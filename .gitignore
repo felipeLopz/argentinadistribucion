@@ -1,0 +1,36 @@
+# dependencias
+/node_modules
+
+# build / output de Next.js
+/.next/
+/out/
+/build
+
+# logs
+*.log
+dev.log
+server.log
+
+# variables de entorno
+.env
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+
+# Config local del agente/preview (no aporta al sitio)
+.claude/
+
+# Diseños de referencia (mockups HTML, no forman parte del sitio)
+/mockup/
+
+# Original del proyecto
+argentina-distributor.zip
