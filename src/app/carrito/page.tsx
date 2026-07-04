@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { contactConfig, storeName } from "@/lib/products";
-import { Separator } from "@/components/ui/separator";
 
 const HORARIOS = [
   "08:00 - 10:00",
@@ -114,10 +113,10 @@ export default function CarritoPage() {
     opcional = false
   ) => (
     <div>
-      <label htmlFor={id} className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1.5">
+      <label htmlFor={id} className="flex items-center gap-2 text-sm font-semibold text-[var(--ink)] mb-1.5">
         {icon}
         {label}
-        {opcional && <span className="text-xs font-normal text-gray-400">(opcional)</span>}
+        {opcional && <span className="text-xs font-normal text-[var(--mut)]">(opcional)</span>}
         {required && <span className="text-red-400 text-xs">*</span>}
       </label>
       <input
@@ -129,14 +128,14 @@ export default function CarritoPage() {
           if (errores[id]) setErrores((prev) => ({ ...prev, [id]: "" }));
         }}
         placeholder={placeholder}
-        className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+        className={`w-full rounded-xl border bg-white/[0.04] px-4 py-3 text-sm text-[var(--ink)] placeholder:text-[var(--mut)] outline-none transition focus:ring-2 ${
           errores[id]
-            ? "border-red-300 focus:ring-red-200 focus:border-red-400"
-            : "border-gray-200 focus:ring-[#0033A0]/20 focus:border-[#0033A0]"
+            ? "border-red-400/60 focus:border-red-400 focus:ring-[rgba(248,113,113,0.2)]"
+            : "border-[var(--line)] focus:border-[var(--gold)] focus:ring-[rgba(232,183,58,0.22)]"
         }`}
       />
       {errores[id] && (
-        <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
+        <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
           <AlertCircle className="h-3 w-3" />
           {errores[id]}
         </p>
@@ -145,30 +144,31 @@ export default function CarritoPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="h-1 bg-gradient-to-r from-[#0033A0] via-[#D4AF37] to-[#0033A0]" />
+    <div className="font-archivo min-h-screen bg-[var(--navy)] text-[var(--ink)]">
+      <div className="h-1 bg-gradient-to-r from-[var(--blue)] via-[var(--gold)] to-[var(--blue)]" />
 
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg shadow-sm border-b border-gray-100">
+      <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[rgba(5,12,46,0.82)] backdrop-blur-[14px]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-14 items-center gap-4">
             <button
               onClick={() => router.push("/")}
-              className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--ink)] transition-colors hover:bg-white/10 hover:text-[var(--gold)]"
+              aria-label="Volver"
             >
-              <ArrowLeft className="h-5 w-5 text-[#0033A0]" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0033A0]">
-                <Trophy className="h-4 w-4 text-[#D4AF37]" />
+              <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)]">
+                <Trophy className="h-4 w-4 text-white" />
               </div>
-              <span className="text-sm font-extrabold text-[#0033A0]">{storeName}</span>
+              <span className="text-sm font-extrabold text-[var(--ink)]">{storeName}</span>
             </div>
-            <Separator orientation="vertical" className="h-6" />
+            <div className="h-6 w-px bg-[var(--line)]" />
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0033A0]">
+              <div className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)]">
                 <ShoppingCart className="h-3.5 w-3.5 text-white" />
               </div>
-              <span className="text-xs font-bold text-[#0033A0] hidden sm:block">
+              <span className="hidden text-xs font-bold text-[var(--mut)] sm:block">
                 Tu carrito ({totalItems} {totalItems === 1 ? "producto" : "productos"})
               </span>
             </div>
@@ -189,11 +189,11 @@ export default function CarritoPage() {
               {/* COLUMNA IZQUIERDA: Items */}
               <div className="lg:col-span-3 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-black text-gray-900">Tu carrito</h1>
+                  <h1 className="text-2xl font-black text-white">Tu carrito</h1>
                   {items.length > 0 && (
                     <button
                       onClick={clearCart}
-                      className="text-xs font-semibold text-red-400 hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer"
+                      className="flex items-center gap-1 text-xs font-semibold text-red-400 transition-colors hover:text-red-300 cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       Vaciar carrito
@@ -205,16 +205,16 @@ export default function CarritoPage() {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="rounded-3xl border border-gray-200 bg-white p-12 text-center"
+                    className="rounded-3xl border border-[var(--line)] bg-[rgba(15,26,80,0.5)] p-12 text-center"
                   >
-                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 mb-6">
-                      <ShoppingCart className="h-10 w-10 text-gray-300" />
+                    <div className="mx-auto mb-6 grid h-20 w-20 place-items-center rounded-full bg-white/5">
+                      <ShoppingCart className="h-10 w-10 text-[var(--mut)]" />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Tu carrito está vacío</h2>
-                    <p className="text-gray-500 mb-6">Explorá nuestros productos y agregá los que te gusten.</p>
+                    <h2 className="mb-2 text-xl font-bold text-white">Tu carrito está vacío</h2>
+                    <p className="mb-6 text-[var(--mut)]">Explorá nuestros productos y agregá los que te gusten.</p>
                     <Link
                       href="/"
-                      className="inline-flex items-center gap-2 rounded-full bg-[#0033A0] hover:bg-[#0046D6] text-white px-6 py-3 font-semibold text-sm transition-all hover:scale-105 active:scale-95 shadow-lg"
+                      className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-px hover:brightness-110"
                     >
                       <ArrowLeft className="h-4 w-4" />
                       Ir a la tienda
@@ -230,25 +230,19 @@ export default function CarritoPage() {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 20, height: 0 }}
-                          className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+                          className="flex gap-4 rounded-2xl border border-[var(--line)] bg-gradient-to-b from-[rgba(15,26,80,0.6)] to-[rgba(10,18,55,0.4)] p-4"
                         >
-                          <Link
-                            href={`/producto/${item.productId}`}
-                            className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100"
-                          >
+                          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#12225f]">
                             <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
-                          </Link>
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
                               <div>
-                                <Link
-                                  href={`/producto/${item.productId}`}
-                                  className="text-sm font-bold text-gray-900 hover:text-[#0033A0] transition-colors line-clamp-1"
-                                >
+                                <p className="text-sm font-bold text-white line-clamp-1">
                                   {item.name}
-                                </Link>
+                                </p>
                                 {item.talle && (
-                                  <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-[#0033A0]/10 text-[#0033A0] px-2 py-0.5 text-[11px] font-bold">
+                                  <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[var(--line)] bg-white/[0.06] px-2 py-0.5 text-[11px] font-bold text-[var(--blue-l)]">
                                     <Ruler className="h-3 w-3" />
                                     {item.talle}
                                   </span>
@@ -256,34 +250,34 @@ export default function CarritoPage() {
                               </div>
                               <button
                                 onClick={() => removeItem(item.productId, item.talle)}
-                                className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[var(--mut)] transition-colors hover:bg-red-500/10 hover:text-red-400 cursor-pointer"
                                 title="Eliminar"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
-                            <p className="mt-1 text-sm font-extrabold text-[#0033A0]">
+                            <p className="mt-1 text-sm font-extrabold text-[var(--blue-l)]">
                               ${item.price.toLocaleString("es-AR")} c/u
                             </p>
                             <div className="mt-2 flex items-center gap-3">
                               <div className="flex items-center">
                                 <button
                                   onClick={() => updateQuantity(item.productId, item.talle, item.cantidad - 1)}
-                                  className="flex h-8 w-8 items-center justify-center rounded-l-lg bg-gray-100 text-gray-700 font-bold text-sm hover:bg-gray-200 transition-colors active:scale-95 select-none cursor-pointer"
+                                  className="flex h-8 w-8 items-center justify-center rounded-l-lg border border-[var(--line)] bg-white/[0.04] text-sm font-bold text-[var(--ink)] transition-colors hover:bg-white/10 active:scale-95 select-none cursor-pointer"
                                 >
                                   −
                                 </button>
-                                <div className="flex h-8 min-w-[40px] items-center justify-center bg-white border-y-2 border-gray-200 px-2">
-                                  <span className="text-sm font-extrabold text-gray-900 tabular-nums">{item.cantidad}</span>
+                                <div className="flex h-8 min-w-[40px] items-center justify-center border-y border-[var(--line)] bg-white/[0.02] px-2">
+                                  <span className="text-sm font-extrabold text-white tabular-nums">{item.cantidad}</span>
                                 </div>
                                 <button
                                   onClick={() => updateQuantity(item.productId, item.talle, item.cantidad + 1)}
-                                  className="flex h-8 w-8 items-center justify-center rounded-r-lg bg-[#0033A0] text-white font-bold text-sm hover:bg-[#0046D6] transition-colors active:scale-95 select-none cursor-pointer"
+                                  className="flex h-8 w-8 items-center justify-center rounded-r-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-sm font-bold text-white transition hover:brightness-110 active:scale-95 select-none cursor-pointer"
                                 >
                                   +
                                 </button>
                               </div>
-                              <span className="text-sm font-bold text-gray-900">
+                              <span className="text-sm font-bold text-white">
                                 ${(item.price * item.cantidad).toLocaleString("es-AR")}
                               </span>
                             </div>
@@ -295,10 +289,10 @@ export default function CarritoPage() {
                 )}
 
                 {items.length > 0 && (
-                  <div className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-400">
+                  <div className="rounded-2xl border border-[var(--line)] bg-[rgba(15,26,80,0.4)] p-4 text-sm text-[var(--mut)]">
                     <p className="text-center">
-                      <Package className="inline h-4 w-4 mr-1" />
-                      Se envián {totalItems} {totalItems === 1 ? "producto" : "productos"} — Envíos a todo el país
+                      <Package className="inline h-4 w-4 mr-1 text-[var(--blue-l)]" />
+                      Se envían {totalItems} {totalItems === 1 ? "producto" : "productos"} — Envíos a todo el país
                     </p>
                   </div>
                 )}
@@ -307,39 +301,39 @@ export default function CarritoPage() {
               {/* COLUMNA DERECHA: Formulario */}
               {items.length > 0 && (
                 <div className="lg:col-span-2 space-y-6">
-                  <div className="rounded-2xl border-2 border-[#0033A0]/10 bg-gradient-to-br from-[#0033A0]/[0.02] to-[#D4AF37]/[0.03] p-6">
-                    <h3 className="flex items-center gap-2 text-base font-bold text-gray-900 mb-4">
-                      <ShieldCheck className="h-5 w-5 text-[#0033A0]" />
+                  <div className="rounded-2xl border border-[var(--line)] bg-[rgba(15,26,80,0.5)] p-6">
+                    <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-white">
+                      <ShieldCheck className="h-5 w-5 text-[var(--blue-l)]" />
                       Resumen del pedido
                     </h3>
                     <div className="space-y-2 text-sm">
                       {items.map((item) => (
                         <div key={`${item.productId}-${item.talle}`} className="flex justify-between">
-                          <span className="text-gray-500 truncate mr-2">
+                          <span className="mr-2 truncate text-[var(--mut)]">
                             {item.name}{item.talle ? ` (${item.talle})` : ""} x{item.cantidad}
                           </span>
-                          <span className="font-semibold text-gray-900 whitespace-nowrap">
+                          <span className="whitespace-nowrap font-semibold text-white">
                             ${(item.price * item.cantidad).toLocaleString("es-AR")}
                           </span>
                         </div>
                       ))}
-                      <Separator />
-                      <div className="flex justify-between items-center pt-1">
-                        <span className="text-base font-bold text-gray-900">Total</span>
-                        <span className="text-2xl font-black text-[#0033A0]">
+                      <div className="my-1 h-px w-full bg-[var(--line)]" />
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-base font-bold text-white">Total</span>
+                        <span className="text-2xl font-black text-white">
                           ${totalPrice.toLocaleString("es-AR")}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h2 className="text-xl font-bold text-gray-900 mb-1">Datos de entrega</h2>
-                    <p className="text-sm text-gray-400 mb-6">Completá tus datos para confirmar la compra.</p>
+                  <div className="rounded-2xl border border-[var(--line)] bg-[rgba(15,26,80,0.5)] p-6">
+                    <h2 className="mb-1 text-xl font-bold text-white">Datos de entrega</h2>
+                    <p className="mb-6 text-sm text-[var(--mut)]">Completá tus datos para confirmar la compra.</p>
 
                     <div className="mb-5">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
-                        <Truck className="h-4 w-4 text-[#0033A0]" />
+                      <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
+                        <Truck className="h-4 w-4 text-[var(--blue-l)]" />
                         Método de entrega
                       </label>
                       <div className="grid grid-cols-2 gap-3">
@@ -347,8 +341,8 @@ export default function CarritoPage() {
                           onClick={() => setMetodoEntrega("envio")}
                           className={`flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all cursor-pointer ${
                             metodoEntrega === "envio"
-                              ? "border-[#0033A0] bg-[#0033A0]/5 text-[#0033A0]"
-                              : "border-gray-200 text-gray-500 hover:border-gray-300"
+                              ? "border-[var(--blue-l)] bg-[rgba(45,107,255,0.15)] text-white"
+                              : "border-[var(--line)] text-[var(--mut)] hover:border-[var(--blue-l)]/60"
                           }`}
                         >
                           <Truck className="h-4 w-4" />
@@ -358,8 +352,8 @@ export default function CarritoPage() {
                           onClick={() => setMetodoEntrega("retiro")}
                           className={`flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all cursor-pointer ${
                             metodoEntrega === "retiro"
-                              ? "border-[#0033A0] bg-[#0033A0]/5 text-[#0033A0]"
-                              : "border-gray-200 text-gray-500 hover:border-gray-300"
+                              ? "border-[var(--blue-l)] bg-[rgba(45,107,255,0.15)] text-white"
+                              : "border-[var(--line)] text-[var(--mut)] hover:border-[var(--blue-l)]/60"
                           }`}
                         >
                           <MapPin className="h-4 w-4" />
@@ -369,18 +363,18 @@ export default function CarritoPage() {
                     </div>
 
                     <div className="space-y-4">
-                      {campo("Nombre y apellido", "nombre", nombre, setNombre, <User className="h-4 w-4 text-gray-400" />, "text", "Ej: Juan Pérez")}
+                      {campo("Nombre y apellido", "nombre", nombre, setNombre, <User className="h-4 w-4 text-[var(--mut)]" />, "text", "Ej: Juan Pérez")}
                       {campo(
                         metodoEntrega === "envio" ? "Dirección completa" : "Dirección de retiro",
-                        "direccion", direccion, setDireccion, <MapPin className="h-4 w-4 text-gray-400" />, "text",
+                        "direccion", direccion, setDireccion, <MapPin className="h-4 w-4 text-[var(--mut)]" />, "text",
                         metodoEntrega === "envio" ? "Calle, número, piso, ciudad, CP" : "Dirección donde retirás"
                       )}
-                      {campo("Número de teléfono", "telefono", telefono, setTelefono, <Phone className="h-4 w-4 text-gray-400" />, "tel", "Ej: 2615551234")}
-                      {campo("Correo electrónico", "email", email, setEmail, <Mail className="h-4 w-4 text-gray-400" />, "email", "Ej: tu@email.com", false, true)}
+                      {campo("Número de teléfono", "telefono", telefono, setTelefono, <Phone className="h-4 w-4 text-[var(--mut)]" />, "tel", "Ej: 2615551234")}
+                      {campo("Correo electrónico", "email", email, setEmail, <Mail className="h-4 w-4 text-[var(--mut)]" />, "email", "Ej: tu@email.com", false, true)}
 
                       <div>
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1.5">
-                          <Clock className="h-4 w-4 text-gray-400" />
+                        <label className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
+                          <Clock className="h-4 w-4 text-[var(--mut)]" />
                           Horario de {metodoEntrega === "envio" ? "entrega" : "retiro"}
                           <span className="text-red-400 text-xs">*</span>
                         </label>
@@ -394,8 +388,8 @@ export default function CarritoPage() {
                               }}
                               className={`rounded-xl border-2 px-3 py-2.5 text-xs font-semibold transition-all cursor-pointer ${
                                 horario === h
-                                  ? "border-[#0033A0] bg-[#0033A0] text-white shadow-md"
-                                  : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                                  ? "border-[var(--blue-l)] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-white shadow-md"
+                                  : "border-[var(--line)] text-[var(--mut)] hover:border-[var(--blue-l)]/60 hover:bg-white/[0.04]"
                               }`}
                             >
                               {h}
@@ -403,7 +397,7 @@ export default function CarritoPage() {
                           ))}
                         </div>
                         {errores.horario && (
-                          <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
+                          <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                             <AlertCircle className="h-3 w-3" />
                             {errores.horario}
                           </p>
@@ -413,12 +407,12 @@ export default function CarritoPage() {
 
                     <button
                       onClick={confirmar}
-                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-green-500 hover:bg-green-600 text-white h-13 py-3.5 font-bold text-base shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl cursor-pointer"
+                      className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-base font-bold text-white shadow-lg transition hover:-translate-y-px hover:brightness-110 cursor-pointer"
                     >
                       <MessageCircle className="h-5 w-5" />
                       Confirmar compra por WhatsApp
                     </button>
-                    <p className="mt-3 text-center text-[11px] text-gray-400">
+                    <p className="mt-3 text-center text-[11px] text-[var(--mut)]">
                       Se abrirá WhatsApp con todos los productos del carrito para coordinar el pago y la entrega.
                     </p>
                   </div>
@@ -430,24 +424,24 @@ export default function CarritoPage() {
               key="confirmado"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center py-20 text-center max-w-lg mx-auto"
+              className="mx-auto flex max-w-lg flex-col items-center justify-center py-20 text-center"
             >
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", delay: 0.2 }}
-                className="flex h-24 w-24 items-center justify-center rounded-full bg-green-100 mb-6"
+                className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/15"
               >
-                <CheckCircle2 className="h-12 w-12 text-green-500" />
+                <CheckCircle2 className="h-12 w-12 text-green-400" />
               </motion.div>
-              <h2 className="text-2xl font-black text-gray-900 mb-2">¡Pedido enviado!</h2>
-              <p className="text-gray-500 mb-8 leading-relaxed">
+              <h2 className="mb-2 text-2xl font-black text-white">¡Pedido enviado!</h2>
+              <p className="mb-8 leading-relaxed text-[var(--mut)]">
                 Tu pedido fue enviado por WhatsApp. Te van a responder a la brevedad para coordinar el pago y la entrega.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <div className="flex w-full flex-col gap-3 sm:flex-row">
                 <Link
                   href="/"
-                  className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[#0033A0] hover:bg-[#0046D6] text-white px-6 py-3.5 font-semibold text-sm transition-all hover:scale-105 active:scale-95 shadow-lg"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-px hover:brightness-110"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Volver a la tienda
@@ -456,7 +450,7 @@ export default function CarritoPage() {
                   href={`${contactConfig.whatsappLink}?text=${encodeURIComponent("Hola! Acabo de hacer un pedido. Quería confirmar el estado.")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 rounded-full bg-green-500 hover:bg-green-600 text-white px-6 py-3.5 font-semibold text-sm transition-all hover:scale-105 active:scale-95 shadow-lg"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#25a35a] px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-px hover:brightness-110"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Abrir WhatsApp
@@ -467,8 +461,8 @@ export default function CarritoPage() {
         </AnimatePresence>
       </main>
 
-      <footer className="border-t border-gray-200 bg-white py-6 mt-12">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
+      <footer className="mt-12 border-t border-[var(--line)] bg-[rgba(5,12,46,0.5)] py-6">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-xs text-[var(--mut)] sm:flex-row sm:px-6 lg:px-8">
           <p>&copy; {new Date().getFullYear()} {storeName}</p>
           <p>{contactConfig.location} · {contactConfig.shippingNote}</p>
         </div>
