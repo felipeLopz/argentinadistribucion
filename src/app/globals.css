@@ -129,3 +129,65 @@
     cursor: not-allowed !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DISEÑO "ESTADIO NOCTURNO" — tokens base (Etapa 1)
+   Paleta y utilidades reutilizables por el resto de las secciones.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --navy: #050c2e;
+  --navy-2: #0a1550;
+  --blue: #0b3ecc;
+  --blue-l: #2d6bff;
+  --gold: #e8b73a;
+  --gold-l: #f5d06b;
+  --ink: #e8ecff;
+  --mut: #8b96c9;
+  --line: rgba(120, 140, 220, 0.16);
+}
+
+/* Tipografía del diseño (variable de next/font, aplicada por subárbol) */
+.font-archivo {
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Título con degradé dorado (parte inferior del H1 del hero) */
+.text-gold-gradient {
+  background: linear-gradient(120deg, var(--gold), var(--gold-l), var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Glows radiales del fondo del hero */
+.hero-glow {
+  background:
+    radial-gradient(60% 55% at 50% 0%, rgba(11, 62, 204, 0.55), transparent 70%),
+    radial-gradient(40% 40% at 80% 20%, rgba(232, 183, 58, 0.12), transparent 60%),
+    radial-gradient(40% 40% at 15% 40%, rgba(45, 107, 255, 0.18), transparent 60%);
+}
+
+/* Franjas verticales tipo estadio */
+.hero-stripes {
+  opacity: 0.5;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 38px,
+    rgba(120, 140, 220, 0.05) 38px 39px
+  );
+}
+
+/* Link del navbar con subrayado dorado animado */
+.nav-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 2px;
+  width: 0;
+  background: var(--gold);
+  transition: width 0.25s ease;
+}
+.nav-underline:hover::after {
+  width: 100%;
+}
