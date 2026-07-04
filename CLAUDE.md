@@ -90,18 +90,17 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
 - **Subido a GitHub** en 10 commits temáticos, **pusheado**. Repo:
   `github.com/felipeLopz/argentinadistribucion`, rama **`main`**, conectado a **Vercel**
   (push a `main` = deploy automático). Working tree limpio.
+- **Scripts de `package.json` ordenados y portables** (commit `406b12d`, pusheado):
+  `build` → `next build` (se eliminó el `cp -r`, que Vercel no necesita), `start` →
+  `next start -p 3000` (en vez de `bun` + `tee` + `NODE_ENV`), y se **eliminaron los
+  scripts `db:*` de Prisma** (sin uso). Sin dependencias nuevas. Verificado en local
+  (`npm run dev` y `npm run build` OK) y **deploy en Vercel confirmado en verde**.
 
 **Pendiente** ⏳ (verificado en el código a la fecha de este archivo)
 - [ ] **Datos de contacto reales** en `products.ts` → `contactConfig`. Hoy hay
   **email de prueba `Gmaildeprueba@gmail.com`** y **redes de ejemplo**
   (`instagram/twitter/facebook` con `argentina.distributor`). Validar también el
   WhatsApp `2613900039` (`wa.me/5492613900039`).
-- [ ] **Scripts de `package.json`**: `build` usa `cp -r` y `start` usa `bun` + `tee`
-  → **rotos en Windows local** (en Vercel/Linux `cp -r` funciona, no bloquea el deploy).
-  Además hay scripts `db:*` de Prisma **sin uso** (no hay Prisma instalado). El `dev`
-  ya está OK (`next dev -p 3000`).
-- [ ] **Confirmar en Vercel** que el deploy del rediseño quedó verde y revisar la web
-  en vivo.
 
 ## 6. Cómo correr el proyecto
 
