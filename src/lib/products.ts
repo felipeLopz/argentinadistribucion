@@ -103,8 +103,31 @@ export const products: Product[] = [
     category: "indumentaria",
   },
 
-  // ═══ ACCESORIOS ═══
-  // Sección vacía — se muestra mensaje "Próximamente" en la página
+  // ═══ PROMOS ═══
+  {
+    id: "promo-1",
+    name: "Promo Cargador + Cabezal",
+    description: "Cargador de alta calidad con cabezal magnético incluido. Diseño oficial de la Selección Argentina. Cargá tu celu y usá el GPS al mismo tiempo.",
+    image: IMG_CARGADOR,
+    price: 18500,
+    category: "accesorios",
+  },
+  {
+    id: "promo-2",
+    name: "Promo Funda + Protector",
+    description: "Funda protectora para iPhone con diseño de la Selección Argentina más protector de pantalla templado incluido. Protección completa.",
+    image: IMG_FUNDA_IPHONE,
+    price: 10500,
+    category: "accesorios",
+  },
+  {
+    id: "promo-3",
+    name: "Promo Funda + AirPods",
+    description: "Funda para iPhone más AirPods personalizados con colores de la Selección Argentina. El combo ideal para fans de Argentina.",
+    image: IMG_AIRPODS,
+    price: 56000,
+    category: "accesorios",
+  },
 
   // ═══ ACCESORIOS APPLE ═══
   {
@@ -140,7 +163,7 @@ export const categories = [
   { id: "paquetes", label: "Paquetes de Figuritas", icon: "Package" },
   { id: "albumes", label: "Álbumes", icon: "BookOpen" },
   { id: "indumentaria", label: "Indumentaria", icon: "Shirt" },
-  { id: "accesorios", label: "Accesorios", icon: "Watch" },
+  { id: "accesorios", label: "Promos", icon: "Watch" },
   { id: "accesorios-apple", label: "Accesorios Apple", icon: "Smartphone" },
 ] as const;
 
@@ -152,7 +175,7 @@ export const navSections = [
   { id: "paquetes", label: "Paquetes de Figuritas" },
   { id: "albumes", label: "Álbumes" },
   { id: "indumentaria", label: "Indumentaria" },
-  { id: "accesorios", label: "Accesorios" },
+  { id: "accesorios", label: "Promos" },
   { id: "accesorios-apple", label: "Accesorios Apple" },
   { id: "contacto", label: "Contacto" },
 ] as const;
