@@ -20,7 +20,6 @@ import {
   ShoppingCart,
   ShieldCheck,
   Package,
-  Ruler,
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { contactConfig, storeName } from "@/lib/products";
@@ -67,7 +66,7 @@ export default function CarritoPage() {
 
     const lineas = items.map(
       (i, idx) =>
-        `${idx + 1}. ${i.name}${i.talle ? ` (Talle ${i.talle})` : ""} x${i.cantidad} — $${(i.price * i.cantidad).toLocaleString("es-AR")}`
+        `${idx + 1}. ${i.name}${i.variante ? ` - ${i.variante}` : ""} x${i.cantidad} — $${(i.price * i.cantidad).toLocaleString("es-AR")}`
     );
 
     const msg = [
@@ -225,7 +224,7 @@ export default function CarritoPage() {
                     <AnimatePresence>
                       {items.map((item) => (
                         <motion.div
-                          key={`${item.productId}-${item.talle}`}
+                          key={`${item.productId}-${item.variante}`}
                           layout
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
@@ -241,15 +240,14 @@ export default function CarritoPage() {
                                 <p className="text-sm font-bold text-white line-clamp-1">
                                   {item.name}
                                 </p>
-                                {item.talle && (
-                                  <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[var(--line)] bg-white/[0.06] px-2 py-0.5 text-[11px] font-bold text-[var(--blue-l)]">
-                                    <Ruler className="h-3 w-3" />
-                                    {item.talle}
+                                {item.variante && (
+                                  <span className="mt-1 inline-flex items-center gap-1 rounded-md border border-[var(--line)] bg-white/[0.06] px-2 py-0.5 text-[11px] font-bold text-[var(--blue-l)]">
+                                    {item.variante}
                                   </span>
                                 )}
                               </div>
                               <button
-                                onClick={() => removeItem(item.productId, item.talle)}
+                                onClick={() => removeItem(item.productId, item.variante)}
                                 className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[var(--mut)] transition-colors hover:bg-red-500/10 hover:text-red-400 cursor-pointer"
                                 title="Eliminar"
                               >
@@ -262,7 +260,7 @@ export default function CarritoPage() {
                             <div className="mt-2 flex items-center gap-3">
                               <div className="flex items-center">
                                 <button
-                                  onClick={() => updateQuantity(item.productId, item.talle, item.cantidad - 1)}
+                                  onClick={() => updateQuantity(item.productId, item.variante, item.cantidad - 1)}
                                   className="flex h-8 w-8 items-center justify-center rounded-l-lg border border-[var(--line)] bg-white/[0.04] text-sm font-bold text-[var(--ink)] transition-colors hover:bg-white/10 active:scale-95 select-none cursor-pointer"
                                 >
                                   −
@@ -271,7 +269,7 @@ export default function CarritoPage() {
                                   <span className="text-sm font-extrabold text-white tabular-nums">{item.cantidad}</span>
                                 </div>
                                 <button
-                                  onClick={() => updateQuantity(item.productId, item.talle, item.cantidad + 1)}
+                                  onClick={() => updateQuantity(item.productId, item.variante, item.cantidad + 1)}
                                   className="flex h-8 w-8 items-center justify-center rounded-r-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-sm font-bold text-white transition hover:brightness-110 active:scale-95 select-none cursor-pointer"
                                 >
                                   +
@@ -308,9 +306,9 @@ export default function CarritoPage() {
                     </h3>
                     <div className="space-y-2 text-sm">
                       {items.map((item) => (
-                        <div key={`${item.productId}-${item.talle}`} className="flex justify-between">
+                        <div key={`${item.productId}-${item.variante}`} className="flex justify-between">
                           <span className="mr-2 truncate text-[var(--mut)]">
-                            {item.name}{item.talle ? ` (${item.talle})` : ""} x{item.cantidad}
+                            {item.name}{item.variante ? ` - ${item.variante}` : ""} x{item.cantidad}
                           </span>
                           <span className="whitespace-nowrap font-semibold text-white">
                             ${(item.price * item.cantidad).toLocaleString("es-AR")}

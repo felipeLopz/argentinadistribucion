@@ -71,7 +71,7 @@ export default function CartPanel({
                   <AnimatePresence>
                     {items.map((item) => (
                       <motion.div
-                        key={`${item.productId}-${item.talle}`}
+                        key={`${item.productId}-${item.variante}`}
                         layout
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -81,8 +81,8 @@ export default function CartPanel({
                         <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg bg-[#12225f] object-cover" />
                         <div className="flex-1 min-w-0">
                           <h4 className="truncate text-sm font-semibold text-white">{item.name}</h4>
-                          {item.talle && (
-                            <span className="rounded-md border border-[var(--line)] bg-white/[0.06] px-1.5 py-0.5 text-[11px] font-bold text-[var(--blue-l)]">Talle {item.talle}</span>
+                          {item.variante && (
+                            <span className="rounded-md border border-[var(--line)] bg-white/[0.06] px-1.5 py-0.5 text-[11px] font-bold text-[var(--blue-l)]">{item.variante}</span>
                           )}
                           <p className="mt-1 text-xs text-[var(--mut)]">
                             ${item.price.toLocaleString("es-AR")} c/u · x{item.cantidad}
@@ -92,7 +92,7 @@ export default function CartPanel({
                           </p>
                         </div>
                         <button
-                          onClick={() => removeItem(item.productId, item.talle)}
+                          onClick={() => removeItem(item.productId, item.variante)}
                           className="flex h-8 w-8 items-center justify-center self-start rounded-full text-[var(--mut)] transition-colors hover:bg-red-500/10 hover:text-red-400 cursor-pointer"
                           title="Eliminar"
                         >

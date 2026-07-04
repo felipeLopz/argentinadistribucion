@@ -14,7 +14,10 @@ export interface CartItem {
   name: string;
   image: string;
   price: number;
-  talle: string;
+  /* Variante elegida ya formateada y auto-descriptiva
+     (ej. "Talle L", "Negro Mate - iPhone 13", o "" si no tiene opciones).
+     Junto con productId forma la identidad del ítem en el carrito. */
+  variante: string;
   cantidad: number;
 }
 
@@ -23,8 +26,8 @@ interface CartContextType {
   totalItems: number;
   totalPrice: number;
   addItem: (item: Omit<CartItem, "cantidad"> & { cantidad?: number }) => void;
-  removeItem: (productId: string, talle: string) => void;
-  updateQuantity: (productId: string, talle: string, cantidad: number) => void;
+  removeItem: (productId: string, variante: string) => void;
+  updateQuantity: (productId: string, variante: string, cantidad: number) => void;
   clearCart: () => void;
   justAdded: string | null;
 }
@@ -40,7 +43,15 @@ function loadFromStorage(): CartItem[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed;
+    /* Migración suave: carritos guardados por el sistema viejo usaban `talle`.
+       Los normalizamos al nuevo campo `variante` sin perder el ítem. */
+    return parsed.map((i) => {
+      if (i && typeof i === "object" && i.variante === undefined) {
+        const { talle, ...rest } = i as Record<string, unknown>;
+        return { ...rest, variante: typeof talle === "string" ? talle : "" } as CartItem;
+      }
+      return i as CartItem;
+    });
   } catch {
     return [];
   }
@@ -88,7 +99,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const qty = newItem.cantidad ?? 1;
       setItems((prev) => {
         const idx = prev.findIndex(
-          (i) => i.productId === newItem.productId && i.talle === newItem.talle
+          (i) => i.productId === newItem.productId && i.variante === newItem.variante
         );
         if (idx >= 0) {
           const copy = [...prev];
@@ -102,21 +113,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const removeItem = useCallback((productId: string, talle: string) => {
+  const removeItem = useCallback((productId: string, variante: string) => {
     setItems((prev) =>
-      prev.filter((i) => !(i.productId === productId && i.talle === talle))
+      prev.filter((i) => !(i.productId === productId && i.variante === variante))
     );
   }, []);
 
   const updateQuantity = useCallback(
-    (productId: string, talle: string, cantidad: number) => {
+    (productId: string, variante: string, cantidad: number) => {
       if (cantidad <= 0) {
-        removeItem(productId, talle);
+        removeItem(productId, variante);
         return;
       }
       setItems((prev) =>
         prev.map((i) =>
-          i.productId === productId && i.talle === talle
+          i.productId === productId && i.variante === variante
             ? { ...i, cantidad }
             : i
         )

@@ -126,7 +126,7 @@ export function FiguritasEleccionCard() {
       name: `${cantidad} Figurita${cantidad !== 1 ? "s" : ""} a Elección`,
       image: IMG_PACKS,
       price: 150,
-      talle: "",
+      variante: "",
       cantidad,
     });
     setFeedback(true);

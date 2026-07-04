@@ -101,6 +101,9 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
   **email de prueba `Gmaildeprueba@gmail.com`** y **redes de ejemplo**
   (`instagram/twitter/facebook` con `argentina.distributor`). Validar también el
   WhatsApp `2613900039` (`wa.me/5492613900039`).
+- [ ] **Reemplazar imágenes placeholder** de funda iPhone 17, protectores 11-16 y
+  protector 17 por las reales cuando estén disponibles (hoy los 4 productos de fundas/
+  protectores reusan `IMG_FUNDA_IPHONE` en `products.ts`).
 
 ## 6. Cómo correr el proyecto
 

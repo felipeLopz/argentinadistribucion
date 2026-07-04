@@ -1,3 +1,12 @@
+/* Grupo de opciones obligatorias de un producto (ej. Color, Modelo).
+   Distinto de talleStock: NO maneja stock, solo una lista de valores a elegir.
+   Un producto puede tener 0, 1 o varios grupos; se deben elegir TODOS para
+   poder agregar al carrito. */
+export interface ProductOption {
+  label: string;
+  values: string[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -5,9 +14,26 @@ export interface Product {
   image: string;
   price?: number;
   talleStock?: Record<string, number>;
+  options?: ProductOption[];
   category: "paquetes" | "albumes" | "indumentaria" | "accesorios" | "accesorios-apple";
   status?: "consultar" | "proximamente";
 }
+
+/* Opciones reutilizables para las fundas/protectores de iPhone */
+const COLORES_FUNDA = [
+  "Negro Mate",
+  "Blanco Translúcido / Transparente",
+  "Gris Espacial / Grafito",
+  "Azul Marino / Azul Medianoche",
+  "Verde Pino / Verde Militar",
+  "Gris Lavanda",
+  "Rosa Arena / Rosa Pastel",
+  "Azul Cielo / Azul Sierra",
+  "Verde Menta / Matcha",
+  "Rojo Coral",
+  "Amarillo Canario",
+];
+const MODELOS_IPHONE_11_16 = ["iPhone 11", "iPhone 12", "iPhone 13", "iPhone 14", "iPhone 15", "iPhone 16"];
 
 /* ──────────────────────────────────────────────
    Datos de productos organizados por sección.
@@ -132,8 +158,38 @@ export const products: Product[] = [
   // ═══ ACCESORIOS APPLE ═══
   {
     id: "apl-1",
-    name: "Fundas para iPhone",
-    description: "Fundas protectoras para iPhone con diseño de la Selección Argentina.",
+    name: "Fundas de iPhone 11 al 16 de silicona",
+    description: "Fundas de silicona para iPhone 11 al 16. Elegí color y modelo.",
+    image: IMG_FUNDA_IPHONE,
+    price: 7900,
+    options: [
+      { label: "Color", values: COLORES_FUNDA },
+      { label: "Modelo", values: MODELOS_IPHONE_11_16 },
+    ],
+    category: "accesorios-apple",
+  },
+  {
+    id: "apl-4",
+    name: "Funda de iPhone 17 silicona",
+    description: "Funda de silicona para iPhone 17. Elegí el color.",
+    image: IMG_FUNDA_IPHONE,
+    price: 7900,
+    options: [{ label: "Color", values: COLORES_FUNDA }],
+    category: "accesorios-apple",
+  },
+  {
+    id: "apl-5",
+    name: "Protectores de iPhone del 11 al 16",
+    description: "Protectores de pantalla para iPhone 11 al 16. Elegí el modelo.",
+    image: IMG_FUNDA_IPHONE,
+    price: 7900,
+    options: [{ label: "Modelo", values: MODELOS_IPHONE_11_16 }],
+    category: "accesorios-apple",
+  },
+  {
+    id: "apl-6",
+    name: "Protector de iPhone 17",
+    description: "Protector de pantalla para iPhone 17.",
     image: IMG_FUNDA_IPHONE,
     price: 7900,
     category: "accesorios-apple",

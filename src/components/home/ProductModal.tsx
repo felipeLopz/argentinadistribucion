@@ -21,6 +21,7 @@ export default function ProductModal({
 }) {
   const { addItem, justAdded } = useCart();
   const [talle, setTalle] = useState("");
+  const [opciones, setOpciones] = useState<Record<string, string>>({});
   const [cantidad, setCantidad] = useState(1);
   const [agregado, setAgregado] = useState(false);
 
@@ -31,11 +32,34 @@ export default function ProductModal({
   const precioUnitario = product?.price ?? 0;
   const subtotal = precioUnitario * cantidad;
 
+  /* Opciones genéricas (Color/Modelo). Distinto del talle: sin stock. */
+  const grupos = product?.options ?? [];
+  const tieneOpciones = grupos.length > 0;
+  const opcionesCompletas = grupos.every((g) => !!opciones[g.label]);
+
+  /* Variante auto-descriptiva que se guarda en el carrito y va al WhatsApp:
+     "Talle L" (camiseta) · "Negro Mate - iPhone 13" (opciones) · "" (sin nada) */
+  const variante = tieneTalles
+    ? talle
+      ? `Talle ${talle}`
+      : ""
+    : tieneOpciones
+    ? grupos.map((g) => opciones[g.label]).join(" - ")
+    : "";
+
+  /* Se puede agregar si están completas las selecciones obligatorias */
+  const puedeAgregar = tieneTalles
+    ? !!talle && stockTalle > 0
+    : tieneOpciones
+    ? opcionesCompletas
+    : true;
+
   const showFeedback = agregado || justAdded === product?.name;
 
   /* Reset estado al cambiar de producto */
   useEffect(() => {
     setTalle("");
+    setOpciones({});
     setCantidad(1);
     setAgregado(false);
   }, [product?.id]);
@@ -60,7 +84,7 @@ export default function ProductModal({
       name: product!.name,
       image: product!.image,
       price: product!.price!,
-      talle: tieneTalles ? talle : "",
+      variante,
       cantidad,
     });
     setAgregado(true);
@@ -68,7 +92,7 @@ export default function ProductModal({
   };
 
   const consultarWhatsApp = () => {
-    const msg = `Hola! Quiero consultar sobre: ${product!.name}${tieneTalles && talle ? ` (Talle ${talle})` : ""} — x${cantidad} — $${subtotal.toLocaleString("es-AR")}`;
+    const msg = `Hola! Quiero consultar sobre: ${product!.name}${variante ? ` - ${variante}` : ""} — x${cantidad} — $${subtotal.toLocaleString("es-AR")}`;
     window.open(`${contactConfig.whatsappLink}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
@@ -149,11 +173,11 @@ export default function ProductModal({
               </button>
               <button
                 onClick={agregarAlCarrito}
-                disabled={tieneTalles && (!talle || stockTalle === 0)}
+                disabled={!puedeAgregar}
                 className={`flex h-11 w-full items-center justify-center gap-2 rounded-[12px] text-sm font-bold transition ${
                   showFeedback
                     ? "bg-green-500 text-white"
-                    : tieneTalles && !talle
+                    : !puedeAgregar
                     ? "cursor-not-allowed border border-[var(--line)] bg-white/[0.05] text-[var(--mut)]"
                     : "cursor-pointer bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-white hover:-translate-y-px hover:brightness-110"
                 }`}
@@ -177,7 +201,7 @@ export default function ProductModal({
                   ${precioUnitario.toLocaleString("es-AR")}
                 </span>
                 <span className="mb-0.5 text-sm text-[var(--mut)]">
-                  {tieneTalles ? "por unidad" : "por pack"}
+                  {tieneTalles || tieneOpciones ? "por unidad" : "por pack"}
                 </span>
               </div>
 
@@ -231,11 +255,40 @@ export default function ProductModal({
                 </div>
               )}
 
+              {/* Selectores de opciones (Color / Modelo) — sin stock */}
+              {tieneOpciones && grupos.map((grupo) => (
+                <div key={grupo.label}>
+                  <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
+                    <Star className="h-4 w-4 text-[var(--blue-l)]" />
+                    {grupo.label}
+                    <span className="text-xs text-red-400">*</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {grupo.values.map((v) => {
+                      const seleccionado = opciones[grupo.label] === v;
+                      return (
+                        <button
+                          key={v}
+                          onClick={() => setOpciones((prev) => ({ ...prev, [grupo.label]: v }))}
+                          className={`rounded-xl border-2 px-4 py-2.5 text-sm font-semibold transition-all ${
+                            seleccionado
+                              ? "scale-105 border-[var(--blue-l)] bg-[var(--blue)] text-white shadow-[0_8px_20px_rgba(11,62,204,0.4)]"
+                              : "cursor-pointer border-[var(--line)] text-[var(--ink)] hover:border-[var(--blue-l)] hover:bg-white/[0.04]"
+                          }`}
+                        >
+                          {v}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
               {/* Selector de cantidad */}
               <div>
                 <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
                   <Package className="h-4 w-4 text-[var(--blue-l)]" />
-                  Cantidad de {tieneTalles ? "unidades" : "packs"}
+                  Cantidad de {tieneTalles || tieneOpciones ? "unidades" : "packs"}
                 </label>
                 <div className={`flex items-center gap-4${tieneTalles && (!talle || stockTalle === 0) ? " pointer-events-none opacity-40" : ""}`}>
                   <div className="flex items-center">
