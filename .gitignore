@@ -11,9 +11,9 @@
 dev.log
 server.log
 
-# variables de entorno
+# variables de entorno (nunca commitear credenciales)
 .env
-.env*.local
+.env*
 
 # TypeScript
 *.tsbuildinfo
