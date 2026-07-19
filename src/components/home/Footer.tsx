@@ -1,6 +1,6 @@
 "use client";
 
-import { Trophy, Instagram, Twitter, Facebook, MessageCircle, Mail, MapPin, Truck, Heart } from "lucide-react";
+import { Trophy, Instagram, MessageCircle, Mail, MapPin, Truck, Heart } from "lucide-react";
 import { navSections, storeName, contactConfig } from "@/lib/products";
 
 /* ═══════════════════════════════════════════════
@@ -27,33 +27,19 @@ export default function Footer() {
             </p>
             {/* Redes sociales */}
             <div className="mt-5 flex items-center gap-3">
-              <a
-                href={contactConfig.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-white/[0.06] text-[var(--ink)] transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)]"
-                aria-label="Instagram"
-              >
-                <Instagram className="h-4 w-4" />
-              </a>
-              <a
-                href={contactConfig.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-white/[0.06] text-[var(--ink)] transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)]"
-                aria-label="Twitter"
-              >
-                <Twitter className="h-4 w-4" />
-              </a>
-              <a
-                href={contactConfig.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-white/[0.06] text-[var(--ink)] transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)]"
-                aria-label="Facebook"
-              >
-                <Facebook className="h-4 w-4" />
-              </a>
+              {contactConfig.instagrams.map((ig) => (
+                <a
+                  key={ig.user}
+                  href={ig.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-white/[0.06] text-[var(--ink)] transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)]"
+                  aria-label={`Instagram @${ig.user}`}
+                  title={`@${ig.user}`}
+                >
+                  <Instagram className="h-4 w-4" />
+                </a>
+              ))}
             </div>
           </div>
 

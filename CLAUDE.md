@@ -95,12 +95,14 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
   `next start -p 3000` (en vez de `bun` + `tee` + `NODE_ENV`), y se **eliminaron los
   scripts `db:*` de Prisma** (sin uso). Sin dependencias nuevas. Verificado en local
   (`npm run dev` y `npm run build` OK) y **deploy en Vercel confirmado en verde**.
+- **Datos de contacto reales cargados** en `contactConfig` (`products.ts`): WhatsApp
+  **`2617085062`** (`wa.me/5492617085062`, único número — lo leen los 9 puntos de acción),
+  email **`Lucianagargantini0@gmail.com`**, ubicación **Mendoza, Argentina**, y **dos
+  cuentas de Instagram** (`instagrams: [Luli.gargantini, jere.alarcon11]`) que se muestran
+  ambas en Contacto y en el Footer. Se **eliminaron las redes falsas del scaffolding**
+  (Twitter/Facebook/TikTok con `argentina.distributor`) del footer y del config.
 
 **Pendiente** ⏳ (verificado en el código a la fecha de este archivo)
-- [ ] **Datos de contacto reales** en `products.ts` → `contactConfig`. Hoy hay
-  **email de prueba `Gmaildeprueba@gmail.com`** y **redes de ejemplo**
-  (`instagram/twitter/facebook` con `argentina.distributor`). Validar también el
-  WhatsApp `2613900039` (`wa.me/5492613900039`).
 - [ ] **Reemplazar imágenes placeholder** de funda iPhone 17, protectores 11-16 y
   protector 17 por las reales cuando estén disponibles (hoy los 4 productos de fundas/
   protectores reusan `IMG_FUNDA_IPHONE` en `products.ts`).

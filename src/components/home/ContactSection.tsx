@@ -54,20 +54,27 @@ export default function ContactSection() {
             <p className="mt-2.5 text-sm font-bold text-[var(--gold)]">{contactConfig.email}</p>
           </a>
 
-          {/* Instagram */}
-          <a
-            href="https://www.instagram.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex flex-col items-center rounded-[18px] border border-[var(--line)] bg-gradient-to-b from-[rgba(15,26,80,0.5)] to-[rgba(10,18,55,0.3)] p-7 text-center transition duration-300 hover:-translate-y-[5px] hover:border-[rgba(232,183,58,0.4)]"
-          >
+          {/* Instagram (dos cuentas) */}
+          <div className="group flex flex-col items-center rounded-[18px] border border-[var(--line)] bg-gradient-to-b from-[rgba(15,26,80,0.5)] to-[rgba(10,18,55,0.3)] p-7 text-center transition duration-300 hover:-translate-y-[5px] hover:border-[rgba(232,183,58,0.4)]">
             <div className="grid h-[54px] w-[54px] place-items-center rounded-[15px] bg-[rgba(236,72,153,0.13)]">
               <Instagram className="h-7 w-7 text-[#e46bb0]" />
             </div>
             <h3 className="mt-4 font-bold text-white">Instagram</h3>
             <p className="mt-1 text-[13px] text-[var(--mut)]">Consultas por DM</p>
-            <p className="mt-2.5 text-sm font-bold text-[var(--gold)]">Escribinos</p>
-          </a>
+            <div className="mt-2.5 flex flex-col gap-1">
+              {contactConfig.instagrams.map((ig) => (
+                <a
+                  key={ig.user}
+                  href={ig.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-bold text-[var(--gold)] transition-colors hover:text-[var(--gold-l)]"
+                >
+                  @{ig.user}
+                </a>
+              ))}
+            </div>
+          </div>
 
           {/* Envíos */}
           <div className="group flex flex-col items-center rounded-[18px] border border-[var(--line)] bg-gradient-to-b from-[rgba(15,26,80,0.5)] to-[rgba(10,18,55,0.3)] p-7 text-center transition duration-300 hover:-translate-y-[5px] hover:border-[rgba(232,183,58,0.4)]">

@@ -240,16 +240,17 @@ export const navSections = [
    Configuración de contacto
    ────────────────────────────────────────────── */
 export const contactConfig = {
-  whatsapp: "2613900039",
-  whatsappLink: "https://wa.me/5492613900039",
-  email: "Gmaildeprueba@gmail.com",
-  emailLink: "mailto:Gmaildeprueba@gmail.com",
+  whatsapp: "2617085062",
+  whatsappLink: "https://wa.me/5492617085062",
+  email: "Lucianagargantini0@gmail.com",
+  emailLink: "mailto:Lucianagargantini0@gmail.com",
   shippingNote: "Realizamos envíos a toda Argentina.",
-  location: "Buenos Aires, Argentina",
-  instagram: "https://instagram.com/argentina.distributor",
-  twitter: "https://twitter.com/argentina_dist",
-  facebook: "https://facebook.com/argentina.distributor",
-  tiktok: "https://tiktok.com/@argentina.distributor",
+  location: "Mendoza, Argentina",
+  /* Dos cuentas de Instagram — se muestran ambas en Contacto y en el Footer */
+  instagrams: [
+    { user: "Luli.gargantini", url: "https://instagram.com/Luli.gargantini" },
+    { user: "jere.alarcon11", url: "https://instagram.com/jere.alarcon11" },
+  ],
 };
 
 /* ──────────────────────────────────────────────
