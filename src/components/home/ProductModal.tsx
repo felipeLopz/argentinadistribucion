@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, MessageCircle, ShoppingCart, Check, Star, Truck, Ruler, Ban, Package } from "lucide-react";
 import { contactConfig, type Product } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
+import { useStock } from "@/lib/stock-context";
+import { esGrupoDeStock, gruposDeStock } from "@/lib/stock-config";
 
 /* ═══════════════════════════════════════════════
    PRODUCT MODAL — Panel deslizante con detalle del producto
@@ -20,22 +22,43 @@ export default function ProductModal({
   onClose: () => void;
 }) {
   const { addItem, justAdded } = useCart();
+  const { stockDeClave, stockDeTalle, stockDeOpciones, estado: estadoStock } = useStock();
   const [talle, setTalle] = useState("");
   const [opciones, setOpciones] = useState<Record<string, string>>({});
   const [cantidad, setCantidad] = useState(1);
   const [agregado, setAgregado] = useState(false);
 
+  /* talleStock define QUÉ talles se ofrecen; las cantidades ya no salen de
+     ahí sino de la base (ver stock-context). */
   const tieneTalles = !!product?.talleStock;
   const talles = tieneTalles ? Object.keys(product!.talleStock!) : [];
-  const stockTalle = tieneTalles && talle ? (product!.talleStock![talle] ?? 0) : 0;
-  const stock = tieneTalles ? stockTalle : 999;
   const precioUnitario = product?.price ?? 0;
   const subtotal = precioUnitario * cantidad;
 
-  /* Opciones genéricas (Color/Modelo). Distinto del talle: sin stock. */
+  /* Opciones genéricas (Color/Modelo) */
   const grupos = product?.options ?? [];
   const tieneOpciones = grupos.length > 0;
   const opcionesCompletas = grupos.every((g) => !!opciones[g.label]);
+
+  /* ─── Stock de la selección actual ───
+     null = todavía no se sabe (cargando, o falta elegir opciones).
+     0 = agotado. Ojo con la granularidad mixta: en las fundas 11-16 el
+     stock se resuelve por MODELO, no por color (lo maneja stock-config). */
+  const seleccionCompleta = tieneTalles ? !!talle : tieneOpciones ? opcionesCompletas : true;
+  const stockActual: number | null = !product
+    ? null
+    : tieneTalles
+    ? talle
+      ? stockDeTalle(product.id, talle)
+      : null
+    : tieneOpciones
+    ? opcionesCompletas
+      ? stockDeOpciones(product, opciones)
+      : null
+    : stockDeClave(product.id, "");
+
+  const agotado = stockActual === 0;
+  const stock = stockActual ?? 1;
 
   /* Variante auto-descriptiva que se guarda en el carrito y va al WhatsApp:
      "Talle L" (camiseta) · "Negro Mate - iPhone 13" (opciones) · "" (sin nada) */
@@ -47,12 +70,9 @@ export default function ProductModal({
     ? grupos.map((g) => opciones[g.label]).join(" - ")
     : "";
 
-  /* Se puede agregar si están completas las selecciones obligatorias */
-  const puedeAgregar = tieneTalles
-    ? !!talle && stockTalle > 0
-    : tieneOpciones
-    ? opcionesCompletas
-    : true;
+  /* Se puede agregar si están completas las selecciones obligatorias Y hay
+     stock confirmado. Sin dato de stock NO se habilita (fallamos cerrado). */
+  const puedeAgregar = seleccionCompleta && stockActual !== null && stockActual > 0;
 
   const showFeedback = agregado || justAdded === product?.name;
 
@@ -64,16 +84,14 @@ export default function ProductModal({
     setAgregado(false);
   }, [product?.id]);
 
-  /* Reset cantidad cuando cambia talle */
+  /* La cantidad nunca puede superar el stock disponible */
   useEffect(() => {
-    if (tieneTalles) {
-      if (talle && stockTalle > 0) {
-        setCantidad((c) => Math.min(c, stockTalle));
-      } else {
-        setCantidad(1);
-      }
+    if (stockActual !== null && stockActual > 0) {
+      setCantidad((c) => Math.min(c, stockActual));
+    } else {
+      setCantidad(1);
     }
-  }, [talle, tieneTalles, stockTalle]);
+  }, [stockActual]);
 
   const restar = () => setCantidad((c) => Math.max(1, c - 1));
   const sumar = () => setCantidad((c) => Math.min(stock, c + 1));
@@ -184,13 +202,25 @@ export default function ProductModal({
               >
                 {showFeedback ? (
                   <><Check className="h-4 w-4" /> Agregado al carrito</>
+                ) : agotado && seleccionCompleta ? (
+                  <><Ban className="h-4 w-4" /> Agotado</>
                 ) : (
                   <><ShoppingCart className="h-4 w-4" /> Agregar al carrito</>
                 )}
               </button>
-              <p className="text-center text-[10px] text-[var(--mut)]">
-                Solo si vas a comprar este producto
-              </p>
+              {estadoStock === "cargando" ? (
+                <p className="animate-pulse text-center text-[10px] font-semibold text-[var(--mut)]">
+                  Verificando stock…
+                </p>
+              ) : agotado && seleccionCompleta ? (
+                <p className="text-center text-[10px] font-semibold text-red-400">
+                  Sin stock por el momento — podés consultarnos por WhatsApp
+                </p>
+              ) : (
+                <p className="text-center text-[10px] text-[var(--mut)]">
+                  Solo si vas a comprar este producto
+                </p>
+              )}
             </div>
 
             {/* Contenido scrolleable */}
@@ -221,7 +251,7 @@ export default function ProductModal({
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {talles.map((t) => {
-                      const stockT = product!.talleStock![t] ?? 0;
+                      const stockT = stockDeTalle(product!.id, t);
                       const agotado = stockT === 0;
                       const seleccionado = talle === t;
                       return (
@@ -246,7 +276,7 @@ export default function ProductModal({
                           <span className={`text-[10px] font-semibold ${
                             seleccionado ? "text-white/80" : agotado ? "text-red-400" : "text-[var(--mut)]"
                           }`}>
-                            {agotado ? "Agotado" : `Stock: ${stockT}`}
+                            {agotado ? "Agotado" : stockT === null ? "…" : `Stock: ${stockT}`}
                           </span>
                         </button>
                       );
@@ -255,34 +285,70 @@ export default function ProductModal({
                 </div>
               )}
 
-              {/* Selectores de opciones (Color / Modelo) — sin stock */}
-              {tieneOpciones && grupos.map((grupo) => (
-                <div key={grupo.label}>
-                  <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
-                    <Star className="h-4 w-4 text-[var(--blue-l)]" />
-                    {grupo.label}
-                    <span className="text-xs text-red-400">*</span>
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {grupo.values.map((v) => {
-                      const seleccionado = opciones[grupo.label] === v;
-                      return (
-                        <button
-                          key={v}
-                          onClick={() => setOpciones((prev) => ({ ...prev, [grupo.label]: v }))}
-                          className={`rounded-xl border-2 px-4 py-2.5 text-sm font-semibold transition-all ${
-                            seleccionado
-                              ? "scale-105 border-[var(--blue-l)] bg-[var(--blue)] text-white shadow-[0_8px_20px_rgba(11,62,204,0.4)]"
-                              : "cursor-pointer border-[var(--line)] text-[var(--ink)] hover:border-[var(--blue-l)] hover:bg-white/[0.04]"
-                          }`}
-                        >
-                          {v}
-                        </button>
-                      );
-                    })}
+              {/* Selectores de opciones (Color / Modelo).
+                  Solo los grupos que DEFINEN stock muestran disponibilidad:
+                  en las fundas 11-16 eso es "Modelo", no "Color". */}
+              {tieneOpciones && grupos.map((grupo) => {
+                const esStock = esGrupoDeStock(product!, grupo.label);
+                /* Para saber el stock de un valor candidato, los demás grupos
+                   que definen stock ya tienen que estar elegidos. */
+                const otrosListos = gruposDeStock(product!).every(
+                  (g) => g === grupo.label || !!opciones[g]
+                );
+                return (
+                  <div key={grupo.label}>
+                    <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
+                      <Star className="h-4 w-4 text-[var(--blue-l)]" />
+                      {grupo.label}
+                      <span className="text-xs text-red-400">*</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {grupo.values.map((v) => {
+                        const seleccionado = opciones[grupo.label] === v;
+                        const stockV =
+                          esStock && otrosListos
+                            ? stockDeOpciones(product!, { ...opciones, [grupo.label]: v })
+                            : null;
+                        const agotadoV = stockV === 0;
+                        return (
+                          <button
+                            key={v}
+                            onClick={() => {
+                              if (!agotadoV) setOpciones((prev) => ({ ...prev, [grupo.label]: v }));
+                            }}
+                            disabled={agotadoV}
+                            className={`relative flex flex-col items-center gap-0.5 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold transition-all ${
+                              agotadoV
+                                ? "cursor-not-allowed border-[var(--line)] bg-white/[0.03] opacity-50"
+                                : seleccionado
+                                ? "scale-105 border-[var(--blue-l)] bg-[var(--blue)] text-white shadow-[0_8px_20px_rgba(11,62,204,0.4)]"
+                                : "cursor-pointer border-[var(--line)] text-[var(--ink)] hover:border-[var(--blue-l)] hover:bg-white/[0.04]"
+                            }`}
+                          >
+                            {agotadoV && (
+                              <Ban className="absolute -right-1.5 -top-1.5 h-4 w-4 rounded-full bg-[var(--navy)] text-red-400" />
+                            )}
+                            <span className={agotadoV ? "text-[var(--mut)] line-through" : ""}>{v}</span>
+                            {esStock && (
+                              <span
+                                className={`text-[10px] font-semibold ${
+                                  seleccionado
+                                    ? "text-white/80"
+                                    : agotadoV
+                                    ? "text-red-400"
+                                    : "text-[var(--mut)]"
+                                }`}
+                              >
+                                {agotadoV ? "Agotado" : stockV === null ? "…" : `Stock: ${stockV}`}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {/* Selector de cantidad */}
               <div>
@@ -290,7 +356,7 @@ export default function ProductModal({
                   <Package className="h-4 w-4 text-[var(--blue-l)]" />
                   Cantidad de {tieneTalles || tieneOpciones ? "unidades" : "packs"}
                 </label>
-                <div className={`flex items-center gap-4${tieneTalles && (!talle || stockTalle === 0) ? " pointer-events-none opacity-40" : ""}`}>
+                <div className={`flex items-center gap-4${!puedeAgregar ? " pointer-events-none opacity-40" : ""}`}>
                   <div className="flex items-center">
                     <button
                       onClick={restar}

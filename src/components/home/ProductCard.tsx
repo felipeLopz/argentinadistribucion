@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ShoppingCart, Clock, MessageCircle, Star } from "lucide-react";
+import { ShoppingCart, Clock, MessageCircle, Star, Ban } from "lucide-react";
 import { contactConfig, IMG_PACKS, type Product } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
+import { useStock } from "@/lib/stock-context";
 
 /* Ancho fijo de tarjeta compartido por TODAS las cards (mockup: 262px) */
 const CARD_W = "w-[262px] shrink-0 max-sm:w-full max-sm:max-w-[360px]";
@@ -30,9 +31,15 @@ const PRICE_PILL =
    Toda la card es clickeable y abre el modal de vista rápida.
    ═══════════════════════════════════════════════ */
 export function ProductCard({ product, index, onOpen }: { product: Product; index: number; onOpen?: () => void }) {
+  const { stockTotal, estado } = useStock();
   const isProximamente = product.status === "proximamente";
   const hasPrice = product.price != null;
   const isClickable = hasPrice && !isProximamente;
+
+  /* Stock sumado de todas las variantes. null = todavía no se sabe.
+     La card muestra el total; el detalle por variante va en el modal. */
+  const total = hasPrice && !isProximamente ? stockTotal(product.id) : null;
+  const agotado = total === 0;
 
   const open = isClickable && onOpen ? onOpen : undefined;
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -64,7 +71,9 @@ export function ProductCard({ product, index, onOpen }: { product: Product; inde
         <img
           src={product.image}
           alt={product.name}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.08]"
+          className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.08] ${
+            agotado ? "opacity-40 grayscale" : ""
+          }`}
           loading="lazy"
         />
       </div>
@@ -82,9 +91,27 @@ export function ProductCard({ product, index, onOpen }: { product: Product; inde
             Próximamente
           </span>
         ) : hasPrice ? (
-          <span className={`mt-auto mx-auto ${PRICE_PILL}`}>
-            ${product.price!.toLocaleString("es-AR")}
-          </span>
+          <div className="mt-auto flex flex-col items-center gap-2">
+            <span className={`${PRICE_PILL}${agotado ? " opacity-50 line-through" : ""}`}>
+              ${product.price!.toLocaleString("es-AR")}
+            </span>
+            {/* Disponibilidad. Mientras carga no decimos "Agotado" (sería
+                falso): se avisa que se está consultando. */}
+            {estado === "cargando" ? (
+              <span className="animate-pulse text-[12px] font-semibold text-[var(--mut)]/70">
+                Verificando stock…
+              </span>
+            ) : agotado ? (
+              <span className="inline-flex items-center gap-1 text-[12px] font-bold text-red-400">
+                <Ban className="h-3.5 w-3.5" />
+                Agotado
+              </span>
+            ) : total !== null ? (
+              <span className="text-[12px] font-semibold text-[var(--mut)]">
+                Quedan {total}
+              </span>
+            ) : null}
+          </div>
         ) : (
           <button
             onClick={(e) => {

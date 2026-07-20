@@ -27,10 +27,19 @@ export const STOCK_GROUPS: Record<string, string[]> = {
  *  Se mantiene igual que en el carrito para que las claves coincidan. */
 const TALLE_PREFIJO = "Talle ";
 
+/** Stock indexado: { productId: { stockKey: cantidad } } */
+export type MapaDeStock = Record<string, Record<string, number>>;
+
 /** Grupos de opciones que definen el stock de un producto. */
-function gruposDeStock(product: Product): string[] {
+export function gruposDeStock(product: Product): string[] {
   if (STOCK_GROUPS[product.id]) return STOCK_GROUPS[product.id];
   return (product.options ?? []).map((g) => g.label);
+}
+
+/** true si el stock de este producto se distingue por ese grupo de opciones.
+ *  Ej: en las fundas 11-16 es true para "Modelo" y false para "Color". */
+export function esGrupoDeStock(product: Product, label: string): boolean {
+  return gruposDeStock(product).includes(label);
 }
 
 /**

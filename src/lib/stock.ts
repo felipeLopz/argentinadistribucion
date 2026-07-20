@@ -1,5 +1,5 @@
 import { getSql } from "./db";
-import { filasDeStockDelCatalogo } from "./stock-config";
+import { filasDeStockDelCatalogo, type MapaDeStock } from "./stock-config";
 
 /* ══════════════════════════════════════════════════════════════
    ACCESO AL STOCK — ⚠️ SOLO SERVIDOR (importa la conexión a la base)
@@ -11,8 +11,7 @@ import { filasDeStockDelCatalogo } from "./stock-config";
    los productos sin opciones.
    ══════════════════════════════════════════════════════════════ */
 
-/** Stock indexado: { productId: { stockKey: cantidad } } */
-export type MapaDeStock = Record<string, Record<string, number>>;
+export type { MapaDeStock };
 
 /** Cantidad por defecto para filas nuevas cuyo valor no conocemos. */
 const STOCK_INICIAL_POR_DEFECTO = 10;
