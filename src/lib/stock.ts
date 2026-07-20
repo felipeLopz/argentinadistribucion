@@ -61,6 +61,24 @@ export async function sincronizarConCatalogo(): Promise<{
   return { creadas, totalCatalogo: filas.length };
 }
 
+/** Fila de stock con sus metadatos de auditoría (para el panel). */
+export interface FilaStockDetallada {
+  product_id: string;
+  stock_key: string;
+  cantidad: number;
+  updated_at: string;
+  updated_by: string | null;
+}
+
+/** Lee el stock con metadatos. Solo lo usa el panel (requiere sesión). */
+export async function leerStockDetallado(): Promise<FilaStockDetallada[]> {
+  const sql = getSql();
+  return (await sql`
+    SELECT product_id, stock_key, cantidad, updated_at, updated_by
+      FROM stock
+  `) as FilaStockDetallada[];
+}
+
 /** Lee todo el stock. Lanza error si la base no responde (fallamos cerrado). */
 export async function leerStock(): Promise<MapaDeStock> {
   const sql = getSql();
