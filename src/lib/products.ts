@@ -125,6 +125,10 @@ export const products: Product[] = [
     description: "Camisetas oficiales de la Selección Argentina. Diversas tallas disponibles.",
     image: IMG_CAMISETA,
     price: 32400,
+    /* Las CLAVES definen qué talles se ofrecen (las lee el modal).
+       Los VALORES ya no son el stock en runtime (eso vive en la base) —
+       solo se usan como cantidad inicial la primera vez que /api/stock/seed
+       crea las filas en un entorno nuevo. No son dato muerto. */
     talleStock: { XS: 3, S: 8, M: 12, L: 10, XL: 5, XXL: 2 },
     category: "indumentaria",
   },
@@ -213,17 +217,6 @@ export const products: Product[] = [
 ];
 
 /* ──────────────────────────────────────────────
-   Categorías con sus datos de sección
-   ────────────────────────────────────────────── */
-export const categories = [
-  { id: "paquetes", label: "Paquetes de Figuritas", icon: "Package" },
-  { id: "albumes", label: "Álbumes", icon: "BookOpen" },
-  { id: "indumentaria", label: "Indumentaria", icon: "Shirt" },
-  { id: "accesorios", label: "Promos", icon: "Watch" },
-  { id: "accesorios-apple", label: "Accesorios Apple", icon: "Smartphone" },
-] as const;
-
-/* ──────────────────────────────────────────────
    Navegación por secciones de la tienda
    ────────────────────────────────────────────── */
 export const navSections = [
@@ -257,4 +250,3 @@ export const contactConfig = {
    Nombre de la tienda (centralizado)
    ────────────────────────────────────────────── */
 export const storeName = "Argentina Distributor";
-export const storeTagline = "Figuritas & Merchandising";
