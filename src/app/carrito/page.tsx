@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -232,7 +233,15 @@ export default function CarritoPage() {
                           className="flex gap-4 rounded-2xl border border-[var(--line)] bg-gradient-to-b from-[rgba(15,26,80,0.6)] to-[rgba(10,18,55,0.4)] p-4"
                         >
                           <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#12225f]">
-                            <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                            {/* Miniatura de tamaño fijo (96px), igual que en el panel del carrito */}
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              width={96}
+                              height={96}
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                            />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">

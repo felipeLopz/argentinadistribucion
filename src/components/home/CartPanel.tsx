@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, X } from "lucide-react";
@@ -78,7 +79,16 @@ export default function CartPanel({
                         exit={{ opacity: 0, x: -20, height: 0 }}
                         className="flex gap-3 rounded-xl border border-[var(--line)] bg-gradient-to-b from-[rgba(15,26,80,0.6)] to-[rgba(10,18,55,0.4)] p-3"
                       >
-                        <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg bg-[#12225f] object-cover" />
+                        {/* Miniatura de tamaño fijo (64px): width/height explícitos
+                            en vez de fill, así no necesita contenedor relative. */}
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          width={64}
+                          height={64}
+                          loading="lazy"
+                          className="h-16 w-16 rounded-lg bg-[#12225f] object-cover"
+                        />
                         <div className="flex-1 min-w-0">
                           <h4 className="truncate text-sm font-semibold text-white">{item.name}</h4>
                           {item.variante && (

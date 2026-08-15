@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { ShoppingCart, Clock, MessageCircle, Star, Ban } from "lucide-react";
 import { contactConfig, IMG_PACKS, type Product } from "@/lib/products";
@@ -9,6 +10,10 @@ import { useStock } from "@/lib/stock-context";
 
 /* Ancho fijo de tarjeta compartido por TODAS las cards (mockup: 262px) */
 const CARD_W = "w-[262px] shrink-0 max-sm:w-full max-sm:max-w-[360px]";
+
+/* Ancho real al que se muestra la imagen de la card, para que next/image
+   pida la variante justa (262px en desktop, hasta 360px en mobile). */
+const CARD_IMG_SIZES = "(max-width: 639px) 360px, 262px";
 
 /* Hover común a las cards (elevación + sombra). */
 const cardHover = {
@@ -68,10 +73,12 @@ export function ProductCard({ product, index, onOpen }: { product: Product; inde
     >
       {/* Imagen */}
       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#12225f] to-[#0a1550]">
-        <img
+        <Image
           src={product.image}
           alt={product.name}
-          className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.08] ${
+          fill
+          sizes={CARD_IMG_SIZES}
+          className={`object-cover transition-transform duration-500 group-hover:scale-[1.08] ${
             agotado ? "opacity-40 grayscale" : ""
           }`}
           loading="lazy"
@@ -169,10 +176,12 @@ export function FiguritasEleccionCard() {
     >
       {/* Imagen */}
       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#12225f] to-[#0a1550]">
-        <img
+        <Image
           src={IMG_PACKS}
           alt="Figuritas a Elección"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.08]"
+          fill
+          sizes={CARD_IMG_SIZES}
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.08]"
           loading="lazy"
         />
         <span className="pointer-events-none absolute left-3 top-3 inline-flex items-center gap-1 rounded-[7px] border border-[var(--line)] bg-[rgba(5,12,46,0.85)] px-2.5 py-[5px] text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--mut)] backdrop-blur-[6px]">

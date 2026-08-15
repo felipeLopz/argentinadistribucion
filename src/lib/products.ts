@@ -41,13 +41,13 @@ const MODELOS_IPHONE_11_16 = ["iPhone 11", "iPhone 12", "iPhone 13", "iPhone 14"
    ────────────────────────────────────────────── */
 
 /* Imagen real de los paquetes de figuritas (misma para todos los packs) */
-export const IMG_PACKS = "/images/figuritas-paquete.png";
-const IMG_ALBUM_BLANDA = "/images/tapa-blanca.png";
-const IMG_ALBUM_DURA = "/images/tapa-dura.png";
-const IMG_CAMISETA = "/images/camiseta.png";
-const IMG_CARGADOR = "/images/cargador.png";
-const IMG_FUNDA_IPHONE = "/images/funda-iphone.png";
-const IMG_AIRPODS = "/images/airpods.png";
+export const IMG_PACKS = "/images/figuritas-paquete.webp";
+const IMG_ALBUM_BLANDA = "/images/tapa-blanca.webp";
+const IMG_ALBUM_DURA = "/images/tapa-dura.webp";
+const IMG_CAMISETA = "/images/camiseta.webp";
+const IMG_CARGADOR = "/images/cargador.webp";
+const IMG_FUNDA_IPHONE = "/images/funda-iphone.webp";
+const IMG_AIRPODS = "/images/airpods.webp";
 
 export const products: Product[] = [
   // ═══ PAQUETES DE FIGURITAS ═══

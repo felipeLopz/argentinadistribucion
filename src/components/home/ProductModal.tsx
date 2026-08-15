@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MessageCircle, ShoppingCart, Check, Star, Truck, Ruler, Ban, Package } from "lucide-react";
 import { contactConfig, type Product } from "@/lib/products";
@@ -161,10 +162,18 @@ export default function ProductModal({
             <div className="flex-1 overflow-y-auto">
               {/* Header con imagen de fondo */}
               <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#12225f] to-[#0a1550] sm:h-72">
-                <img
+                <Image
                   src={product.image}
                   alt={product.name}
-                  className="h-full w-full object-cover"
+                  fill
+                  /* El panel mide max-w-lg (512px) y ocupa todo el ancho en mobile */
+                  sizes="(max-width: 512px) 100vw, 512px"
+                  className="object-cover"
+                  /* Eager a propósito: la imagen sólo se monta cuando el usuario
+                     abre el modal y es su contenido principal; con lazy podría
+                     aparecer con retraso durante la animación de entrada. */
+                  priority={false}
+                  loading="eager"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy)] via-[var(--navy)]/30 to-transparent" />
 
