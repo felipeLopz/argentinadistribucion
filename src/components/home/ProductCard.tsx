@@ -124,7 +124,7 @@ export function ProductCard({ product, index, onOpen }: { product: Product; inde
             onClick={(e) => {
               e.stopPropagation();
               const msg = encodeURIComponent(`Hola! Quiero consultar sobre: ${product.name}`);
-              window.open(`${contactConfig.whatsappLink}?text=${msg}`, "_blank");
+              window.open(`${contactConfig.whatsappLink}?text=${msg}`, "_blank", "noopener,noreferrer");
             }}
             className="mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#25a35a] text-[14px] font-bold text-white transition hover:-translate-y-px hover:brightness-110"
           >
@@ -151,7 +151,7 @@ export function FiguritasEleccionCard() {
 
   const consultarWhatsApp = () => {
     const msg = `Hola! Quiero consultar por ${cantidad} figurita${cantidad !== 1 ? "s" : ""} a elección.`;
-    window.open(`${contactConfig.whatsappLink}?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(`${contactConfig.whatsappLink}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
   };
 
   const agregarAlCarrito = () => {

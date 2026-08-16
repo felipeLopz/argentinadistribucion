@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from "@/lib/cart-context";
 import { StockProvider } from "@/lib/stock-context";
+import { SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,10 +22,35 @@ const archivo = Archivo({
   subsets: ["latin"],
 });
 
+/* Título y descripción centralizados: los comparten el <title>, la tarjeta
+   de Open Graph y la de Twitter, así no pueden quedar desalineados. */
+const SITE_NAME = "Argentina Distributor";
+const SITE_TITLE = "Argentina Distributor | Figuritas del Mundial & Merchandising";
+const SITE_DESCRIPTION =
+  "Tienda online de figuritas del Mundial y merchandising oficial de Argentina. Figuritas Panini, camisetas, accesorios y coleccionables. Envios a todo el pais.";
+
 export const metadata: Metadata = {
-  title: "Argentina Distributor | Figuritas del Mundial & Merchandising",
-  description:
-    "Tienda online de figuritas del Mundial y merchandising oficial de Argentina. Figuritas Panini, camisetas, accesorios y coleccionables. Envios a todo el pais.",
+  /* Necesaria para que las imágenes OG con rutas relativas
+     (las genera opengraph-image.tsx) resuelvan a URL absoluta. */
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  /* Tarjeta al compartir el link (WhatsApp, Instagram, Facebook…).
+     La imagen la inyecta Next automáticamente desde opengraph-image.tsx. */
+  openGraph: {
+    type: "website",
+    locale: "es_AR",
+    url: "/",
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  /* Twitter/X — la imagen viene de twitter-image.tsx */
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
   keywords: [
     "figuritas mundial",
     "argentina merchandising",

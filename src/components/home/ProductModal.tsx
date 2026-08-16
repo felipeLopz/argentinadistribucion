@@ -8,6 +8,7 @@ import { contactConfig, type Product } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { useStock } from "@/lib/stock-context";
 import { esGrupoDeStock, gruposDeStock } from "@/lib/stock-config";
+import { useDialogoAccesible } from "@/hooks/use-dialogo-accesible";
 
 /* ═══════════════════════════════════════════════
    PRODUCT MODAL — Panel deslizante con detalle del producto
@@ -112,7 +113,7 @@ export default function ProductModal({
 
   const consultarWhatsApp = () => {
     const msg = `Hola! Quiero consultar sobre: ${product!.name}${variante ? ` - ${variante}` : ""} — x${cantidad} — $${subtotal.toLocaleString("es-AR")}`;
-    window.open(`${contactConfig.whatsappLink}?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(`${contactConfig.whatsappLink}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
   };
 
   const categoriaLabels: Record<string, string> = {
@@ -122,6 +123,12 @@ export default function ProductModal({
     "accesorios-apple": "Accesorios Apple",
   };
   const categoriaLabel = product ? (categoriaLabels[product.category] || product.category) : "";
+
+  /* Accesibilidad del diálogo (foco, Escape, focus trap).
+     Va ANTES del return temprano para no alterar el orden de hooks.
+     Se pasa la misma condición con la que el diálogo realmente se
+     renderiza, así el foco entra recién cuando el panel existe. */
+  const dialogoRef = useDialogoAccesible<HTMLDivElement>(isOpen && !!product, onClose);
 
   if (!product || !isOpen) return null;
 
@@ -144,7 +151,12 @@ export default function ProductModal({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="font-archivo fixed right-0 top-0 z-50 flex h-full w-full max-w-lg flex-col overflow-hidden border-l border-[var(--line)] bg-[var(--navy)] shadow-2xl"
+            ref={dialogoRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-modal-producto"
+            tabIndex={-1}
+            className="font-archivo fixed right-0 top-0 z-50 flex h-full w-full max-w-lg flex-col overflow-hidden border-l border-[var(--line)] bg-[var(--navy)] shadow-2xl outline-none"
           >
             {/* Botón cerrar — overlay fijo, siempre accesible aunque el
                 contenido de abajo se scrollee (en mobile el panel cubre todo
@@ -187,7 +199,10 @@ export default function ProductModal({
 
                 {/* Nombre y precio sobre la imagen */}
                 <div className="absolute bottom-4 left-4 right-4">
-                  <h2 className="text-xl font-black leading-tight text-white drop-shadow-lg sm:text-2xl">
+                  <h2
+                    id="titulo-modal-producto"
+                    className="text-xl font-black leading-tight text-white drop-shadow-lg sm:text-2xl"
+                  >
                     {product.name}
                   </h2>
                   <p className="mt-1 line-clamp-2 text-sm text-white/75">{product.description}</p>
@@ -374,6 +389,7 @@ export default function ProductModal({
                     <div className="flex items-center">
                       <button
                         onClick={restar}
+                        aria-label="Restar"
                         className="flex h-11 w-11 cursor-pointer select-none items-center justify-center rounded-l-xl border border-[var(--line)] bg-white/[0.04] text-xl font-bold text-[var(--ink)] transition-colors hover:bg-white/10 active:scale-95"
                       >
                         −
@@ -383,6 +399,7 @@ export default function ProductModal({
                       </div>
                       <button
                         onClick={sumar}
+                        aria-label="Sumar"
                         className="flex h-11 w-11 cursor-pointer select-none items-center justify-center rounded-r-xl bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-xl font-bold text-white transition hover:brightness-110 active:scale-95"
                       >
                         +

@@ -6,6 +6,17 @@ import { products, contactConfig, type Product } from "@/lib/products";
 import { categoryIcons, categoryTitles } from "./categories";
 import { ProductCard, FiguritasEleccionCard } from "./ProductCard";
 
+/* Criterio de búsqueda de un producto (nombre o descripción).
+   Se exporta para que la home pueda saber si hay resultados en ALGUNA
+   categoría sin duplicar el criterio: una sola fuente de verdad. */
+export function coincideBusqueda(product: Product, query: string): boolean {
+  const q = query.toLowerCase();
+  return (
+    product.name.toLowerCase().includes(q) ||
+    product.description.toLowerCase().includes(q)
+  );
+}
+
 /* ═══════════════════════════════════════════════
    PRODUCT SECTION — Sección genérica de categoría
    (estilo "Estadio Nocturno": grilla flex centrada,
@@ -24,11 +35,7 @@ export default function ProductGrid({
 }) {
   const sectionProducts = products.filter((p) => p.category === category);
   const filtered = searchQuery
-    ? sectionProducts.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.description.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? sectionProducts.filter((p) => coincideBusqueda(p, searchQuery))
     : sectionProducts;
   const icon = categoryIcons[category];
   const title = categoryTitles[category];

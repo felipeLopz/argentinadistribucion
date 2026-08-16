@@ -95,7 +95,8 @@ export default function CarritoPage() {
 
     window.open(
       `${contactConfig.whatsappLink}?text=${encodeURIComponent(msg)}`,
-      "_blank"
+      "_blank",
+      "noopener,noreferrer"
     );
     clearCart();
     setEnviado(true);
@@ -338,11 +339,15 @@ export default function CarritoPage() {
                     <h2 className="mb-1 text-xl font-bold text-white">Datos de entrega</h2>
                     <p className="mb-6 text-sm text-[var(--mut)]">Completá tus datos para confirmar la compra.</p>
 
-                    <div className="mb-5">
-                      <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
+                    {/* fieldset/legend: agrupa los botones para el lector de
+                        pantalla. Se resetean los estilos por defecto del
+                        navegador (borde, padding, margen y el min-width
+                        automático) para que se vea igual que antes. */}
+                    <fieldset className="mb-5 m-0 min-w-0 border-0 p-0">
+                      <legend className="mb-3 flex items-center gap-2 p-0 text-sm font-semibold text-[var(--ink)]">
                         <Truck className="h-4 w-4 text-[var(--blue-l)]" />
                         Método de entrega
-                      </label>
+                      </legend>
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           onClick={() => setMetodoEntrega("envio")}
@@ -367,7 +372,7 @@ export default function CarritoPage() {
                           Retiro
                         </button>
                       </div>
-                    </div>
+                    </fieldset>
 
                     <div className="space-y-4">
                       {campo("Nombre y apellido", "nombre", nombre, setNombre, <User className="h-4 w-4 text-[var(--mut)]" />, "text", "Ej: Juan Pérez")}
@@ -379,12 +384,14 @@ export default function CarritoPage() {
                       {campo("Número de teléfono", "telefono", telefono, setTelefono, <Phone className="h-4 w-4 text-[var(--mut)]" />, "tel", "Ej: 2615551234")}
                       {campo("Correo electrónico", "email", email, setEmail, <Mail className="h-4 w-4 text-[var(--mut)]" />, "email", "Ej: tu@email.com", false, true)}
 
-                      <div>
-                        <label className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
+                      {/* Mismo criterio que "Método de entrega": fieldset/legend
+                          con los estilos por defecto reseteados. */}
+                      <fieldset className="m-0 min-w-0 border-0 p-0">
+                        <legend className="mb-1.5 flex items-center gap-2 p-0 text-sm font-semibold text-[var(--ink)]">
                           <Clock className="h-4 w-4 text-[var(--mut)]" />
                           Horario de {metodoEntrega === "envio" ? "entrega" : "retiro"}
                           <span className="text-red-400 text-xs">*</span>
-                        </label>
+                        </legend>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {HORARIOS.map((h) => (
                             <button
@@ -409,7 +416,7 @@ export default function CarritoPage() {
                             {errores.horario}
                           </p>
                         )}
-                      </div>
+                      </fieldset>
                     </div>
 
                     <button

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, X } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { useDialogoAccesible } from "@/hooks/use-dialogo-accesible";
 
 /* ═══════════════════════════════════════════════
    CART PANEL — Preview lateral (theme "Estadio Nocturno")
@@ -18,6 +19,10 @@ export default function CartPanel({
 }) {
   const { items, totalItems, totalPrice, removeItem } = useCart();
   const router = useRouter();
+
+  /* Accesibilidad del diálogo: foco al abrir, Escape para cerrar,
+     Tab atrapado adentro y foco devuelto al cerrar. */
+  const dialogoRef = useDialogoAccesible<HTMLDivElement>(isOpen, onClose);
 
   return (
     <AnimatePresence>
@@ -38,11 +43,19 @@ export default function CartPanel({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="font-archivo fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-[var(--line)] bg-[var(--navy)] text-[var(--ink)] shadow-2xl"
+            ref={dialogoRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-panel-carrito"
+            tabIndex={-1}
+            className="font-archivo fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-[var(--line)] bg-[var(--navy)] text-[var(--ink)] shadow-2xl outline-none"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[var(--line)] px-6 py-4">
-              <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+              <h2
+                id="titulo-panel-carrito"
+                className="flex items-center gap-2 text-lg font-bold text-white"
+              >
                 <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)]">
                   <ShoppingCart className="h-4 w-4 text-white" />
                 </div>

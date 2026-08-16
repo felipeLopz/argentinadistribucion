@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { type Product } from "@/lib/products";
+import { products, type Product } from "@/lib/products";
 import Navbar from "@/components/home/Navbar";
 import Hero from "@/components/home/Hero";
-import ProductGrid from "@/components/home/ProductGrid";
+import ProductGrid, { coincideBusqueda } from "@/components/home/ProductGrid";
+import SearchEmptyState from "@/components/home/SearchEmptyState";
 import ContactSection from "@/components/home/ContactSection";
 import Footer from "@/components/home/Footer";
 import CartPanel from "@/components/home/CartPanel";
@@ -19,6 +20,12 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  /* Cada sección se oculta sola cuando no tiene coincidencias, así que si
+     NINGUNA categoría matchea la página quedaría vacía entre el Hero y
+     Contacto. En ese caso mostramos un estado vacío explícito. */
+  const sinResultados =
+    !!searchQuery && !products.some((p) => coincideBusqueda(p, searchQuery));
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--navy)]">
@@ -36,6 +43,10 @@ export default function Home() {
         <ProductGrid sectionId="indumentaria" category="indumentaria" searchQuery={searchQuery} onProductClick={setSelectedProduct} />
         <ProductGrid sectionId="accesorios" category="accesorios" searchQuery={searchQuery} onProductClick={setSelectedProduct} />
         <ProductGrid sectionId="accesorios-apple" category="accesorios-apple" searchQuery={searchQuery} onProductClick={setSelectedProduct} />
+
+        {sinResultados && (
+          <SearchEmptyState query={searchQuery} onClear={() => setSearchQuery("")} />
+        )}
 
         <ContactSection />
       </main>
