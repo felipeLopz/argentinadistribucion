@@ -201,6 +201,34 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
 - [ ] **Ajustar las cantidades de stock reales desde el panel**: la carga inicial dejó
   la camiseta con sus números del catálogo (3/8/12/10/5/2) pero **todo lo demás en 10
   de relleno** (`STOCK_INICIAL_POR_DEFECTO` en `stock.ts`).
+- [ ] **Actualizar promos** (plan ya aprobado, falta aplicar):
+  - **Eliminar las 2 fundas de silicona viejas** (`apl-1` "Fundas 11 al 16 de silicona"
+    y `apl-4` "Funda 17 silicona") y sus filas de stock.
+    ⚠️ **NO tocar los protectores `apl-5` / `apl-6`.**
+  - **Eliminar las 3 promos viejas**: `promo-1` (Cargador + Cabezal), `promo-2`
+    (Funda + Protector), `promo-3` (Funda + AirPods).
+  - **Agregar 3 promos nuevas.** Las fotos **ya están procesadas** a WebP 800px en
+    `public/images/` (ver tabla abajo):
+    1. **Silicone Case iPhone 11-17** — precio **escalonado por cantidad**
+       (1=$5000, 2=$8500, 3=$12500, 4=$16500), **tope en 4**; con 5+ mostrar aviso
+       "consultá por WhatsApp". **Tabla de precios visible en el modal.**
+       Patrón tipo **"Figuritas a Elección"**: el precio se pre-calcula y se manda ya
+       resuelto al carrito, **sin tocar la lógica del carrito**. **SIN control de stock.**
+    2. **AirPods Pro 2** — $25000, precio simple, **CON stock**.
+    3. **Cable y cabezal iPhone USB-C** — $20000, precio simple, **CON stock**.
+  - **Aplicar con ultracode (Opus 4.8 xhigh)** porque la silicone case toca el carrito.
+    Verificar bien: **carrito**, **mensaje de WhatsApp**, y que el **aviso de 5+** funcione.
+  - **Fotos ya procesadas** (origen: `C:\Users\Pc\OneDrive\Escritorio\Fotos luchi para web\`):
+
+    | Original | En `public/images/` | Medidas | Peso |
+    |---|---|---|---|
+    | `fundas 11 17.jpeg` | `silicone-case.webp` | 600x800 | 52.6 KB |
+    | `promo auriculares.jpeg` | `airpods-pro-2.webp` | 662x800 | 145.7 KB |
+    | `promo cable y cabezal.jpeg` | `cable-cabezal-usbc.webp` | 600x800 | 15.5 KB |
+
+    ⚠️ Son **verticales**, mientras que las 7 del catálogo son **cuadradas (800x800)**.
+    Las cards usan `aspect-square` + `object-cover`, así que se **recortan arriba y
+    abajo**. Revisar el encuadre al aplicarlas; si queda mal, recortarlas a cuadrado.
 
 ## 6. Notas / cómo operar el stock
 
