@@ -17,22 +17,29 @@ export interface Product {
   options?: ProductOption[];
   category: "paquetes" | "albumes" | "indumentaria" | "accesorios" | "accesorios-apple";
   status?: "consultar" | "proximamente";
+
+  /* ─── Promo por cantidad (pack) ───
+     Precio TOTAL del pack según cuántas unidades lleva:
+     packPrecios[0] = 1 unidad … packPrecios[n-1] = n unidades.
+     El tope del pack es packPrecios.length; pasado ese tope se deriva la
+     consulta a WhatsApp.
+
+     El carrito NO entiende de promos: el modal resuelve el precio y manda
+     el pack ya armado como un ítem de cantidad 1 (mismo criterio que
+     "Figuritas a Elección"). */
+  packPrecios?: number[];
+
+  /** Nombre corto con el que el ítem entra al carrito y al mensaje de
+   *  WhatsApp, cuando el del catálogo es demasiado largo para esa línea.
+   *  Si no está, se usa `name`. */
+  cartName?: string;
+
+  /** true = siempre disponible: no lleva stock en la base. Ni la web lo
+   *  consulta, ni el seed le crea filas, ni el panel lo lista. */
+  sinStock?: boolean;
 }
 
-/* Opciones reutilizables para las fundas/protectores de iPhone */
-const COLORES_FUNDA = [
-  "Negro Mate",
-  "Blanco Translúcido / Transparente",
-  "Gris Espacial / Grafito",
-  "Azul Marino / Azul Medianoche",
-  "Verde Pino / Verde Militar",
-  "Gris Lavanda",
-  "Rosa Arena / Rosa Pastel",
-  "Azul Cielo / Azul Sierra",
-  "Verde Menta / Matcha",
-  "Rojo Coral",
-  "Amarillo Canario",
-];
+/* Opciones reutilizables para los protectores de iPhone */
 const MODELOS_IPHONE_11_16 = ["iPhone 11", "iPhone 12", "iPhone 13", "iPhone 14", "iPhone 15", "iPhone 16"];
 
 /* ──────────────────────────────────────────────
@@ -48,6 +55,10 @@ const IMG_CAMISETA = "/images/camiseta.webp";
 const IMG_CARGADOR = "/images/cargador.webp";
 const IMG_FUNDA_IPHONE = "/images/funda-iphone.webp";
 const IMG_AIRPODS = "/images/airpods.webp";
+/* Promos nuevas */
+const IMG_SILICONE_CASE = "/images/silicone-case.webp";
+const IMG_AIRPODS_PRO_2 = "/images/airpods-pro-2.webp";
+const IMG_CABLE_CABEZAL = "/images/cable-cabezal-usbc.webp";
 
 export const products: Product[] = [
   // ═══ PAQUETES DE FIGURITAS ═══
@@ -135,52 +146,41 @@ export const products: Product[] = [
 
   // ═══ PROMOS ═══
   {
-    id: "promo-1",
-    name: "Promo Cargador + Cabezal",
-    description: "Cargador de alta calidad con cabezal magnético incluido. Diseño oficial de la Selección Argentina. Cargá tu celu y usá el GPS al mismo tiempo.",
-    image: IMG_CARGADOR,
-    price: 18500,
+    id: "promo-silicone",
+    name: "Silicone Case (iPhone 11 al 17)",
+    /* Entra al carrito como "Silicone Case" a secas: la línea del pedido
+       ya lleva la cantidad y el precio del pack al lado. */
+    cartName: "Silicone Case",
+    description:
+      "Fundas de silicona para iPhone 11 al 17, en todos los colores. Promo por cantidad: cuantas más llevás, mejor el precio.",
+    image: IMG_SILICONE_CASE,
+    /* Precio de UNA unidad: es el que muestra la card. El precio real del
+       pack sale de packPrecios y lo resuelve el modal. */
+    price: 5000,
+    packPrecios: [5000, 8500, 12500, 16500],
+    sinStock: true,
     category: "accesorios",
   },
   {
-    id: "promo-2",
-    name: "Promo Funda + Protector",
-    description: "Funda protectora para iPhone con diseño de la Selección Argentina más protector de pantalla templado incluido. Protección completa.",
-    image: IMG_FUNDA_IPHONE,
-    price: 10500,
+    id: "promo-airpods-pro-2",
+    name: "AirPods Pro 2",
+    description:
+      "AirPods Pro 2 con estuche de carga, cable USB-C y almohadillas de repuesto en todos los talles.",
+    image: IMG_AIRPODS_PRO_2,
+    price: 25000,
     category: "accesorios",
   },
   {
-    id: "promo-3",
-    name: "Promo Funda + AirPods",
-    description: "Funda para iPhone más AirPods personalizados con colores de la Selección Argentina. El combo ideal para fans de Argentina.",
-    image: IMG_AIRPODS,
-    price: 56000,
+    id: "promo-cable-cabezal",
+    name: "Cable y cabezal iPhone USB-C",
+    description:
+      "Cable USB-C de 1 metro más cabezal de 20W para carga rápida. Los dos en su caja original.",
+    image: IMG_CABLE_CABEZAL,
+    price: 20000,
     category: "accesorios",
   },
 
   // ═══ ACCESORIOS APPLE ═══
-  {
-    id: "apl-1",
-    name: "Fundas de iPhone 11 al 16 de silicona",
-    description: "Fundas de silicona para iPhone 11 al 16. Elegí color y modelo.",
-    image: IMG_FUNDA_IPHONE,
-    price: 7900,
-    options: [
-      { label: "Color", values: COLORES_FUNDA },
-      { label: "Modelo", values: MODELOS_IPHONE_11_16 },
-    ],
-    category: "accesorios-apple",
-  },
-  {
-    id: "apl-4",
-    name: "Funda de iPhone 17 silicona",
-    description: "Funda de silicona para iPhone 17. Elegí el color.",
-    image: IMG_FUNDA_IPHONE,
-    price: 7900,
-    options: [{ label: "Color", values: COLORES_FUNDA }],
-    category: "accesorios-apple",
-  },
   {
     id: "apl-5",
     name: "Protectores de iPhone del 11 al 16",

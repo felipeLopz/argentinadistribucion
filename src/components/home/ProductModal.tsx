@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MessageCircle, ShoppingCart, Check, Star, Truck, Ruler, Ban, Package } from "lucide-react";
+import { X, MessageCircle, ShoppingCart, Check, Star, Truck, Ruler, Ban, Package, AlertTriangle, Tag } from "lucide-react";
 import { contactConfig, type Product } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { useStock } from "@/lib/stock-context";
-import { esGrupoDeStock, gruposDeStock } from "@/lib/stock-config";
+import { esGrupoDeStock, gruposDeStock, llevaStock } from "@/lib/stock-config";
 import { useDialogoAccesible } from "@/hooks/use-dialogo-accesible";
+import { categoryTitles } from "./categories";
 
 /* ═══════════════════════════════════════════════
    PRODUCT MODAL — Panel deslizante con detalle del producto
@@ -29,13 +30,24 @@ export default function ProductModal({
   const [opciones, setOpciones] = useState<Record<string, string>>({});
   const [cantidad, setCantidad] = useState(1);
   const [agregado, setAgregado] = useState(false);
+  const [avisoTope, setAvisoTope] = useState(false);
 
   /* talleStock define QUÉ talles se ofrecen; las cantidades ya no salen de
      ahí sino de la base (ver stock-context). */
   const tieneTalles = !!product?.talleStock;
   const talles = tieneTalles ? Object.keys(product!.talleStock!) : [];
   const precioUnitario = product?.price ?? 0;
-  const subtotal = precioUnitario * cantidad;
+
+  /* ─── Promo por cantidad (pack) ───
+     El precio NO es unitario: sale de la tabla packPrecios según cuántas
+     unidades entran al pack. Pasado el tope se deriva a WhatsApp. */
+  const packPrecios = product?.packPrecios;
+  const esPromoPack = !!packPrecios && packPrecios.length > 0;
+  const topePack = packPrecios?.length ?? 0;
+
+  const subtotal = esPromoPack
+    ? packPrecios![Math.min(Math.max(cantidad, 1), topePack) - 1]
+    : precioUnitario * cantidad;
 
   /* Opciones genéricas (Color/Modelo) */
   const grupos = product?.options ?? [];
@@ -47,7 +59,10 @@ export default function ProductModal({
      0 = agotado. Ojo con la granularidad mixta: en las fundas 11-16 el
      stock se resuelve por MODELO, no por color (lo maneja stock-config). */
   const seleccionCompleta = tieneTalles ? !!talle : tieneOpciones ? opcionesCompletas : true;
-  const stockActual: number | null = !product
+
+  /* Productos siempre disponibles: no se consulta la base (no tienen fila) */
+  const conStock = product ? llevaStock(product) : true;
+  const stockActual: number | null = !product || !conStock
     ? null
     : tieneTalles
     ? talle
@@ -59,12 +74,19 @@ export default function ProductModal({
       : null
     : stockDeClave(product.id, "");
 
-  const agotado = stockActual === 0;
-  const stock = stockActual ?? 1;
+  const agotado = conStock && stockActual === 0;
+  /* Tope del selector: el stock disponible, o el tope del pack en las
+     promos por cantidad. Sin control de stock, no hay techo. */
+  const stock = !conStock ? Number.MAX_SAFE_INTEGER : stockActual ?? 1;
 
   /* Variante auto-descriptiva que se guarda en el carrito y va al WhatsApp:
-     "Talle L" (camiseta) · "Negro Mate - iPhone 13" (opciones) · "" (sin nada) */
-  const variante = tieneTalles
+     "Talle L" (camiseta) · "Negro Mate - iPhone 13" (opciones) ·
+     "3 fundas" (promo por cantidad) · "" (sin nada).
+     En la promo es lo que le da identidad propia a cada pack: dos packs de
+     distinto tamaño son dos ítems separados en el carrito. */
+  const variante = esPromoPack
+    ? `${cantidad} funda${cantidad !== 1 ? "s" : ""}`
+    : tieneTalles
     ? talle
       ? `Talle ${talle}`
       : ""
@@ -73,8 +95,10 @@ export default function ProductModal({
     : "";
 
   /* Se puede agregar si están completas las selecciones obligatorias Y hay
-     stock confirmado. Sin dato de stock NO se habilita (fallamos cerrado). */
-  const puedeAgregar = seleccionCompleta && stockActual !== null && stockActual > 0;
+     stock confirmado. Sin dato de stock NO se habilita (fallamos cerrado),
+     salvo que el producto directamente no lleve stock. */
+  const puedeAgregar =
+    seleccionCompleta && (!conStock || (stockActual !== null && stockActual > 0));
 
   const showFeedback = agregado || justAdded === product?.name;
 
@@ -84,45 +108,79 @@ export default function ProductModal({
     setOpciones({});
     setCantidad(1);
     setAgregado(false);
+    setAvisoTope(false);
   }, [product?.id]);
 
-  /* La cantidad nunca puede superar el stock disponible */
+  /* La cantidad nunca puede superar el stock disponible.
+     Los productos sin stock quedan afuera: su cantidad la manda el usuario
+     (y en las promos, el tope del pack). */
   useEffect(() => {
+    if (!conStock) return;
     if (stockActual !== null && stockActual > 0) {
       setCantidad((c) => Math.min(c, stockActual));
     } else {
       setCantidad(1);
     }
-  }, [stockActual]);
+  }, [stockActual, conStock]);
 
-  const restar = () => setCantidad((c) => Math.max(1, c - 1));
-  const sumar = () => setCantidad((c) => Math.min(stock, c + 1));
+  const restar = () => {
+    setAvisoTope(false);
+    setCantidad((c) => Math.max(1, c - 1));
+  };
+
+  const sumar = () => {
+    /* Promo: el pack no pasa de su tope. Al intentarlo, se avisa y se
+       ofrece WhatsApp en vez de dejar armar un pack sin precio. */
+    if (esPromoPack && cantidad >= topePack) {
+      setAvisoTope(true);
+      return;
+    }
+    setCantidad((c) => Math.min(stock, c + 1));
+  };
 
   const agregarAlCarrito = () => {
-    addItem({
-      productId: product!.id,
-      name: product!.name,
-      image: product!.image,
-      price: product!.price!,
-      variante,
-      cantidad,
-    });
+    /* La promo entra como UN ítem con el precio del pack ya resuelto —
+       mismo criterio que "Figuritas a Elección". El carrito solo hace
+       precio × cantidad, y acá la cantidad es 1 pack. */
+    addItem(
+      esPromoPack
+        ? {
+            productId: product!.id,
+            name: product!.cartName ?? product!.name,
+            image: product!.image,
+            price: subtotal,
+            variante,
+            cantidad: 1,
+          }
+        : {
+            productId: product!.id,
+            name: product!.cartName ?? product!.name,
+            image: product!.image,
+            price: product!.price!,
+            variante,
+            cantidad,
+          }
+    );
     setAgregado(true);
     setTimeout(() => setAgregado(false), 2000);
   };
 
   const consultarWhatsApp = () => {
-    const msg = `Hola! Quiero consultar sobre: ${product!.name}${variante ? ` - ${variante}` : ""} — x${cantidad} — $${subtotal.toLocaleString("es-AR")}`;
+    /* En la promo la variante ya dice cuántas unidades son ("3 fundas"),
+       así que no se repite el "x3". */
+    const msg = esPromoPack
+      ? `Hola! Quiero consultar sobre: ${product!.name} — ${variante} — $${subtotal.toLocaleString("es-AR")}`
+      : `Hola! Quiero consultar sobre: ${product!.name}${variante ? ` - ${variante}` : ""} — x${cantidad} — $${subtotal.toLocaleString("es-AR")}`;
     window.open(`${contactConfig.whatsappLink}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
   };
 
-  const categoriaLabels: Record<string, string> = {
-    paquetes: "Paquetes de Figuritas",
-    albumes: "Álbumes",
-    indumentaria: "Indumentaria",
-    "accesorios-apple": "Accesorios Apple",
+  /* Aviso de tope: se pasa de la promo, se cierra por WhatsApp */
+  const consultarPorMas = () => {
+    const msg = `Hola! Quiero hacer precio por más de ${topePack} silicone case.`;
+    window.open(`${contactConfig.whatsappLink}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
   };
-  const categoriaLabel = product ? (categoriaLabels[product.category] || product.category) : "";
+
+  const categoriaLabel = product ? categoryTitles[product.category] ?? product.category : "";
 
   /* Accesibilidad del diálogo (foco, Escape, focus trap).
      Va ANTES del return temprano para no alterar el orden de hooks.
@@ -237,7 +295,7 @@ export default function ProductModal({
                     <><ShoppingCart className="h-4 w-4" /> Agregar al carrito</>
                   )}
                 </button>
-                {estadoStock === "cargando" ? (
+                {conStock && estadoStock === "cargando" ? (
                   <p className="animate-pulse text-center text-[10px] font-semibold text-[var(--mut)]">
                     Verificando stock…
                   </p>
@@ -254,15 +312,53 @@ export default function ProductModal({
 
               {/* Resto del detalle */}
               <div className="space-y-5 px-5 py-4">
-                {/* Precio grande */}
-                <div className="flex items-end gap-3">
-                  <span className="text-3xl font-black text-white">
-                    ${precioUnitario.toLocaleString("es-AR")}
-                  </span>
-                  <span className="mb-0.5 text-sm text-[var(--mut)]">
-                    {tieneTalles || tieneOpciones ? "por unidad" : "por pack"}
-                  </span>
-                </div>
+                {/* Precio. En la promo por cantidad no hay un precio único:
+                    va la TABLA completa, con la fila elegida resaltada. */}
+                {esPromoPack ? (
+                  <div className="rounded-2xl border border-[var(--line)] bg-white/[0.03] p-4">
+                    <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-white">
+                      <Tag className="h-4 w-4 text-[var(--gold)]" />
+                      Precio por cantidad
+                    </h3>
+                    <ul className="space-y-1.5">
+                      {packPrecios!.map((precio, i) => {
+                        const n = i + 1;
+                        const elegida = n === cantidad;
+                        return (
+                          <li
+                            key={n}
+                            aria-current={elegida ? "true" : undefined}
+                            className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition-colors ${
+                              elegida
+                                ? "border-[var(--blue-l)] bg-[rgba(139,92,246,0.15)] text-white"
+                                : "border-transparent text-[var(--mut)]"
+                            }`}
+                          >
+                            <span className="font-semibold">
+                              {n} {n === 1 ? "funda" : "fundas"}
+                            </span>
+                            <span className={`font-extrabold tabular-nums ${elegida ? "text-white" : "text-[var(--ink)]"}`}>
+                              ${precio.toLocaleString("es-AR")}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <p className="mt-3 text-[11px] leading-relaxed text-[var(--mut)]">
+                      El precio es por el pack completo. ¿Querés más de {topePack}?
+                      Podés sumar otro pack, o consultarnos para hacer precio.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-end gap-3">
+                    <span className="text-3xl font-black text-white">
+                      ${precioUnitario.toLocaleString("es-AR")}
+                    </span>
+                    <span className="mb-0.5 text-sm text-[var(--mut)]">
+                      {tieneTalles || tieneOpciones ? "por unidad" : "por pack"}
+                    </span>
+                  </div>
+                )}
 
                 {/* Info de envío */}
                 <div className="flex items-center gap-2 text-sm text-[var(--mut)]">
@@ -383,7 +479,9 @@ export default function ProductModal({
                 <div>
                   <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
                     <Package className="h-4 w-4 text-[var(--blue-l)]" />
-                    Cantidad de {tieneTalles || tieneOpciones ? "unidades" : "packs"}
+                    {esPromoPack
+                      ? "Cantidad de fundas"
+                      : `Cantidad de ${tieneTalles || tieneOpciones ? "unidades" : "packs"}`}
                   </label>
                   <div className={`flex items-center gap-4${!puedeAgregar ? " pointer-events-none opacity-40" : ""}`}>
                     <div className="flex items-center">
@@ -406,10 +504,38 @@ export default function ProductModal({
                       </button>
                     </div>
                     <div className="flex-1 text-right">
-                      <p className="text-xs text-[var(--mut)]">Subtotal</p>
+                      <p className="text-xs text-[var(--mut)]">
+                        {esPromoPack ? "Precio del pack" : "Subtotal"}
+                      </p>
                       <p className="text-2xl font-black text-white">${subtotal.toLocaleString("es-AR")}</p>
                     </div>
                   </div>
+
+                  {/* Tope de la promo: no se arma un pack más grande, se
+                      deriva a WhatsApp para arreglar precio. */}
+                  {avisoTope && (
+                    <div
+                      role="alert"
+                      className="mt-3 rounded-2xl border border-[var(--gold)]/50 bg-[rgba(167,139,250,0.12)] p-4"
+                    >
+                      <p className="flex items-start gap-2 text-sm font-bold text-[var(--gold-l)]">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                        Sobrepasaste la promo
+                      </p>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--mut)]">
+                        La promo llega hasta {topePack} fundas por pack. Si querés hacer
+                        precio con más, consultanos por WhatsApp. También podés agregar
+                        este pack y armar otro.
+                      </p>
+                      <button
+                        onClick={consultarPorMas}
+                        className="mt-3 flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] bg-[#25a35a] text-sm font-bold text-white transition hover:-translate-y-px hover:brightness-110"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Consultar por más de {topePack}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Descripción completa */}

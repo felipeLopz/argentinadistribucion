@@ -18,9 +18,7 @@ import { products, type Product } from "./products";
  *  Si un producto con opciones no figura acá, se lleva stock por todas
  *  sus opciones. Si no tiene opciones, lleva una sola fila (clave ""). */
 export const STOCK_GROUPS: Record<string, string[]> = {
-  "apl-1": ["Modelo"], // fundas 11-16: por modelo, NO por color
-  "apl-4": ["Color"],  // funda 17: solo color
-  "apl-5": ["Modelo"], // protectores 11-16: solo modelo
+  "apl-5": ["Modelo"], // protectores 11-16: solo modelo, NO por color
 };
 
 /** Prefijo con el que la camiseta arma su variante ("Talle L").
@@ -29,6 +27,18 @@ const TALLE_PREFIJO = "Talle ";
 
 /** Stock indexado: { productId: { stockKey: cantidad } } */
 export type MapaDeStock = Record<string, Record<string, number>>;
+
+/**
+ * ¿Este producto lleva stock?
+ *
+ * Los marcados con `sinStock` (hoy, la promo de silicone case) están
+ * siempre disponibles: no tienen fila en la base, el seed no se las crea
+ * y el panel no los lista. Es la ÚNICA excepción al "fallar cerrado":
+ * acá no hay número que consultar, así que no hay nada que fallar.
+ */
+export function llevaStock(product: Product): boolean {
+  return product.sinStock !== true;
+}
 
 /** Grupos de opciones que definen el stock de un producto. */
 export function gruposDeStock(product: Product): string[] {
@@ -73,6 +83,9 @@ export function stockKeyDeTalle(talle: string): string {
  * Se usa para la carga inicial de la tabla.
  */
 export function clavesDeStock(product: Product): { key: string; inicial: number | null }[] {
+  /* Producto siempre disponible: ninguna fila (ni en el seed ni en el panel) */
+  if (!llevaStock(product)) return [];
+
   /* Camiseta: usa los talles y sus cantidades ya conocidas */
   if (product.talleStock) {
     return Object.entries(product.talleStock).map(([talle, cant]) => ({

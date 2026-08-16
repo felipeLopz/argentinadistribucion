@@ -24,12 +24,16 @@ const SIN_SESION = NextResponse.json({ ok: false, error: "No autorizado" }, { st
  *  Sirve para armar el listado y para validar las escrituras: solo se puede
  *  escribir sobre pares (producto, variante) que existen en el catálogo. */
 function catalogoDeStock() {
-  return products.map((p) => ({
-    id: p.id,
-    nombre: p.name,
-    categoria: p.category,
-    claves: clavesDeStock(p).map((c) => c.key),
-  }));
+  return products
+    .map((p) => ({
+      id: p.id,
+      nombre: p.name,
+      categoria: p.category,
+      claves: clavesDeStock(p).map((c) => c.key),
+    }))
+    /* Los productos sin stock (siempre disponibles) no tienen casilleros:
+       se dejan afuera del panel y, de paso, del validador de escrituras. */
+    .filter((p) => p.claves.length > 0);
 }
 
 /**

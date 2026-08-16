@@ -7,6 +7,7 @@ import { ShoppingCart, Clock, MessageCircle, Star, Ban } from "lucide-react";
 import { contactConfig, IMG_PACKS, type Product } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { useStock } from "@/lib/stock-context";
+import { llevaStock } from "@/lib/stock-config";
 
 /* Ancho fijo de tarjeta compartido por TODAS las cards (mockup: 262px) */
 const CARD_W = "w-[262px] shrink-0 max-sm:w-full max-sm:max-w-[360px]";
@@ -42,8 +43,11 @@ export function ProductCard({ product, index, onOpen }: { product: Product; inde
   const isClickable = hasPrice && !isProximamente;
 
   /* Stock sumado de todas las variantes. null = todavía no se sabe.
-     La card muestra el total; el detalle por variante va en el modal. */
-  const total = hasPrice && !isProximamente ? stockTotal(product.id) : null;
+     La card muestra el total; el detalle por variante va en el modal.
+     Los productos sin stock (promo siempre disponible) no lo consultan:
+     si lo hicieran, la respuesta sería 0 y saldrían como agotados. */
+  const conStock = llevaStock(product);
+  const total = hasPrice && !isProximamente && conStock ? stockTotal(product.id) : null;
   const agotado = total === 0;
 
   const open = isClickable && onOpen ? onOpen : undefined;
@@ -103,8 +107,15 @@ export function ProductCard({ product, index, onOpen }: { product: Product; inde
               ${product.price!.toLocaleString("es-AR")}
             </span>
             {/* Disponibilidad. Mientras carga no decimos "Agotado" (sería
-                falso): se avisa que se está consultando. */}
-            {estado === "cargando" ? (
+                falso): se avisa que se está consultando. Los productos sin
+                stock muestran, en su lugar, de qué va la promo. */}
+            {!conStock ? (
+              product.packPrecios ? (
+                <span className="text-[12px] font-semibold text-[var(--gold)]">
+                  Promo por cantidad · hasta {product.packPrecios.length}
+                </span>
+              ) : null
+            ) : estado === "cargando" ? (
               <span className="animate-pulse text-[12px] font-semibold text-[var(--mut)]/70">
                 Verificando stock…
               </span>
