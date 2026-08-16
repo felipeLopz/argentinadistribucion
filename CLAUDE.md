@@ -34,7 +34,7 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 
 | Ruta | Para qué sirve |
 |---|---|
-| `src/lib/products.ts` | **Catálogo** (array `products` + interface `Product`), `categories`, `navSections`, `contactConfig` (WhatsApp/email/redes), `storeName`. **Se edita a mano** para catálogo, precios y contacto. |
+| `src/lib/products.ts` | **Catálogo** (array `products` + interface `Product`), `categories`, `navSections`, `contactConfig` (WhatsApp/email/redes), `storeName`. **Se edita a mano** para catálogo, precios y contacto. Campos opcionales del producto: `packPrecios` (promo por cantidad), `cartName` (nombre corto para el carrito) y `sinStock` (siempre disponible). |
 | `src/lib/cart-context.tsx` | Lógica del **carrito**: React Context + localStorage (clave `argentina-distributor-cart`). `addItem/removeItem/updateQuantity/clearCart` + totales. |
 | `src/lib/utils.ts` | Helper `cn()` (clases). |
 | `src/app/layout.tsx` | Layout raíz: fuentes (Geist + **Archivo**), metadata SEO, `CartProvider`, `Toaster`. |
@@ -45,7 +45,7 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 | `src/components/ui/` | Solo `toast.tsx` + `toaster.tsx` (sistema de toasts montado en layout, hoy no se dispara). |
 | `src/hooks/use-toast.ts` | Hook del toast. |
 | `public/images/` | Imágenes de productos referenciadas por `products.ts`. |
-| `src/lib/stock-config.ts` | **Fuente de verdad de la granularidad del stock** (`STOCK_GROUPS`) y derivación de claves. Puro (sin base): lo usan el navegador, la web pública y el panel. |
+| `src/lib/stock-config.ts` | **Fuente de verdad de la granularidad del stock** (`STOCK_GROUPS`) y derivación de claves. También decide **qué productos NO llevan stock** (`llevaStock`, según el campo `sinStock`). Puro (sin base): lo usan el navegador, la web pública y el panel. |
 | `src/lib/db.ts` | Cliente de Neon. **Solo servidor**, conexión perezosa. |
 | `src/lib/stock.ts` | Lectura/escritura del stock en la base. **Solo servidor**. |
 | `src/lib/stock-context.tsx` | `StockProvider`: la web pública lee `/api/stock` desde el navegador (mismo patrón que el carrito). |
@@ -102,6 +102,11 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
     **pill azul centrada** (constante `PRICE_PILL`).
   - **Excepción "Figuritas a Elección"**: conserva **selector de cantidad** (−/+) y
     sus **botones** "Agregar al carrito" (azul) + "Consultar" (verde).
+  - **Promo por cantidad ("Silicone Case")**: es una card normal (abre el modal),
+    pero abajo del precio dice "Promo por cantidad · hasta 4" en vez de la
+    disponibilidad, porque no lleva stock. Todo lo demás pasa en el modal:
+    **tabla de precios** visible al abrir, selector con **tope 4** y aviso con
+    botón de WhatsApp si se lo intenta pasar.
 
 ## 4. Decisiones y convenciones ya tomadas
 
@@ -109,6 +114,13 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
   - La lógica del carrito → `src/lib/cart-context.tsx`.
   - La **generación del mensaje de WhatsApp del checkout** → función `confirmar()` en
     `src/app/carrito/page.tsx`.
+- **Patrón para promos con precio raro** (escalonado, combos, etc.): **el carrito NO
+  entiende de promos**; solo hace `precio × cantidad`. El precio se resuelve *antes*
+  y el ítem entra ya armado. Es lo que hacen "Figuritas a Elección" y la Silicone
+  Case: el pack entra con `price` = precio del pack y `cantidad: 1`, y la `variante`
+  ("3 fundas") es lo que le da **identidad propia** — por eso dos packs de distinto
+  tamaño quedan como dos ítems separados y no se fusionan. Si aparece otra promo
+  rara, seguir este camino en vez de tocar `cart-context.tsx`.
 - **Eliminado a propósito (NO reintroducir)**:
   - La página de detalle `/producto/[id]` (los ítems del carrito **no** navegan a ella).
   - El **botón flotante del carrito** (`CartIcon`) y el **flotante de WhatsApp**.
@@ -144,9 +156,10 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
   (Twitter/Facebook/TikTok con `argentina.distributor`) del footer y del config.
 - **Sistema de stock real con base de datos** (Neon Postgres). Stock **por variante**
   con **granularidad mixta**, definida en `STOCK_GROUPS` de `stock-config.ts`:
-  fundas 11-16 (`apl-1`) y protectores 11-16 (`apl-5`) **por modelo** (6 filas, no 66);
-  funda 17 (`apl-4`) **por color** (11); camiseta (`ind-1`) **por talle** (6); el resto,
-  una fila con clave `""`. Son **43 filas** en total.
+  protectores 11-16 (`apl-5`) **por modelo** (6 filas, no 66); camiseta (`ind-1`)
+  **por talle** (6); el resto, una fila con clave `""`. Los productos marcados con
+  `sinStock` (hoy solo la Silicone Case) **no llevan ninguna fila**. Son **25 filas**
+  en total (eran 43 antes de la actualización de promos).
   La web pública muestra **"Quedan N" / "Agotado"** (tachado, mismo trato que los talles
   agotados) y **bloquea agregar al carrito** lo agotado; mientras carga muestra
   "Verificando stock…". El endpoint público **`/api/stock` es de SOLO LECTURA**
@@ -193,42 +206,41 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
   → texto sobre acentos → panel de admin → imagen OG. **Solo valores de color**: no
   se tocó lógica, estructura ni la autenticación del panel. Barrido final confirmado:
   **cero rastros** de los colores del theme anterior en todo el proyecto.
+- **Actualización de promos** (commit `cf1a2f6`, pusheado y en producción):
+  - **Eliminados**: las fundas de silicona viejas `apl-1` (11 al 16) y `apl-4` (17),
+    y las 3 promos viejas `promo-1` (Cargador + Cabezal), `promo-2` (Funda +
+    Protector) y `promo-3` (Funda + AirPods). Los protectores `apl-5` / `apl-6`
+    quedaron intactos.
+  - **Silicone Case (iPhone 11 al 17)** — `promo-silicone`, reemplaza a las fundas
+    viejas. **Promo por cantidad**: 1=$5.000, 2=$8.500, 3=$12.500, 4=$16.500 (precio
+    del **pack completo**, no unitario), con la tabla visible en el modal. **Tope 4
+    por pack**; al intentar pasarse aparece "Sobrepasaste la promo" con botón de
+    WhatsApp. Se pueden armar **varios packs** (cada tamaño es un ítem aparte).
+    **Sin control de stock**: siempre disponible. Sigue el patrón de "Figuritas a
+    Elección" (ver sección 4) — **no se tocó ni el carrito ni el `confirmar()`**.
+  - **AirPods Pro 2** (`promo-airpods-pro-2`, $25.000) y **Cable y cabezal iPhone
+    USB-C** (`promo-cable-cabezal`, $20.000): precio simple, **con stock**.
+  - **Fotos nuevas** en WebP 800px: `silicone-case.webp`, `airpods-pro-2.webp`,
+    `cable-cabezal-usbc.webp`. Son **verticales** y las cards son cuadradas, pero se
+    revisó el recorte real: las tres entran bien centradas, **no hizo falta tocar el
+    `object-position`**.
+  - Campos nuevos en `Product`: `packPrecios`, `cartName`, `sinStock` (ver sección 2).
+  - ⚠️ **Quedaron ~20 filas huérfanas en la base** de los productos borrados
+    (`apl-1` 6, `apl-4` 11, `promo-1/2/3` 3). **No molestan** — nadie las lee, porque
+    todo se arma desde el catálogo — pero si se quiere limpiar:
+    `DELETE FROM stock WHERE product_id IN ('apl-1','apl-4','promo-1','promo-2','promo-3');`
 
 **Pendiente** ⏳ (verificado en el código a la fecha de este archivo)
-- [ ] **Reemplazar imágenes placeholder** de funda iPhone 17, protectores 11-16 y
-  protector 17 por las reales cuando estén disponibles (hoy los 4 productos de fundas/
-  protectores reusan `IMG_FUNDA_IPHONE` en `products.ts`).
-- [ ] **Ajustar las cantidades de stock reales desde el panel**: la carga inicial dejó
-  la camiseta con sus números del catálogo (3/8/12/10/5/2) pero **todo lo demás en 10
-  de relleno** (`STOCK_INICIAL_POR_DEFECTO` en `stock.ts`).
-- [ ] **Actualizar promos** (plan ya aprobado, falta aplicar):
-  - **Eliminar las 2 fundas de silicona viejas** (`apl-1` "Fundas 11 al 16 de silicona"
-    y `apl-4` "Funda 17 silicona") y sus filas de stock.
-    ⚠️ **NO tocar los protectores `apl-5` / `apl-6`.**
-  - **Eliminar las 3 promos viejas**: `promo-1` (Cargador + Cabezal), `promo-2`
-    (Funda + Protector), `promo-3` (Funda + AirPods).
-  - **Agregar 3 promos nuevas.** Las fotos **ya están procesadas** a WebP 800px en
-    `public/images/` (ver tabla abajo):
-    1. **Silicone Case iPhone 11-17** — precio **escalonado por cantidad**
-       (1=$5000, 2=$8500, 3=$12500, 4=$16500), **tope en 4**; con 5+ mostrar aviso
-       "consultá por WhatsApp". **Tabla de precios visible en el modal.**
-       Patrón tipo **"Figuritas a Elección"**: el precio se pre-calcula y se manda ya
-       resuelto al carrito, **sin tocar la lógica del carrito**. **SIN control de stock.**
-    2. **AirPods Pro 2** — $25000, precio simple, **CON stock**.
-    3. **Cable y cabezal iPhone USB-C** — $20000, precio simple, **CON stock**.
-  - **Aplicar con ultracode (Opus 4.8 xhigh)** porque la silicone case toca el carrito.
-    Verificar bien: **carrito**, **mensaje de WhatsApp**, y que el **aviso de 5+** funcione.
-  - **Fotos ya procesadas** (origen: `C:\Users\Pc\OneDrive\Escritorio\Fotos luchi para web\`):
-
-    | Original | En `public/images/` | Medidas | Peso |
-    |---|---|---|---|
-    | `fundas 11 17.jpeg` | `silicone-case.webp` | 600x800 | 52.6 KB |
-    | `promo auriculares.jpeg` | `airpods-pro-2.webp` | 662x800 | 145.7 KB |
-    | `promo cable y cabezal.jpeg` | `cable-cabezal-usbc.webp` | 600x800 | 15.5 KB |
-
-    ⚠️ Son **verticales**, mientras que las 7 del catálogo son **cuadradas (800x800)**.
-    Las cards usan `aspect-square` + `object-cover`, así que se **recortan arriba y
-    abajo**. Revisar el encuadre al aplicarlas; si queda mal, recortarlas a cuadrado.
+- [ ] **Cargar las cantidades de stock reales desde el panel.** Dos cosas distintas:
+  - Las filas viejas siguen con **10 de relleno** (`STOCK_INICIAL_POR_DEFECTO` en
+    `stock.ts`); solo la camiseta tiene sus números del catálogo (3/8/12/10/5/2).
+  - **AirPods Pro 2** y **Cable y cabezal USB-C** todavía **no tienen fila**: aparecen
+    en el panel con el badge **"SIN CARGAR"**. Se cargan escribiendo el número y
+    dando Guardar. ⚠️ **No correr el seed** para esto: les pondría 10 de relleno
+    (ver sección 6).
+- [ ] **Reemplazar las imágenes placeholder** de los **protectores 11-16** (`apl-5`) y
+  del **protector 17** (`apl-6`), que son los 2 productos que todavía reusan
+  `IMG_FUNDA_IPHONE` en `products.ts`.
 
 ## 6. Notas / cómo operar el stock
 
@@ -254,12 +266,18 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
   cambiar si algún día se pasa a un dominio propio: de ahí salen el `metadataBase`
   (que arma las URLs absolutas de las tarjetas de Open Graph) y el `sitemap.xml`.
   Si no se actualiza, las tarjetas al compartir apuntarían al dominio viejo.
-- **Si se agregan productos nuevos al catálogo**: después de deployar, correr una vez
-  la sincronización para que aparezcan sus filas de stock (es idempotente y **no pisa**
-  los valores existentes):
+- **Si se agregan productos nuevos al catálogo**: **normalmente no hay que hacer nada**.
+  El panel arma su listado desde el **catálogo**, no desde la base, así que el producto
+  nuevo aparece solo con el badge **"SIN CARGAR"**; al escribir la cantidad y dar
+  Guardar se crea la fila. Ese es el camino recomendado.
+  El seed queda como atajo para **cargas masivas** (es idempotente y **no pisa** los
+  valores existentes), pero ojo: **rellena con 10** las filas que crea, así que promete
+  stock que nadie contó.
   ```
   curl -X POST https://<dominio>/api/stock/seed -H "x-seed-token: <SEED_TOKEN>"
   ```
+- **Los productos con `sinStock` no aparecen en el panel** (no tienen casilleros) y las
+  escrituras sobre ellos se rechazan. Es a propósito: están siempre disponibles.
 
 ## 7. Cómo correr el proyecto
 
