@@ -58,6 +58,12 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 | `src/app/api/admindistribucion/` | Rutas privadas: `login`, `logout`, `stock` (lectura + escrituras). |
 | `src/app/admindistribucion/` | **Panel privado**: `login/page.tsx`, `page.tsx`, `PanelStock.tsx`, `BotonSalir.tsx`. |
 | `scripts/hash-password.mjs` | Genera el hash bcrypt de una contraseña (entrada oculta). |
+| `src/lib/site.ts` | **URL de producción del sitio** (`SITE_URL`). Única fuente de verdad: la usan `metadataBase` y el sitemap. |
+| `src/app/opengraph-image.tsx` | Genera la **imagen de la tarjeta al compartir** (PNG 1200x630) con el theme del sitio. |
+| `src/app/twitter-image.tsx` | Reexporta la de arriba para Twitter/X (misma imagen, sin duplicar el diseño). |
+| `src/app/sitemap.ts` | Genera `/sitemap.xml`. **Sólo la home**; deja fuera `/carrito` y las rutas privadas. |
+| `src/hooks/use-dialogo-accesible.ts` | Foco, Escape y focus trap de los diálogos. Lo comparten `ProductModal` y `CartPanel`. |
+| `src/components/home/SearchEmptyState.tsx` | Estado vacío cuando la búsqueda no encuentra nada en ninguna categoría. |
 
 **`src/components/home/`**: `Navbar`, `Hero`, `ProductGrid` (sección genérica por
 categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccionCard`),
@@ -141,6 +147,29 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
   `NEXT_PUBLIC_`**: `DATABASE_URL` (Neon, la inyecta la integración), `SEED_TOKEN`
   (carga inicial), `ADMIN_USERS` (`email:hash`, admite varios separados por coma) y
   `AUTH_SECRET` (firma de la sesión).
+- **Auditoría técnica aplicada** (commits `e9ed6ca` y `8a913cc`, pusheados), en 7 bloques:
+  - **Imágenes**: las 7 del catálogo eran **JPEG con extensión `.png`** a 1024px.
+    Se convirtieron a **WebP real** a 800px y se migraron a **`next/image`** (con `sizes`
+    por contexto y lazy loading). En disco pasaron de **644 KB a 349 KB**, y la home
+    **transfiere ~111 KB** porque `next/image` sirve la variante justa (una miniatura
+    del carrito baja 64px en vez de 800px). **−83% de transferencia.**
+  - **SEO**: **Open Graph + Twitter cards**, con **imagen OG generada** (PNG 1200x630,
+    theme "Estadio Nocturno") en vez de reusar una foto del catálogo — las del catálogo
+    son WebP, que **WhatsApp no renderiza bien** en las tarjetas, y son cuadradas.
+    Más `metadataBase` y **sitemap**.
+  - **Accesibilidad**: `ProductModal` y `CartPanel` pasaron a ser **diálogos accesibles**
+    (`role="dialog"`, `aria-modal`, `aria-labelledby`, cierre con **Escape**, foco que
+    entra al abrir, **focus trap** y foco devuelto al cerrar) vía el hook
+    `use-dialogo-accesible.ts`. Además `aria-label` en los +/− del modal y
+    **`fieldset`/`legend`** en los grupos del checkout (con los estilos por defecto
+    reseteados: se verificó que el diseño no se movió).
+  - **UX**: **estado vacío de búsqueda** — antes, si nada coincidía, la página quedaba
+    en blanco entre el Hero y Contacto. Ahora muestra el término buscado y un botón
+    para limpiar.
+  - **Seguridad**: **`noopener,noreferrer`** en los 4 `window.open` de WhatsApp
+    (reverse tabnabbing). Se verificó que ninguno usa el valor de retorno, que con
+    `noopener` pasa a ser `null`.
+  - **Prolijidad**: `name` del `package.json` ya no es el genérico del scaffolding.
 
 **Pendiente** ⏳ (verificado en el código a la fecha de este archivo)
 - [ ] **Reemplazar imágenes placeholder** de funda iPhone 17, protectores 11-16 y
@@ -170,6 +199,10 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
   usabilidad pensando en alguien **no técnico** (hoy dice cosas como "variante" o
   "Sin variantes", y los errores de la API son bastante técnicos). También habría que
   crearle su propio usuario en `ADMIN_USERS` en vez de compartir el mío.
+- **La URL del sitio vive en `src/lib/site.ts`** (`SITE_URL`). Es el **único lugar** a
+  cambiar si algún día se pasa a un dominio propio: de ahí salen el `metadataBase`
+  (que arma las URLs absolutas de las tarjetas de Open Graph) y el `sitemap.xml`.
+  Si no se actualiza, las tarjetas al compartir apuntarían al dominio viejo.
 - **Si se agregan productos nuevos al catálogo**: después de deployar, correr una vez
   la sincronización para que aparezcan sus filas de stock (es idempotente y **no pisa**
   los valores existentes):
