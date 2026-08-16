@@ -9,11 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Product } from "./products";
-import {
-  stockKeyDesdeOpciones,
-  stockKeyDeTalle,
-  type MapaDeStock,
-} from "./stock-config";
+import { stockKeyDesdeOpciones, type MapaDeStock } from "./stock-config";
 
 /* ══════════════════════════════════════════════════════════════
    STOCK CONTEXT — stock compartido, leído desde /api/stock
@@ -40,8 +36,6 @@ interface StockContextType {
   stockDeClave: (productId: string, key: string) => number | null;
   /** Stock según las opciones elegidas en el modal. null = no se sabe. */
   stockDeOpciones: (product: Product, opciones: Record<string, string>) => number | null;
-  /** Stock de un talle de la camiseta. null = no se sabe. */
-  stockDeTalle: (productId: string, talle: string) => number | null;
   /** Suma de todas las variantes de un producto. null = no se sabe. */
   stockTotal: (productId: string) => number | null;
   recargar: () => void;
@@ -106,12 +100,6 @@ export function StockProvider({ children }: { children: ReactNode }) {
     [stockDeClave]
   );
 
-  const stockDeTalle = useCallback(
-    (productId: string, talle: string): number | null =>
-      stockDeClave(productId, stockKeyDeTalle(talle)),
-    [stockDeClave]
-  );
-
   const stockTotal = useCallback(
     (productId: string): number | null => {
       if (estado === "cargando") return null;
@@ -125,7 +113,7 @@ export function StockProvider({ children }: { children: ReactNode }) {
 
   return (
     <StockContext.Provider
-      value={{ estado, stockDeClave, stockDeOpciones, stockDeTalle, stockTotal, recargar: cargar }}
+      value={{ estado, stockDeClave, stockDeOpciones, stockTotal, recargar: cargar }}
     >
       {children}
     </StockContext.Provider>

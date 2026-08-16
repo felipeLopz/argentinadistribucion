@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MessageCircle, ShoppingCart, Check, Star, Truck, Ruler, Ban, Package, AlertTriangle, Tag } from "lucide-react";
+import { X, MessageCircle, ShoppingCart, Check, Star, Truck, Ban, Package, AlertTriangle, Tag } from "lucide-react";
 import { contactConfig, type Product } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { useStock } from "@/lib/stock-context";
 import { esGrupoDeStock, gruposDeStock, llevaStock } from "@/lib/stock-config";
 import { useDialogoAccesible } from "@/hooks/use-dialogo-accesible";
 import { categoryTitles } from "./categories";
+import SinFoto from "./SinFoto";
 
 /* ═══════════════════════════════════════════════
    PRODUCT MODAL — Panel deslizante con detalle del producto
@@ -25,17 +26,12 @@ export default function ProductModal({
   onClose: () => void;
 }) {
   const { addItem, justAdded } = useCart();
-  const { stockDeClave, stockDeTalle, stockDeOpciones, estado: estadoStock } = useStock();
-  const [talle, setTalle] = useState("");
+  const { stockDeClave, stockDeOpciones, estado: estadoStock } = useStock();
   const [opciones, setOpciones] = useState<Record<string, string>>({});
   const [cantidad, setCantidad] = useState(1);
   const [agregado, setAgregado] = useState(false);
   const [avisoTope, setAvisoTope] = useState(false);
 
-  /* talleStock define QUÉ talles se ofrecen; las cantidades ya no salen de
-     ahí sino de la base (ver stock-context). */
-  const tieneTalles = !!product?.talleStock;
-  const talles = tieneTalles ? Object.keys(product!.talleStock!) : [];
   const precioUnitario = product?.price ?? 0;
 
   /* ─── Promo por cantidad (pack) ───
@@ -56,18 +52,14 @@ export default function ProductModal({
 
   /* ─── Stock de la selección actual ───
      null = todavía no se sabe (cargando, o falta elegir opciones).
-     0 = agotado. Ojo con la granularidad mixta: en las fundas 11-16 el
-     stock se resuelve por MODELO, no por color (lo maneja stock-config). */
-  const seleccionCompleta = tieneTalles ? !!talle : tieneOpciones ? opcionesCompletas : true;
+     0 = agotado. Ojo con la granularidad mixta: en los protectores 11-16 el
+     stock se resuelve por MODELO (lo maneja stock-config). */
+  const seleccionCompleta = tieneOpciones ? opcionesCompletas : true;
 
   /* Productos siempre disponibles: no se consulta la base (no tienen fila) */
   const conStock = product ? llevaStock(product) : true;
   const stockActual: number | null = !product || !conStock
     ? null
-    : tieneTalles
-    ? talle
-      ? stockDeTalle(product.id, talle)
-      : null
     : tieneOpciones
     ? opcionesCompletas
       ? stockDeOpciones(product, opciones)
@@ -80,16 +72,11 @@ export default function ProductModal({
   const stock = !conStock ? Number.MAX_SAFE_INTEGER : stockActual ?? 1;
 
   /* Variante auto-descriptiva que se guarda en el carrito y va al WhatsApp:
-     "Talle L" (camiseta) · "Negro Mate - iPhone 13" (opciones) ·
-     "3 fundas" (promo por cantidad) · "" (sin nada).
+     "iPhone 13" (opciones) · "3 fundas" (promo por cantidad) · "" (sin nada).
      En la promo es lo que le da identidad propia a cada pack: dos packs de
      distinto tamaño son dos ítems separados en el carrito. */
   const variante = esPromoPack
     ? `${cantidad} funda${cantidad !== 1 ? "s" : ""}`
-    : tieneTalles
-    ? talle
-      ? `Talle ${talle}`
-      : ""
     : tieneOpciones
     ? grupos.map((g) => opciones[g.label]).join(" - ")
     : "";
@@ -104,7 +91,6 @@ export default function ProductModal({
 
   /* Reset estado al cambiar de producto */
   useEffect(() => {
-    setTalle("");
     setOpciones({});
     setCantidad(1);
     setAgregado(false);
@@ -139,15 +125,16 @@ export default function ProductModal({
   };
 
   const agregarAlCarrito = () => {
-    /* La promo entra como UN ítem con el precio del pack ya resuelto —
-       mismo criterio que "Figuritas a Elección". El carrito solo hace
-       precio × cantidad, y acá la cantidad es 1 pack. */
+    /* La promo entra como UN ítem con el precio del pack ya resuelto: el
+       carrito solo hace precio × cantidad, y acá la cantidad es 1 pack. */
     addItem(
       esPromoPack
         ? {
             productId: product!.id,
             name: product!.cartName ?? product!.name,
-            image: product!.image,
+            /* El carrito guarda un string; "" = todavía sin foto, y las
+               vistas del carrito muestran el placeholder. */
+            image: product!.image ?? "",
             price: subtotal,
             variante,
             cantidad: 1,
@@ -155,7 +142,9 @@ export default function ProductModal({
         : {
             productId: product!.id,
             name: product!.cartName ?? product!.name,
-            image: product!.image,
+            /* El carrito guarda un string; "" = todavía sin foto, y las
+               vistas del carrito muestran el placeholder. */
+            image: product!.image ?? "",
             price: product!.price!,
             variante,
             cantidad,
@@ -232,19 +221,23 @@ export default function ProductModal({
             <div className="flex-1 overflow-y-auto">
               {/* Header con imagen de fondo */}
               <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#241a45] to-[#1c1436] sm:h-72">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  /* El panel mide max-w-lg (512px) y ocupa todo el ancho en mobile */
-                  sizes="(max-width: 512px) 100vw, 512px"
-                  className="object-cover"
-                  /* Eager a propósito: la imagen sólo se monta cuando el usuario
-                     abre el modal y es su contenido principal; con lazy podría
-                     aparecer con retraso durante la animación de entrada. */
-                  priority={false}
-                  loading="eager"
-                />
+                {product.image ? (
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    /* El panel mide max-w-lg (512px) y ocupa todo el ancho en mobile */
+                    sizes="(max-width: 512px) 100vw, 512px"
+                    className="object-cover"
+                    /* Eager a propósito: la imagen sólo se monta cuando el usuario
+                       abre el modal y es su contenido principal; con lazy podría
+                       aparecer con retraso durante la animación de entrada. */
+                    priority={false}
+                    loading="eager"
+                  />
+                ) : (
+                  <SinFoto size="lg" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy)] via-[var(--navy)]/30 to-transparent" />
 
                 {/* Badge categoría */}
@@ -355,7 +348,7 @@ export default function ProductModal({
                       ${precioUnitario.toLocaleString("es-AR")}
                     </span>
                     <span className="mb-0.5 text-sm text-[var(--mut)]">
-                      {tieneTalles || tieneOpciones ? "por unidad" : "por pack"}
+                      {tieneOpciones ? "por unidad" : "por pack"}
                     </span>
                   </div>
                 )}
@@ -366,53 +359,9 @@ export default function ProductModal({
                   Envíos a todo el país
                 </div>
 
-                {/* Selector de talles */}
-                {tieneTalles && (
-                  <div>
-                    <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
-                      <Ruler className="h-4 w-4 text-[var(--blue-l)]" />
-                      Seleccioná tu talle
-                      <span className="text-xs text-red-400">*</span>
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {talles.map((t) => {
-                        const stockT = stockDeTalle(product!.id, t);
-                        const agotado = stockT === 0;
-                        const seleccionado = talle === t;
-                        return (
-                          <button
-                            key={t}
-                            onClick={() => { if (!agotado) setTalle(t); }}
-                            disabled={agotado}
-                            className={`relative flex min-w-[60px] flex-col items-center gap-0.5 rounded-xl border-2 px-4 py-3 transition-all ${
-                              agotado
-                                ? "cursor-not-allowed border-[var(--line)] bg-white/[0.03] opacity-50"
-                                : seleccionado
-                                ? "scale-105 border-[var(--blue-l)] bg-[var(--blue)] text-white shadow-[0_8px_20px_rgba(124,58,237,0.4)]"
-                                : "cursor-pointer border-[var(--line)] text-[var(--ink)] hover:border-[var(--blue-l)] hover:bg-white/[0.04]"
-                            }`}
-                          >
-                            {agotado && (
-                              <Ban className="absolute -right-1.5 -top-1.5 h-4 w-4 rounded-full bg-[var(--navy)] text-red-400" />
-                            )}
-                            <span className={`text-base font-extrabold ${seleccionado ? "text-white" : agotado ? "text-[var(--mut)] line-through" : "text-white"}`}>
-                              {t}
-                            </span>
-                            <span className={`text-[10px] font-semibold ${
-                              seleccionado ? "text-white/80" : agotado ? "text-red-400" : "text-[var(--mut)]"
-                            }`}>
-                              {agotado ? "Agotado" : stockT === null ? "…" : `Stock: ${stockT}`}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Selectores de opciones (Color / Modelo).
+                {/* Selectores de opciones (Modelo).
                     Solo los grupos que DEFINEN stock muestran disponibilidad:
-                    en las fundas 11-16 eso es "Modelo", no "Color". */}
+                    en los protectores 11-16 eso es "Modelo". */}
                 {tieneOpciones && grupos.map((grupo) => {
                   const esStock = esGrupoDeStock(product!, grupo.label);
                   /* Para saber el stock de un valor candidato, los demás grupos
@@ -481,7 +430,7 @@ export default function ProductModal({
                     <Package className="h-4 w-4 text-[var(--blue-l)]" />
                     {esPromoPack
                       ? "Cantidad de fundas"
-                      : `Cantidad de ${tieneTalles || tieneOpciones ? "unidades" : "packs"}`}
+                      : `Cantidad de ${tieneOpciones ? "unidades" : "packs"}`}
                   </label>
                   <div className={`flex items-center gap-4${!puedeAgregar ? " pointer-events-none opacity-40" : ""}`}>
                     <div className="flex items-center">

@@ -21,10 +21,6 @@ export const STOCK_GROUPS: Record<string, string[]> = {
   "apl-5": ["Modelo"], // protectores 11-16: solo modelo, NO por color
 };
 
-/** Prefijo con el que la camiseta arma su variante ("Talle L").
- *  Se mantiene igual que en el carrito para que las claves coincidan. */
-const TALLE_PREFIJO = "Talle ";
-
 /** Stock indexado: { productId: { stockKey: cantidad } } */
 export type MapaDeStock = Record<string, Record<string, number>>;
 
@@ -64,18 +60,9 @@ export function stockKeyDesdeOpciones(
   product: Product,
   opciones: Record<string, string>
 ): string {
-  if (product.talleStock) {
-    const talle = opciones[TALLE_PREFIJO.trim()] ?? opciones["Talle"] ?? "";
-    return talle ? `${TALLE_PREFIJO}${talle}` : "";
-  }
   const grupos = gruposDeStock(product);
   if (grupos.length === 0) return "";
   return grupos.map((g) => opciones[g] ?? "").join(" - ");
-}
-
-/** Clave de stock de un talle puntual de la camiseta. */
-export function stockKeyDeTalle(talle: string): string {
-  return `${TALLE_PREFIJO}${talle}`;
 }
 
 /**
@@ -85,14 +72,6 @@ export function stockKeyDeTalle(talle: string): string {
 export function clavesDeStock(product: Product): { key: string; inicial: number | null }[] {
   /* Producto siempre disponible: ninguna fila (ni en el seed ni en el panel) */
   if (!llevaStock(product)) return [];
-
-  /* Camiseta: usa los talles y sus cantidades ya conocidas */
-  if (product.talleStock) {
-    return Object.entries(product.talleStock).map(([talle, cant]) => ({
-      key: stockKeyDeTalle(talle),
-      inicial: cant,
-    }));
-  }
 
   const grupos = gruposDeStock(product);
   if (grupos.length === 0) return [{ key: "", inicial: null }];

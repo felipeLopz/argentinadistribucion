@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Clock, MessageCircle } from "lucide-react";
 import { products, contactConfig, type Product } from "@/lib/products";
 import { categoryIcons, categoryTitles } from "./categories";
-import { ProductCard, FiguritasEleccionCard } from "./ProductCard";
+import { ProductCard } from "./ProductCard";
 
 /* Criterio de búsqueda de un producto (nombre o descripción).
    Se exporta para que la home pueda saber si hay resultados en ALGUNA
@@ -103,8 +103,6 @@ export default function ProductGrid({
                 onOpen={() => onProductClick(product)}
               />
             ))}
-            {/* Card de Figuritas a Elección — solo en la sección paquetes */}
-            {category === "paquetes" && <FiguritasEleccionCard />}
           </div>
         )}
       </div>

@@ -38,10 +38,11 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
 
-        <ProductGrid sectionId="paquetes" category="paquetes" searchQuery={searchQuery} onProductClick={setSelectedProduct} />
-        <ProductGrid sectionId="albumes" category="albumes" searchQuery={searchQuery} onProductClick={setSelectedProduct} />
-        <ProductGrid sectionId="indumentaria" category="indumentaria" searchQuery={searchQuery} onProductClick={setSelectedProduct} />
+        {/* El orden de estas secciones tiene que ir igual que `navSections`
+            en products.ts, que es de donde sale el menú. */}
         <ProductGrid sectionId="accesorios" category="accesorios" searchQuery={searchQuery} onProductClick={setSelectedProduct} />
+        <ProductGrid sectionId="vapers" category="vapers" searchQuery={searchQuery} onProductClick={setSelectedProduct} />
+        <ProductGrid sectionId="termos" category="termos" searchQuery={searchQuery} onProductClick={setSelectedProduct} />
         <ProductGrid sectionId="accesorios-apple" category="accesorios-apple" searchQuery={searchQuery} onProductClick={setSelectedProduct} />
 
         {sinResultados && (

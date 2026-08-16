@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, X } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useDialogoAccesible } from "@/hooks/use-dialogo-accesible";
+import SinFoto from "./SinFoto";
 
 /* ═══════════════════════════════════════════════
    CART PANEL — Preview lateral (theme "Estadio Nocturno")
@@ -93,15 +94,22 @@ export default function CartPanel({
                         className="flex gap-3 rounded-xl border border-[var(--line)] bg-gradient-to-b from-[rgba(36,26,69,0.6)] to-[rgba(28,20,54,0.4)] p-3"
                       >
                         {/* Miniatura de tamaño fijo (64px): width/height explícitos
-                            en vez de fill, así no necesita contenedor relative. */}
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          width={64}
-                          height={64}
-                          loading="lazy"
-                          className="h-16 w-16 rounded-lg bg-[#241a45] object-cover"
-                        />
+                            en vez de fill, así no necesita contenedor relative.
+                            Sin foto todavía → placeholder del mismo tamaño. */}
+                        {item.image ? (
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            width={64}
+                            height={64}
+                            loading="lazy"
+                            className="h-16 w-16 rounded-lg bg-[#241a45] object-cover"
+                          />
+                        ) : (
+                          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg">
+                            <SinFoto size="sm" />
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <h4 className="truncate text-sm font-semibold text-white">{item.name}</h4>
                           {item.variante && (

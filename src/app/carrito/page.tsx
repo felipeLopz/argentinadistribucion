@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { contactConfig, storeName } from "@/lib/products";
+import SinFoto from "@/components/home/SinFoto";
 
 const HORARIOS = [
   "08:00 - 10:00",
@@ -234,15 +235,20 @@ export default function CarritoPage() {
                           className="flex gap-4 rounded-2xl border border-[var(--line)] bg-gradient-to-b from-[rgba(36,26,69,0.6)] to-[rgba(28,20,54,0.4)] p-4"
                         >
                           <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#241a45]">
-                            {/* Miniatura de tamaño fijo (96px), igual que en el panel del carrito */}
-                            <Image
-                              src={item.image}
-                              alt={item.name}
-                              width={96}
-                              height={96}
-                              loading="lazy"
-                              className="h-full w-full object-cover"
-                            />
+                            {/* Miniatura de tamaño fijo (96px), igual que en el panel
+                                del carrito. Sin foto todavía → placeholder. */}
+                            {item.image ? (
+                              <Image
+                                src={item.image}
+                                alt={item.name}
+                                width={96}
+                                height={96}
+                                loading="lazy"
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <SinFoto size="sm" />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">

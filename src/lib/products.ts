@@ -1,7 +1,6 @@
 /* Grupo de opciones obligatorias de un producto (ej. Color, Modelo).
-   Distinto de talleStock: NO maneja stock, solo una lista de valores a elegir.
-   Un producto puede tener 0, 1 o varios grupos; se deben elegir TODOS para
-   poder agregar al carrito. */
+   Es una lista de valores a elegir; el stock de cada valor lo resuelve
+   stock-config.ts, que puede llevarlo con menos detalle que las opciones. */
 export interface ProductOption {
   label: string;
   values: string[];
@@ -11,11 +10,13 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  image: string;
+  /** Ruta de la foto. **Opcional**: los productos que todavía no tienen
+   *  foto se muestran con el placeholder `SinFoto`. Cuando llegue la real,
+   *  alcanza con agregar acá la ruta. */
+  image?: string;
   price?: number;
-  talleStock?: Record<string, number>;
   options?: ProductOption[];
-  category: "paquetes" | "albumes" | "indumentaria" | "accesorios" | "accesorios-apple";
+  category: "accesorios" | "vapers" | "termos" | "accesorios-apple";
   status?: "consultar" | "proximamente";
 
   /* ─── Promo por cantidad (pack) ───
@@ -25,8 +26,7 @@ export interface Product {
      consulta a WhatsApp.
 
      El carrito NO entiende de promos: el modal resuelve el precio y manda
-     el pack ya armado como un ítem de cantidad 1 (mismo criterio que
-     "Figuritas a Elección"). */
+     el pack ya armado como un ítem de cantidad 1. */
   packPrecios?: number[];
 
   /** Nombre corto con el que el ítem entra al carrito y al mensaje de
@@ -43,107 +43,18 @@ export interface Product {
 const MODELOS_IPHONE_11_16 = ["iPhone 11", "iPhone 12", "iPhone 13", "iPhone 14", "iPhone 15", "iPhone 16"];
 
 /* ──────────────────────────────────────────────
-   Datos de productos organizados por sección.
-   Sin precios — solo nombre, imagen y botón de acción.
+   Imágenes del catálogo.
+   Los vapers y los termos todavía no tienen foto: se omite `image` y la
+   card/modal muestran el placeholder.
    ────────────────────────────────────────────── */
-
-/* Imagen real de los paquetes de figuritas (misma para todos los packs) */
-export const IMG_PACKS = "/images/figuritas-paquete.webp";
-const IMG_ALBUM_BLANDA = "/images/tapa-blanca.webp";
-const IMG_ALBUM_DURA = "/images/tapa-dura.webp";
-const IMG_CAMISETA = "/images/camiseta.webp";
 const IMG_CARGADOR = "/images/cargador.webp";
 const IMG_FUNDA_IPHONE = "/images/funda-iphone.webp";
 const IMG_AIRPODS = "/images/airpods.webp";
-/* Promos nuevas */
 const IMG_SILICONE_CASE = "/images/silicone-case.webp";
 const IMG_AIRPODS_PRO_2 = "/images/airpods-pro-2.webp";
 const IMG_CABLE_CABEZAL = "/images/cable-cabezal-usbc.webp";
 
 export const products: Product[] = [
-  // ═══ PAQUETES DE FIGURITAS ═══
-  {
-    id: "paq-1",
-    name: "Pack de 10 Figuritas",
-    description: "Pack de 10 figuritas sueltas al azar. Ideal para empezar a completar tu álbum.",
-    image: IMG_PACKS,
-    price: 2350,
-    category: "paquetes",
-  },
-  {
-    id: "paq-2",
-    name: "Pack de 15 Figuritas",
-    description: "Pack de 15 figuritas sueltas al azar. Variedad de selecciones y jugadores.",
-    image: IMG_PACKS,
-    price: 3200,
-    category: "paquetes",
-  },
-  {
-    id: "paq-3",
-    name: "Pack de 50 Figuritas",
-    description: "Pack de 50 figuritas sueltas. Gran variedad para avanzar en tu colección.",
-    image: IMG_PACKS,
-    price: 8750,
-    category: "paquetes",
-  },
-  {
-    id: "paq-4",
-    name: "Pack de 100 Figuritas",
-    description: "Pack de 100 figuritas sueltas. La opción ideal para coleccionistas.",
-    image: IMG_PACKS,
-    price: 14200,
-    category: "paquetes",
-  },
-  {
-    id: "paq-5",
-    name: "Pack de 200 Figuritas",
-    description: "Pack de 200 figuritas sueltas. Gran cantidad para completar tu álbum.",
-    image: IMG_PACKS,
-    price: 24800,
-    category: "paquetes",
-  },
-  {
-    id: "paq-6",
-    name: "Pack de 1000 Figuritas",
-    description: "Pack de 1000 figuritas sueltas. Para los más apasionados coleccionistas.",
-    image: IMG_PACKS,
-    price: 89500,
-    category: "paquetes",
-  },
-
-  // ═══ ÁLBUMES ═══
-  {
-    id: "alb-1",
-    name: "Álbum Tapa Blanda",
-    description: "Álbum oficial con tapa blanda. Ligero y fácil de transportar.",
-    image: IMG_ALBUM_BLANDA,
-    price: 9800,
-    category: "albumes",
-  },
-  {
-    id: "alb-2",
-    name: "Álbum Tapa Dura",
-    description: "Álbum oficial con tapa dura. Mayor protección y durabilidad.",
-    image: IMG_ALBUM_DURA,
-    price: 15600,
-    category: "albumes",
-  },
-
-  // ═══ INDUMENTARIA ═══
-  {
-    id: "ind-1",
-    name: "Camisetas",
-    description: "Camisetas oficiales de la Selección Argentina. Diversas tallas disponibles.",
-    image: IMG_CAMISETA,
-    price: 32400,
-    /* Las CLAVES definen qué talles se ofrecen (las lee el modal).
-       Los VALORES ya no son el stock en runtime (eso vive en la base) —
-       solo se usan como cantidad inicial la primera vez que /api/stock/seed
-       crea las filas en un entorno nuevo. No son dato muerto. */
-    talleStock: { XS: 3, S: 8, M: 12, L: 10, XL: 5, XXL: 2 },
-    category: "indumentaria",
-  },
-
   // ═══ PROMOS ═══
   {
     id: "promo-silicone",
@@ -180,6 +91,92 @@ export const products: Product[] = [
     category: "accesorios",
   },
 
+  // ═══ VAPERS ═══
+  /* Descripciones deliberadamente técnicas: formato, batería, capacidad.
+     Sin adjetivos promocionales ni nada que invite al consumo. */
+  {
+    id: "vap-1",
+    name: "Vaper Recargable Pod - Negro",
+    description: "Dispositivo recargable con cápsula reemplazable y carga por USB-C. Color negro.",
+    price: 35000,
+    category: "vapers",
+  },
+  {
+    id: "vap-2",
+    name: "Vaper Recargable Pod - Azul",
+    description: "Dispositivo recargable con cápsula reemplazable y carga por USB-C. Color azul.",
+    price: 35000,
+    category: "vapers",
+  },
+  {
+    id: "vap-3",
+    name: "Vaper Recargable Pod - Plata",
+    description: "Dispositivo recargable con cápsula reemplazable y carga por USB-C. Color plata.",
+    price: 35000,
+    category: "vapers",
+  },
+  {
+    id: "vap-4",
+    name: "Vaper Recargable Pro - Negro",
+    description:
+      "Dispositivo recargable de mayor capacidad de batería, con cápsula reemplazable y carga por USB-C. Color negro.",
+    price: 35000,
+    category: "vapers",
+  },
+  {
+    id: "vap-5",
+    name: "Vaper Recargable Pro - Grafito",
+    description:
+      "Dispositivo recargable de mayor capacidad de batería, con cápsula reemplazable y carga por USB-C. Color grafito.",
+    price: 35000,
+    category: "vapers",
+  },
+  {
+    id: "vap-6",
+    name: "Liquido para Vaper - Tabaco 30ml",
+    description: "Líquido para dispositivos recargables. Frasco de 30 ml. Perfil de sabor tabaco.",
+    price: 35000,
+    category: "vapers",
+  },
+  {
+    id: "vap-7",
+    name: "Liquido para Vaper - Mentol 30ml",
+    description: "Líquido para dispositivos recargables. Frasco de 30 ml. Perfil de sabor mentol.",
+    price: 35000,
+    category: "vapers",
+  },
+  {
+    id: "vap-8",
+    name: "Kit Vaper Recargable + Liquido",
+    description:
+      "Incluye un dispositivo recargable con cápsula reemplazable, cable de carga USB-C y un frasco de líquido de 30 ml.",
+    price: 35000,
+    category: "vapers",
+  },
+
+  // ═══ TERMOS ═══
+  {
+    id: "ter-1",
+    name: "Termo Stanley 750ml - Rosa",
+    description: "Termo de acero inoxidable de 750 ml, con tapa a rosca y sorbete. Color rosa.",
+    price: 45000,
+    category: "termos",
+  },
+  {
+    id: "ter-2",
+    name: "Termo Stanley 750ml - Azul",
+    description: "Termo de acero inoxidable de 750 ml, con tapa a rosca y sorbete. Color azul.",
+    price: 45000,
+    category: "termos",
+  },
+  {
+    id: "ter-3",
+    name: "Termo Stanley 750ml - Blanco",
+    description: "Termo de acero inoxidable de 750 ml, con tapa a rosca y sorbete. Color blanco.",
+    price: 45000,
+    category: "termos",
+  },
+
   // ═══ ACCESORIOS APPLE ═══
   {
     id: "apl-5",
@@ -201,7 +198,7 @@ export const products: Product[] = [
   {
     id: "apl-2",
     name: "AirPods",
-    description: "AirPods personalizados con colores de la Selección Argentina.",
+    description: "Auriculares inalámbricos con estuche de carga.",
     image: IMG_AIRPODS,
     price: 52300,
     category: "accesorios-apple",
@@ -209,7 +206,7 @@ export const products: Product[] = [
   {
     id: "apl-3",
     name: "Cargadores",
-    description: "Cargadores de alta calidad con diseño oficial de Argentina.",
+    description: "Cargadores para iPhone con cable y cabezal.",
     image: IMG_CARGADOR,
     price: 11400,
     category: "accesorios-apple",
@@ -217,14 +214,15 @@ export const products: Product[] = [
 ];
 
 /* ──────────────────────────────────────────────
-   Navegación por secciones de la tienda
+   Navegación por secciones de la tienda.
+   El orden de esta lista es el orden del menú; el de las secciones en la
+   home lo define src/app/page.tsx (van iguales a propósito).
    ────────────────────────────────────────────── */
 export const navSections = [
   { id: "inicio", label: "Inicio" },
-  { id: "paquetes", label: "Paquetes de Figuritas" },
-  { id: "albumes", label: "Álbumes" },
-  { id: "indumentaria", label: "Indumentaria" },
   { id: "accesorios", label: "Promos" },
+  { id: "vapers", label: "Vapers" },
+  { id: "termos", label: "Termos" },
   { id: "accesorios-apple", label: "Accesorios Apple" },
   { id: "contacto", label: "Contacto" },
 ] as const;
