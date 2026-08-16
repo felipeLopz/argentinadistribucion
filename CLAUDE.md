@@ -72,12 +72,28 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
 
 ## 3. Diseño
 
-- **Theme "Estadio Nocturno"**: oscuro (fondo navy) con **acentos azul y dorado**,
-  aplicado a todo el sitio.
-- **Tokens de color**: en `src/app/globals.css`, bloque `:root`:
-  `--navy #050c2e`, `--navy-2 #0a1550`, `--blue #0b3ecc`, `--blue-l #2d6bff`,
-  `--gold #e8b73a`, `--gold-l #f5d06b`, `--ink #e8ecff` (texto), `--mut #8b96c9`
-  (texto tenue), `--line rgba(120,140,220,.16)` (bordes).
+- **Theme "Violeta Profundo"**: oscuro (fondo violeta) con **acentos lila y rosa**,
+  aplicado a todo el sitio **y al panel de admin**.
+  (Reemplazó al theme original "Estadio Nocturno", que era navy + dorado.)
+- **Tokens de color**: en `src/app/globals.css`, bloque `:root`. Hay **dos familias
+  de acento**, cada una con su rol:
+  - **Fondos**: `--navy #140f26` (base), `--navy-2 #1c1436` (superficies).
+  - **Acciones** (botones, pill de precio, estado seleccionado):
+    `--blue #7c3aed`, `--blue-l #8b5cf6`. El gradiente va `--blue-l` → `--blue`.
+  - **Realces** (subrayado del navbar, título del hero, íconos de sección, badges):
+    `--gold #a78bfa` (lila), `--gold-l #f0abfc` (rosa).
+  - **Texto y bordes**: `--ink #efeafe` (texto), `--mut #a396c9` (texto tenue),
+    `--line rgba(167,139,250,.16)` (bordes).
+  ⚠️ **Los nombres de los tokens quedaron del theme viejo a propósito** (`--navy`,
+  `--blue`, `--gold`): renombrarlos obligaba a tocar ~328 usos en 13 componentes.
+  Lo que cambió es el valor, no el nombre. Lo mismo con la clase
+  `.text-gold-gradient`, que hoy hace un degradé lila → rosa.
+- **Texto sobre los botones de acento**: `#140f26` (el propio fondo base). El lila y
+  el rosa son colores claros, así que **el blanco NO pasa contraste** (1.76:1);
+  `#140f26` da 6.85:1, que cumple WCAG AA.
+- **Colores que NO siguen la paleta** (a propósito): el verde de WhatsApp
+  (`#25a35a` / `#37c46f`), el rosa de Instagram (`#e46bb0`) y el rojo de
+  error/agotado. Son colores de marca o de significado, no decorativos.
 - **Tipografía**: **Archivo** (Google Fonts vía `next/font` en `layout.tsx`,
   variable `--font-archivo`); se aplica con la clase `.font-archivo`.
 - **Reglas de las cards** (`src/components/home/ProductCard.tsx`):
@@ -106,8 +122,10 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
 ## 5. Estado actual y pendientes
 
 **Terminado** ✅
-- Rediseño "Estadio Nocturno" **completo** en todo el sitio (navbar, hero, secciones
-  de productos, cards, modal, panel del carrito, `/carrito`, contacto, footer).
+- Rediseño **completo** en todo el sitio (navbar, hero, secciones de productos,
+  cards, modal, panel del carrito, `/carrito`, contacto, footer). Se hizo primero
+  con el theme "Estadio Nocturno" (navy + dorado) y después se **migró a
+  "Violeta Profundo"** (ver más abajo); la estructura del rediseño no cambió.
 - **Testeado** (flujo carrito → WhatsApp funciona de punta a punta) y con limpieza de
   código muerto.
 - **Subido a GitHub** en 10 commits temáticos, **pusheado**. Repo:
@@ -154,7 +172,7 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
     **transfiere ~111 KB** porque `next/image` sirve la variante justa (una miniatura
     del carrito baja 64px en vez de 800px). **−83% de transferencia.**
   - **SEO**: **Open Graph + Twitter cards**, con **imagen OG generada** (PNG 1200x630,
-    theme "Estadio Nocturno") en vez de reusar una foto del catálogo — las del catálogo
+    con el theme del sitio) en vez de reusar una foto del catálogo — las del catálogo
     son WebP, que **WhatsApp no renderiza bien** en las tarjetas, y son cuadradas.
     Más `metadataBase` y **sitemap**.
   - **Accesibilidad**: `ProductModal` y `CartPanel` pasaron a ser **diálogos accesibles**
@@ -170,6 +188,11 @@ categoría), `ProductCard` (tarjeta normal **+** card especial `FiguritasEleccio
     (reverse tabnabbing). Se verificó que ninguno usa el valor de retorno, que con
     `noopener` pasa a ser `null`.
   - **Prolijidad**: `name` del `package.json` ya no es el genérico del scaffolding.
+- **Cambio de paleta a "Violeta Profundo"** (ver sección 3), aplicado en 6 partes
+  verificables: tokens y utilidades de `globals.css` → superficies → sombras y glows
+  → texto sobre acentos → panel de admin → imagen OG. **Solo valores de color**: no
+  se tocó lógica, estructura ni la autenticación del panel. Barrido final confirmado:
+  **cero rastros** de los colores del theme anterior en todo el proyecto.
 
 **Pendiente** ⏳ (verificado en el código a la fecha de este archivo)
 - [ ] **Reemplazar imágenes placeholder** de funda iPhone 17, protectores 11-16 y
