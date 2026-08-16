@@ -90,7 +90,7 @@ export default function CartPanel({
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20, height: 0 }}
-                        className="flex gap-3 rounded-xl border border-[var(--line)] bg-gradient-to-b from-[rgba(15,26,80,0.6)] to-[rgba(10,18,55,0.4)] p-3"
+                        className="flex gap-3 rounded-xl border border-[var(--line)] bg-gradient-to-b from-[rgba(36,26,69,0.6)] to-[rgba(28,20,54,0.4)] p-3"
                       >
                         {/* Miniatura de tamaño fijo (64px): width/height explícitos
                             en vez de fill, así no necesita contenedor relative. */}
@@ -100,7 +100,7 @@ export default function CartPanel({
                           width={64}
                           height={64}
                           loading="lazy"
-                          className="h-16 w-16 rounded-lg bg-[#12225f] object-cover"
+                          className="h-16 w-16 rounded-lg bg-[#241a45] object-cover"
                         />
                         <div className="flex-1 min-w-0">
                           <h4 className="truncate text-sm font-semibold text-white">{item.name}</h4>

@@ -41,7 +41,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-5">
       <form
         onSubmit={entrar}
-        className="w-full max-w-sm rounded-2xl border border-[var(--line)] bg-[rgba(15,26,80,0.5)] p-7"
+        className="w-full max-w-sm rounded-2xl border border-[var(--line)] bg-[rgba(36,26,69,0.5)] p-7"
       >
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)]">
@@ -61,7 +61,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="mb-4 w-full rounded-xl border border-[var(--line)] bg-white/[0.04] px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[rgba(232,183,58,0.22)]"
+          className="mb-4 w-full rounded-xl border border-[var(--line)] bg-white/[0.04] px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[rgba(167,139,250,0.22)]"
         />
 
         <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-[var(--ink)]">
@@ -74,7 +74,7 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="mb-5 w-full rounded-xl border border-[var(--line)] bg-white/[0.04] px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[rgba(232,183,58,0.22)]"
+          className="mb-5 w-full rounded-xl border border-[var(--line)] bg-white/[0.04] px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[rgba(167,139,250,0.22)]"
         />
 
         {error && (

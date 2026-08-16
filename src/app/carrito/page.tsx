@@ -132,7 +132,7 @@ export default function CarritoPage() {
         className={`w-full rounded-xl border bg-white/[0.04] px-4 py-3 text-sm text-[var(--ink)] placeholder:text-[var(--mut)] outline-none transition focus:ring-2 ${
           errores[id]
             ? "border-red-400/60 focus:border-red-400 focus:ring-[rgba(248,113,113,0.2)]"
-            : "border-[var(--line)] focus:border-[var(--gold)] focus:ring-[rgba(232,183,58,0.22)]"
+            : "border-[var(--line)] focus:border-[var(--gold)] focus:ring-[rgba(167,139,250,0.22)]"
         }`}
       />
       {errores[id] && (
@@ -148,7 +148,7 @@ export default function CarritoPage() {
     <div className="font-archivo min-h-screen bg-[var(--navy)] text-[var(--ink)]">
       <div className="h-1 bg-gradient-to-r from-[var(--blue)] via-[var(--gold)] to-[var(--blue)]" />
 
-      <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[rgba(5,12,46,0.82)] backdrop-blur-[14px]">
+      <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[rgba(20,15,38,0.82)] backdrop-blur-[14px]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-14 items-center gap-4">
             <button
@@ -206,7 +206,7 @@ export default function CarritoPage() {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="rounded-3xl border border-[var(--line)] bg-[rgba(15,26,80,0.5)] p-12 text-center"
+                    className="rounded-3xl border border-[var(--line)] bg-[rgba(36,26,69,0.5)] p-12 text-center"
                   >
                     <div className="mx-auto mb-6 grid h-20 w-20 place-items-center rounded-full bg-white/5">
                       <ShoppingCart className="h-10 w-10 text-[var(--mut)]" />
@@ -231,9 +231,9 @@ export default function CarritoPage() {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 20, height: 0 }}
-                          className="flex gap-4 rounded-2xl border border-[var(--line)] bg-gradient-to-b from-[rgba(15,26,80,0.6)] to-[rgba(10,18,55,0.4)] p-4"
+                          className="flex gap-4 rounded-2xl border border-[var(--line)] bg-gradient-to-b from-[rgba(36,26,69,0.6)] to-[rgba(28,20,54,0.4)] p-4"
                         >
-                          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#12225f]">
+                          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#241a45]">
                             {/* Miniatura de tamaño fijo (96px), igual que en el panel del carrito */}
                             <Image
                               src={item.image}
@@ -297,7 +297,7 @@ export default function CarritoPage() {
                 )}
 
                 {items.length > 0 && (
-                  <div className="rounded-2xl border border-[var(--line)] bg-[rgba(15,26,80,0.4)] p-4 text-sm text-[var(--mut)]">
+                  <div className="rounded-2xl border border-[var(--line)] bg-[rgba(36,26,69,0.4)] p-4 text-sm text-[var(--mut)]">
                     <p className="text-center">
                       <Package className="inline h-4 w-4 mr-1 text-[var(--blue-l)]" />
                       Se envían {totalItems} {totalItems === 1 ? "producto" : "productos"} — Envíos a todo el país
@@ -309,7 +309,7 @@ export default function CarritoPage() {
               {/* COLUMNA DERECHA: Formulario */}
               {items.length > 0 && (
                 <div className="lg:col-span-2 space-y-6">
-                  <div className="rounded-2xl border border-[var(--line)] bg-[rgba(15,26,80,0.5)] p-6">
+                  <div className="rounded-2xl border border-[var(--line)] bg-[rgba(36,26,69,0.5)] p-6">
                     <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-white">
                       <ShieldCheck className="h-5 w-5 text-[var(--blue-l)]" />
                       Resumen del pedido
@@ -335,7 +335,7 @@ export default function CarritoPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[var(--line)] bg-[rgba(15,26,80,0.5)] p-6">
+                  <div className="rounded-2xl border border-[var(--line)] bg-[rgba(36,26,69,0.5)] p-6">
                     <h2 className="mb-1 text-xl font-bold text-white">Datos de entrega</h2>
                     <p className="mb-6 text-sm text-[var(--mut)]">Completá tus datos para confirmar la compra.</p>
 
@@ -353,7 +353,7 @@ export default function CarritoPage() {
                           onClick={() => setMetodoEntrega("envio")}
                           className={`flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all cursor-pointer ${
                             metodoEntrega === "envio"
-                              ? "border-[var(--blue-l)] bg-[rgba(45,107,255,0.15)] text-white"
+                              ? "border-[var(--blue-l)] bg-[rgba(139,92,246,0.15)] text-white"
                               : "border-[var(--line)] text-[var(--mut)] hover:border-[var(--blue-l)]/60"
                           }`}
                         >
@@ -364,7 +364,7 @@ export default function CarritoPage() {
                           onClick={() => setMetodoEntrega("retiro")}
                           className={`flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all cursor-pointer ${
                             metodoEntrega === "retiro"
-                              ? "border-[var(--blue-l)] bg-[rgba(45,107,255,0.15)] text-white"
+                              ? "border-[var(--blue-l)] bg-[rgba(139,92,246,0.15)] text-white"
                               : "border-[var(--line)] text-[var(--mut)] hover:border-[var(--blue-l)]/60"
                           }`}
                         >
@@ -475,7 +475,7 @@ export default function CarritoPage() {
         </AnimatePresence>
       </main>
 
-      <footer className="mt-12 border-t border-[var(--line)] bg-[rgba(5,12,46,0.5)] py-6">
+      <footer className="mt-12 border-t border-[var(--line)] bg-[rgba(20,15,38,0.5)] py-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-xs text-[var(--mut)] sm:flex-row sm:px-6 lg:px-8">
           <p>&copy; {new Date().getFullYear()} {storeName}</p>
           <p>{contactConfig.location} · {contactConfig.shippingNote}</p>

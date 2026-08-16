@@ -8,7 +8,7 @@ import { navSections, storeName, contactConfig } from "@/lib/products";
    ═══════════════════════════════════════════════ */
 export default function Footer() {
   return (
-    <footer className="font-archivo bg-gradient-to-b from-transparent to-[rgba(11,62,204,0.08)] text-[var(--mut)]">
+    <footer className="font-archivo bg-gradient-to-b from-transparent to-[rgba(124,58,237,0.08)] text-[var(--mut)]">
       {/* Hairline dorado superior */}
       <div className="h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent" />
 

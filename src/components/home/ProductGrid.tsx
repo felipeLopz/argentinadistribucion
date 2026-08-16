@@ -47,7 +47,7 @@ export default function ProductGrid({
       <div className="mx-auto max-w-[1240px] px-5 sm:px-7">
         {/* Encabezado de sección */}
         <div className="mb-[38px] flex items-center gap-4">
-          <div className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[15px] border border-[var(--line)] bg-[rgba(45,107,255,0.14)] text-[var(--blue-l)]">
+          <div className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[15px] border border-[var(--line)] bg-[rgba(139,92,246,0.14)] text-[var(--blue-l)]">
             {icon}
           </div>
           <div>
@@ -69,12 +69,12 @@ export default function ProductGrid({
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mx-auto max-w-[560px] rounded-[20px] border border-dashed border-[var(--line)] bg-[rgba(10,18,55,0.3)] px-5 py-[70px] text-center"
+            className="mx-auto max-w-[560px] rounded-[20px] border border-dashed border-[var(--line)] bg-[rgba(28,20,54,0.3)] px-5 py-[70px] text-center"
           >
             <div className="mx-auto mb-[18px] grid h-16 w-16 place-items-center rounded-full bg-white/5 text-[var(--mut)]">
               <Clock className="h-7 w-7" />
             </div>
-            <span className="mb-3.5 inline-block rounded-full bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] px-4 py-1.5 text-[13px] font-bold text-[#3a2c00]">
+            <span className="mb-3.5 inline-block rounded-full bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] px-4 py-1.5 text-[13px] font-bold text-[#140f26]">
               Próximamente
             </span>
             <p className="text-[14px] leading-[1.6] text-[var(--mut)]">

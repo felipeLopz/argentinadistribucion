@@ -27,7 +27,7 @@ export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
   };
 
   return (
-    <header className="font-archivo sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[rgba(5,12,46,0.82)] backdrop-blur-[14px]">
+    <header className="font-archivo sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[rgba(20,15,38,0.82)] backdrop-blur-[14px]">
       <div className="mx-auto max-w-[1240px] px-5 sm:px-7">
         <div className="flex h-[74px] items-center gap-6">
           {/* Logo */}
@@ -35,7 +35,7 @@ export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
             onClick={() => handleNavClick("inicio")}
             className="flex items-center gap-[11px] shrink-0"
           >
-            <span className="grid h-[38px] w-[38px] place-items-center rounded-[11px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_22px_rgba(11,62,204,0.5)]">
+            <span className="grid h-[38px] w-[38px] place-items-center rounded-[11px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_22px_rgba(124,58,237,0.5)]">
               <Trophy className="h-[19px] w-[19px]" />
             </span>
             <span className="hidden flex-col text-left leading-none sm:flex">
@@ -56,7 +56,7 @@ export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
               placeholder="Buscar productos..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="h-[42px] w-full rounded-[12px] border border-[var(--line)] bg-white/[0.04] pl-10 pr-9 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)] focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(232,183,58,0.18)]"
+              className="h-[42px] w-full rounded-[12px] border border-[var(--line)] bg-white/[0.04] pl-10 pr-9 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)] focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(167,139,250,0.18)]"
             />
             {searchQuery && (
               <button
@@ -106,7 +106,7 @@ export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
               <motion.button
                 onClick={onCartToggle}
                 whileTap={{ scale: 0.9 }}
-                className="relative grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] text-[#3a2c00] shadow-[0_8px_22px_rgba(232,183,58,0.35)] transition-transform hover:-translate-y-0.5"
+                className="relative grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] text-[#140f26] shadow-[0_8px_22px_rgba(167,139,250,0.35)] transition-transform hover:-translate-y-0.5"
                 aria-label="Carrito"
               >
                 <ShoppingCart className="h-5 w-5" />
@@ -146,7 +146,7 @@ export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
               placeholder="Buscar productos..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="h-[42px] w-full rounded-[12px] border border-[var(--line)] bg-white/[0.04] pl-10 pr-4 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)] focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(232,183,58,0.18)]"
+              className="h-[42px] w-full rounded-[12px] border border-[var(--line)] bg-white/[0.04] pl-10 pr-4 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)] focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(167,139,250,0.18)]"
             />
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="overflow-hidden border-t border-[var(--line)] bg-[rgba(5,12,46,0.95)] lg:hidden"
+            className="overflow-hidden border-t border-[var(--line)] bg-[rgba(20,15,38,0.95)] lg:hidden"
           >
             <div className="space-y-1 px-4 py-2">
               {navSections.map((section) => (

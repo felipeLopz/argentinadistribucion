@@ -18,7 +18,7 @@ const CARD_IMG_SIZES = "(max-width: 639px) 360px, 262px";
 /* Hover común a las cards (elevación + sombra). */
 const cardHover = {
   y: -8,
-  boxShadow: "0 24px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(232,183,58,0.15)",
+  boxShadow: "0 24px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(167,139,250,0.15)",
 };
 const cardReveal = {
   initial: { opacity: 0, y: 24 },
@@ -29,7 +29,7 @@ const cardReveal = {
 /* Pill de precio (azul), ajustado a su contenido. Se usa en las cards
    normales y en la card especial. */
 const PRICE_PILL =
-  "inline-flex w-fit items-center whitespace-nowrap rounded-[11px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-4 py-2 text-[22px] font-extrabold leading-none text-white shadow-[0_6px_16px_rgba(11,62,204,0.5)]";
+  "inline-flex w-fit items-center whitespace-nowrap rounded-[11px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-4 py-2 text-[22px] font-extrabold leading-none text-white shadow-[0_6px_16px_rgba(124,58,237,0.5)]";
 
 /* ═══════════════════════════════════════════════
    PRODUCT CARD — Tarjeta de producto (estilo Estadio Nocturno)
@@ -65,14 +65,14 @@ export function ProductCard({ product, index, onOpen }: { product: Product; inde
       role={open ? "button" : undefined}
       tabIndex={open ? 0 : undefined}
       aria-label={open ? `Ver ${product.name}` : undefined}
-      className={`group relative flex ${CARD_W} flex-col overflow-hidden rounded-[20px] border border-[var(--line)] bg-gradient-to-b from-[rgba(15,26,80,0.6)] to-[rgba(10,18,55,0.4)] ${
+      className={`group relative flex ${CARD_W} flex-col overflow-hidden rounded-[20px] border border-[var(--line)] bg-gradient-to-b from-[rgba(36,26,69,0.6)] to-[rgba(28,20,54,0.4)] ${
         open
           ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]/70"
           : ""
       }`}
     >
       {/* Imagen */}
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#12225f] to-[#0a1550]">
+      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#241a45] to-[#1c1436]">
         <Image
           src={product.image}
           alt={product.name}
@@ -172,10 +172,10 @@ export function FiguritasEleccionCard() {
       {...cardReveal}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       whileHover={cardHover}
-      className={`group relative flex ${CARD_W} flex-col overflow-hidden rounded-[20px] border border-[var(--line)] bg-gradient-to-b from-[rgba(15,26,80,0.6)] to-[rgba(10,18,55,0.4)]`}
+      className={`group relative flex ${CARD_W} flex-col overflow-hidden rounded-[20px] border border-[var(--line)] bg-gradient-to-b from-[rgba(36,26,69,0.6)] to-[rgba(28,20,54,0.4)]`}
     >
       {/* Imagen */}
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#12225f] to-[#0a1550]">
+      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#241a45] to-[#1c1436]">
         <Image
           src={IMG_PACKS}
           alt="Figuritas a Elección"
@@ -184,7 +184,7 @@ export function FiguritasEleccionCard() {
           className="object-cover transition-transform duration-500 group-hover:scale-[1.08]"
           loading="lazy"
         />
-        <span className="pointer-events-none absolute left-3 top-3 inline-flex items-center gap-1 rounded-[7px] border border-[var(--line)] bg-[rgba(5,12,46,0.85)] px-2.5 py-[5px] text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--mut)] backdrop-blur-[6px]">
+        <span className="pointer-events-none absolute left-3 top-3 inline-flex items-center gap-1 rounded-[7px] border border-[var(--line)] bg-[rgba(20,15,38,0.85)] px-2.5 py-[5px] text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--mut)] backdrop-blur-[6px]">
           <Star className="h-3 w-3" />
           A Elección
         </span>

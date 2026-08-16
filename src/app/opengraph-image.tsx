@@ -18,13 +18,15 @@ export const alt = "Argentina Distributor — Figuritas del Mundial & Merchandis
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-/* Tokens del theme, replicados acá porque Satori no lee el CSS del sitio */
-const NAVY = "#050c2e";
-const NAVY_2 = "#0a1550";
-const GOLD = "#e8b73a";
-const GOLD_L = "#f5d06b";
-const INK = "#e8ecff";
-const MUT = "#8b96c9";
+/* Tokens del theme "Violeta Profundo", replicados acá porque Satori no lee
+   el CSS del sitio. Se conservan los nombres (NAVY/GOLD) para que se
+   correspondan 1:1 con los tokens de globals.css; lo que cambia es el valor. */
+const NAVY = "#140f26"; // fondo base
+const NAVY_2 = "#1c1436"; // fondo secundario
+const GOLD = "#a78bfa"; // acento principal (lila)
+const GOLD_L = "#f0abfc"; // acento secundario (rosa)
+const INK = "#efeafe"; // texto principal
+const MUT = "#a396c9"; // texto atenuado
 
 export default function OpengraphImage() {
   return new ImageResponse(

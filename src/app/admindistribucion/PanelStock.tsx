@@ -195,7 +195,7 @@ export default function PanelStock() {
         {filtrados.map((p) => (
           <div
             key={p.id}
-            className="rounded-2xl border border-[var(--line)] bg-[rgba(15,26,80,0.4)] p-5"
+            className="rounded-2xl border border-[var(--line)] bg-[rgba(36,26,69,0.4)] p-5"
           >
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <h2 className="text-base font-bold text-white">{p.nombre}</h2>

@@ -164,7 +164,7 @@ export default function ProductModal({
             <button
               onClick={onClose}
               aria-label="Cerrar"
-              className="absolute right-4 top-4 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-[var(--line)] bg-[rgba(5,12,46,0.85)] text-[var(--ink)] backdrop-blur-md transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)]"
+              className="absolute right-4 top-4 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-[var(--line)] bg-[rgba(20,15,38,0.85)] text-[var(--ink)] backdrop-blur-md transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)]"
             >
               <X className="h-5 w-5" />
             </button>
@@ -173,7 +173,7 @@ export default function ProductModal({
                 selectores, cantidad y descripción — una sola pieza. */}
             <div className="flex-1 overflow-y-auto">
               {/* Header con imagen de fondo */}
-              <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#12225f] to-[#0a1550] sm:h-72">
+              <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#241a45] to-[#1c1436] sm:h-72">
                 <Image
                   src={product.image}
                   alt={product.name}
@@ -191,7 +191,7 @@ export default function ProductModal({
 
                 {/* Badge categoría */}
                 <div className="absolute left-4 top-4">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[rgba(5,12,46,0.85)] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--mut)] backdrop-blur-md">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[rgba(20,15,38,0.85)] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--mut)] backdrop-blur-md">
                     <Star className="h-3 w-3 text-[var(--blue-l)]" />
                     {categoriaLabel}
                   </span>
@@ -292,7 +292,7 @@ export default function ProductModal({
                               agotado
                                 ? "cursor-not-allowed border-[var(--line)] bg-white/[0.03] opacity-50"
                                 : seleccionado
-                                ? "scale-105 border-[var(--blue-l)] bg-[var(--blue)] text-white shadow-[0_8px_20px_rgba(11,62,204,0.4)]"
+                                ? "scale-105 border-[var(--blue-l)] bg-[var(--blue)] text-white shadow-[0_8px_20px_rgba(124,58,237,0.4)]"
                                 : "cursor-pointer border-[var(--line)] text-[var(--ink)] hover:border-[var(--blue-l)] hover:bg-white/[0.04]"
                             }`}
                           >
@@ -350,7 +350,7 @@ export default function ProductModal({
                                 agotadoV
                                   ? "cursor-not-allowed border-[var(--line)] bg-white/[0.03] opacity-50"
                                   : seleccionado
-                                  ? "scale-105 border-[var(--blue-l)] bg-[var(--blue)] text-white shadow-[0_8px_20px_rgba(11,62,204,0.4)]"
+                                  ? "scale-105 border-[var(--blue-l)] bg-[var(--blue)] text-white shadow-[0_8px_20px_rgba(124,58,237,0.4)]"
                                   : "cursor-pointer border-[var(--line)] text-[var(--ink)] hover:border-[var(--blue-l)] hover:bg-white/[0.04]"
                               }`}
                             >
