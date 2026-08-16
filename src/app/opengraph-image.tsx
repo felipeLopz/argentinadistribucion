@@ -10,11 +10,11 @@ import { ImageResponse } from "next/og";
    (b) son cuadradas 800x800 y OG pide 1200x630, así que quedarían
    recortadas o con franjas.
 
-   Usa el theme "Estadio Nocturno" (navy + dorado) para que la tarjeta
-   sea coherente con el sitio.
+   Usa la paleta "Violeta Profundo" del sitio para que la tarjeta sea
+   coherente con él.
    ══════════════════════════════════════════════════════════════ */
 
-export const alt = "Argentina Distributor — Figuritas del Mundial & Merchandising";
+export const alt = "Distribuidor Argentino KOI — Vapers, Termos y Accesorios Apple";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -56,7 +56,7 @@ export default function OpengraphImage() {
           }}
         />
 
-        {/* Pill dorado */}
+        {/* Pill de acento */}
         <div
           style={{
             display: "flex",
@@ -70,34 +70,47 @@ export default function OpengraphImage() {
             color: GOLD_L,
           }}
         >
-          COPA DEL MUNDO
+          VAPERS · TERMOS · APPLE
         </div>
 
-        {/* Nombre de la tienda */}
+        {/* Nombre de la tienda. Va en dos líneas y con "KOI" destacado: en una
+            sola línea, 26 caracteres a 86px se pasarían de los 1200px de ancho. */}
         <div
           style={{
             display: "flex",
-            marginTop: 38,
-            fontSize: 86,
-            fontWeight: 800,
-            color: INK,
-            letterSpacing: -2,
+            marginTop: 34,
+            fontSize: 52,
+            fontWeight: 700,
+            color: MUT,
+            letterSpacing: -1,
           }}
         >
-          Argentina Distributor
+          Distribuidor Argentino
         </div>
-
-        {/* Tagline en dorado */}
         <div
           style={{
             display: "flex",
-            marginTop: 18,
-            fontSize: 44,
+            marginTop: 4,
+            fontSize: 120,
+            fontWeight: 800,
+            color: INK,
+            letterSpacing: 2,
+          }}
+        >
+          KOI
+        </div>
+
+        {/* Tagline en lila */}
+        <div
+          style={{
+            display: "flex",
+            marginTop: 14,
+            fontSize: 40,
             fontWeight: 700,
             color: GOLD,
           }}
         >
-          Figuritas del Mundial &amp; Merchandising
+          Tu tienda de confianza
         </div>
 
         {/* Línea divisoria */}

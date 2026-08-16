@@ -249,4 +249,4 @@ export const contactConfig = {
 /* ──────────────────────────────────────────────
    Nombre de la tienda (centralizado)
    ────────────────────────────────────────────── */
-export const storeName = "Argentina Distributor";
+export const storeName = "Distribuidor Argentino KOI";

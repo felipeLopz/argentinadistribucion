@@ -1,6 +1,6 @@
 "use client";
 
-import { Trophy, Instagram, MessageCircle, Mail, MapPin, Truck, Heart } from "lucide-react";
+import { Fish, Instagram, MessageCircle, Mail, MapPin, Truck, Heart } from "lucide-react";
 import { navSections, storeName, contactConfig } from "@/lib/products";
 
 /* ═══════════════════════════════════════════════
@@ -18,12 +18,12 @@ export default function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="mb-4 flex items-center gap-2.5">
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)]">
-                <Trophy className="h-5 w-5 text-white" />
+                <Fish className="h-5 w-5 text-white" />
               </div>
               <span className="text-lg font-extrabold text-white">{storeName}</span>
             </div>
             <p className="max-w-[280px] text-sm leading-relaxed text-[var(--mut)]">
-              Tu tienda de confianza para figuritas del Mundial y merchandising oficial de la Selección Argentina.
+              Tu tienda de confianza en vapers, termos Stanley y accesorios para iPhone.
             </p>
             {/* Redes sociales */}
             <div className="mt-5 flex items-center gap-3">

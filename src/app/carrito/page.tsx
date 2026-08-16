@@ -16,7 +16,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Trophy,
+  Fish,
   Trash2,
   ShoppingCart,
   ShieldCheck,
@@ -160,7 +160,7 @@ export default function CarritoPage() {
             </button>
             <div className="flex items-center gap-2">
               <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)]">
-                <Trophy className="h-4 w-4 text-white" />
+                <Fish className="h-4 w-4 text-white" />
               </div>
               <span className="text-sm font-extrabold text-[var(--ink)]">{storeName}</span>
             </div>

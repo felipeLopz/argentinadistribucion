@@ -24,10 +24,10 @@ const archivo = Archivo({
 
 /* Título y descripción centralizados: los comparten el <title>, la tarjeta
    de Open Graph y la de Twitter, así no pueden quedar desalineados. */
-const SITE_NAME = "Argentina Distributor";
-const SITE_TITLE = "Argentina Distributor | Figuritas del Mundial & Merchandising";
+const SITE_NAME = "Distribuidor Argentino KOI";
+const SITE_TITLE = "Distribuidor Argentino KOI | Vapers, Termos y Accesorios Apple";
 const SITE_DESCRIPTION =
-  "Tienda online de figuritas del Mundial y merchandising oficial de Argentina. Figuritas Panini, camisetas, accesorios y coleccionables. Envios a todo el pais.";
+  "Tienda online de vapers, termos Stanley y accesorios para iPhone: fundas, protectores, cargadores y auriculares. Atencion personalizada por WhatsApp y envios a todo el pais.";
 
 export const metadata: Metadata = {
   /* Necesaria para que las imágenes OG con rutas relativas
@@ -52,17 +52,19 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
   },
   keywords: [
-    "figuritas mundial",
-    "argentina merchandising",
-    "panini qatar 2022",
-    "camiseta argentina",
-    "seleccion argentina",
-    "copa del mundo",
-    "messi",
-    "coleccionables futbol",
+    "vapers",
+    "vapers argentina",
+    "termos stanley",
+    "accesorios apple",
+    "fundas iphone",
+    "protectores de pantalla",
+    "cargadores iphone",
+    "distribuidor mendoza",
   ],
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇦🇷</text></svg>",
+    /* Pez koi: coherente con el nombre de la marca y neutro respecto de los
+       productos, que van a seguir cambiando. */
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐟</text></svg>",
   },
 };
 

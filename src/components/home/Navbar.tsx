@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, ShoppingCart, Menu, Trophy } from "lucide-react";
+import { Search, X, ShoppingCart, Menu, Fish } from "lucide-react";
 import { navSections, storeName } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 
@@ -36,14 +36,14 @@ export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
             className="flex items-center gap-[11px] shrink-0"
           >
             <span className="grid h-[38px] w-[38px] place-items-center rounded-[11px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_22px_rgba(124,58,237,0.5)]">
-              <Trophy className="h-[19px] w-[19px]" />
+              <Fish className="h-[19px] w-[19px]" />
             </span>
             <span className="hidden flex-col text-left leading-none sm:flex">
               <span className="text-[15px] font-extrabold tracking-[-0.02em] text-[var(--ink)]">
                 {storeName}
               </span>
               <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--gold)]">
-                Figuritas &amp; Merchandising
+                Vapers &middot; Termos &middot; Apple
               </span>
             </span>
           </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Trophy, MessageCircle } from "lucide-react";
+import { Fish, ShoppingBag, MessageCircle } from "lucide-react";
 import { contactConfig } from "@/lib/products";
 
 const FEATURES = [
@@ -31,8 +31,8 @@ export default function Hero() {
           transition={{ duration: 0.6 }}
           className="inline-flex items-center gap-2 rounded-full border border-[rgba(167,139,250,0.4)] bg-[rgba(167,139,250,0.12)] px-[18px] py-2 text-[13px] font-bold uppercase tracking-[0.03em] text-[var(--gold-l)]"
         >
-          <Trophy className="h-4 w-4" />
-          Copa del Mundo
+          <Fish className="h-4 w-4" />
+          Vapers · Termos · Apple
         </motion.span>
 
         {/* Título */}
@@ -42,8 +42,8 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mt-7 font-black leading-[0.98] tracking-[-0.035em] text-[clamp(38px,6.5vw,80px)]"
         >
-          <span className="text-white">Figuritas del Mundial</span>
-          <span className="text-gold-gradient mt-1.5 block">&amp; Merchandising Argentina</span>
+          <span className="text-white">KOI</span>
+          <span className="text-gold-gradient mt-1.5 block">tu tienda de confianza</span>
         </motion.h1>
 
         {/* Subtítulo */}
@@ -53,8 +53,8 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mx-auto mt-6 max-w-[560px] text-[17px] leading-[1.65] text-[var(--mut)]"
         >
-          Tu tienda de confianza para figuritas, álbumes y toda la merchandising
-          oficial de la Selección Argentina. Envíos a todo el país.
+          Vapers, termos Stanley y accesorios para iPhone, con atención
+          personalizada por WhatsApp y envíos a todo el país.
         </motion.p>
 
         {/* CTA */}
@@ -68,7 +68,7 @@ export default function Hero() {
             href="#paquetes"
             className="inline-flex items-center gap-2 rounded-[13px] bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] px-[30px] py-[15px] text-[15px] font-bold text-[#140f26] shadow-[0_10px_30px_rgba(167,139,250,0.35)] transition-[transform,box-shadow] duration-300 hover:-translate-y-[3px] hover:shadow-[0_16px_40px_rgba(167,139,250,0.5)]"
           >
-            <Trophy className="h-[18px] w-[18px]" />
+            <ShoppingBag className="h-[18px] w-[18px]" />
             Ver Productos
           </a>
           <a
