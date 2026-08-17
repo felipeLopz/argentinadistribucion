@@ -65,8 +65,9 @@ export default function Hero() {
           className="mt-9 flex flex-col items-center justify-center gap-3.5 sm:flex-row"
         >
           <a
-            /* Primera sección del catálogo (ver navSections en products.ts) */
-            href="#accesorios"
+            /* El catálogo es una sola sección desde que hay filtros: ya no
+               hay una sección por categoría a la que apuntar. */
+            href="#catalogo"
             className="inline-flex items-center gap-2 rounded-[13px] bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] px-[30px] py-[15px] text-[15px] font-bold text-[#140f26] shadow-[0_10px_30px_rgba(167,139,250,0.35)] transition-[transform,box-shadow] duration-300 hover:-translate-y-[3px] hover:shadow-[0_16px_40px_rgba(167,139,250,0.5)]"
           >
             <ShoppingBag className="h-[18px] w-[18px]" />

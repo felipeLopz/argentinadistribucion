@@ -1,23 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ShoppingCart, Menu, Fish } from "lucide-react";
 import { navSections, storeName } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
+import { useFiltros } from "@/lib/filtros-context";
 
 /* ═══════════════════════════════════════════════
    NAVBAR — Diseño "Estadio Nocturno"
    Barra oscura translúcida, buscador con foco dorado,
    links con subrayado dorado y carrito dorado con badge azul.
    ═══════════════════════════════════════════════ */
-export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
-  onCartToggle: () => void;
-}) {
+export default function Navbar({ onCartToggle }: { onCartToggle: () => void }) {
   const { totalItems } = useCart();
+  /* La búsqueda sale del contexto de filtros: es el MISMO estado que usa
+     el catálogo, no una copia. */
+  const { filtros, setBusqueda } = useFiltros();
+  const searchQuery = filtros.busqueda;
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [buscadorMobileAbierto, setBuscadorMobileAbierto] = useState(false);
+  const inputMobileRef = useRef<HTMLInputElement>(null);
+
+  /* Al abrir el buscador mobile, el foco va al input (igual que antes) */
+  useEffect(() => {
+    if (buscadorMobileAbierto) inputMobileRef.current?.focus();
+  }, [buscadorMobileAbierto]);
 
   /* Cerrar menú móvil al hacer clic en un enlace */
   const handleNavClick = (id: string) => {
@@ -55,12 +64,12 @@ export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
               type="text"
               placeholder="Buscar productos..."
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) => setBusqueda(e.target.value)}
               className="h-[42px] w-full rounded-[12px] border border-[var(--line)] bg-white/[0.04] pl-10 pr-9 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)] focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(167,139,250,0.18)]"
             />
             {searchQuery && (
               <button
-                onClick={() => onSearchChange("")}
+                onClick={() => setBusqueda("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--mut)] transition-colors hover:text-[var(--ink)]"
                 aria-label="Limpiar búsqueda"
               >
@@ -89,15 +98,10 @@ export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
               {/* Búsqueda mobile */}
               <button
                 className="grid h-11 w-11 place-items-center rounded-[12px] border border-[var(--line)] bg-white/[0.04] text-[var(--ink)] transition-colors hover:bg-white/10 md:hidden"
-                onClick={() => {
-                  const searchMobile = document.getElementById("search-mobile");
-                  if (searchMobile) {
-                    const isHidden = searchMobile.classList.contains("hidden");
-                    searchMobile.classList.toggle("hidden");
-                    if (isHidden) searchMobile.querySelector("input")?.focus();
-                  }
-                }}
+                onClick={() => setBuscadorMobileAbierto((v) => !v)}
                 aria-label="Buscar"
+                aria-expanded={buscadorMobileAbierto}
+                aria-controls="search-mobile"
               >
                 <Search className="h-5 w-5" />
               </button>
@@ -138,14 +142,18 @@ export default function Navbar({ searchQuery, onSearchChange, onCartToggle }: {
         </div>
 
         {/* Buscador mobile (colapsable) */}
-        <div id="search-mobile" className="hidden pb-3 md:hidden">
+        <div
+          id="search-mobile"
+          className={`${buscadorMobileAbierto ? "" : "hidden"} pb-3 md:hidden`}
+        >
           <div className="relative">
             <Search className="pointer-events-none absolute left-[13px] top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--mut)]" />
             <input
+              ref={inputMobileRef}
               type="text"
               placeholder="Buscar productos..."
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) => setBusqueda(e.target.value)}
               className="h-[42px] w-full rounded-[12px] border border-[var(--line)] bg-white/[0.04] pl-10 pr-4 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)] focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(167,139,250,0.18)]"
             />
           </div>

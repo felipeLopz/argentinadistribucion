@@ -214,17 +214,31 @@ export const products: Product[] = [
 ];
 
 /* ──────────────────────────────────────────────
-   Navegación por secciones de la tienda.
-   El orden de esta lista es el orden del menú; el de las secciones en la
-   home lo define src/app/page.tsx (van iguales a propósito).
+   Navegación del navbar.
+
+   Son SOLO anclas de scroll. Las categorías NO van acá: viven en los
+   chips de la barra de filtros del catálogo (ver CATEGORIAS abajo), que
+   filtran en lugar de scrollear. Meterlas en los dos lados daría dos
+   formas distintas de hacer lo mismo.
    ────────────────────────────────────────────── */
 export const navSections = [
   { id: "inicio", label: "Inicio" },
+  { id: "contacto", label: "Contacto" },
+] as const;
+
+/* ──────────────────────────────────────────────
+   Categorías del catálogo — los chips de la barra de filtros.
+
+   "todo" no es una categoría de producto: es el estado sin filtrar.
+   Las etiquetas son cortas a propósito, porque en mobile los chips van
+   en una fila que scrollea.
+   ────────────────────────────────────────────── */
+export const CATEGORIAS = [
+  { id: "todo", label: "Ver todo" },
   { id: "accesorios", label: "Promos" },
   { id: "vapers", label: "Vapers" },
   { id: "termos", label: "Termos" },
-  { id: "accesorios-apple", label: "Accesorios Apple" },
-  { id: "contacto", label: "Contacto" },
+  { id: "accesorios-apple", label: "Apple" },
 ] as const;
 
 /* ──────────────────────────────────────────────

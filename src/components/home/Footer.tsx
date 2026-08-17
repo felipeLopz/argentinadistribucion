@@ -1,12 +1,27 @@
 "use client";
 
 import { Fish, Instagram, MessageCircle, Mail, MapPin, Truck, Heart } from "lucide-react";
-import { navSections, storeName, contactConfig } from "@/lib/products";
+import { CATEGORIAS, navSections, storeName, contactConfig } from "@/lib/products";
+import { useFiltros } from "@/lib/filtros-context";
+import type { CategoriaFiltro } from "@/lib/filtros";
 
 /* ═══════════════════════════════════════════════
    FOOTER — Diseño "Estadio Nocturno"
    ═══════════════════════════════════════════════ */
 export default function Footer() {
+  const { setCategoria } = useFiltros();
+
+  const irASeccion = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  /* Los links de categoría del footer activan el chip correspondiente y
+     llevan al catálogo: las secciones por categoría ya no existen. */
+  const irACategoria = (id: CategoriaFiltro) => {
+    setCategoria(id);
+    irASeccion("catalogo");
+  };
+
   return (
     <footer className="font-archivo bg-gradient-to-b from-transparent to-[rgba(124,58,237,0.08)] text-[var(--mut)]">
       {/* Hairline dorado superior */}
@@ -47,19 +62,37 @@ export default function Footer() {
           <div>
             <h4 className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--gold)]">Secciones</h4>
             <ul className="space-y-2.5 text-sm">
-              {navSections.map((s) => (
-                <li key={s.id}>
+              {/* Inicio */}
+              <li>
+                <button
+                  onClick={() => irASeccion(navSections[0].id)}
+                  className="text-[var(--mut)] transition-colors hover:text-[var(--ink)]"
+                >
+                  {navSections[0].label}
+                </button>
+              </li>
+
+              {/* Categorías: activan el chip, no scrollean a una sección */}
+              {CATEGORIAS.filter((c) => c.id !== "todo").map((c) => (
+                <li key={c.id}>
                   <button
-                    onClick={() => {
-                      const el = document.getElementById(s.id);
-                      if (el) el.scrollIntoView({ behavior: "smooth" });
-                    }}
+                    onClick={() => irACategoria(c.id as CategoriaFiltro)}
                     className="text-[var(--mut)] transition-colors hover:text-[var(--ink)]"
                   >
-                    {s.label}
+                    {c.label}
                   </button>
                 </li>
               ))}
+
+              {/* Contacto */}
+              <li>
+                <button
+                  onClick={() => irASeccion(navSections[1].id)}
+                  className="text-[var(--mut)] transition-colors hover:text-[var(--ink)]"
+                >
+                  {navSections[1].label}
+                </button>
+              </li>
             </ul>
           </div>
 
