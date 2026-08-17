@@ -8,6 +8,10 @@ export interface ProductOption {
   values: string[];
 }
 
+/** Las categorías del catálogo. Las etiquetas de los chips salen de
+ *  CATEGORIAS, más abajo. */
+export type Categoria = "accesorios" | "vapers" | "termos" | "accesorios-apple";
+
 export interface Product {
   id: string;
   name: string;
@@ -18,7 +22,19 @@ export interface Product {
   image?: string;
   price?: number;
   options?: ProductOption[];
-  category: "accesorios" | "vapers" | "termos" | "accesorios-apple";
+
+  /** Categoría principal. Es la que muestra el badge del modal. */
+  category: Categoria;
+
+  /** Categorías ADICIONALES en las que también aparece. Un producto puede
+   *  estar en varias secciones sin dejar de ser uno solo: `products` lo
+   *  guarda una única vez, así que "Ver todo" lo muestra una vez y el
+   *  contador de cada chip lo cuenta.
+   *
+   *  Ojo: por eso la suma de los contadores de los chips puede ser mayor
+   *  que el total de "Ver todo". Es esperado, no un error de conteo. */
+  categoriasExtra?: Categoria[];
+
   status?: "consultar" | "proximamente";
 
   /* ─── Promo por cantidad (pack) ───
@@ -55,17 +71,21 @@ export interface Product {
   precioAnterior?: number;
 }
 
-/* Opciones reutilizables para los protectores de iPhone */
-const MODELOS_IPHONE_11_16 = ["iPhone 11", "iPhone 12", "iPhone 13", "iPhone 14", "iPhone 15", "iPhone 16"];
+/** Todas las categorías en las que aparece un producto: la principal más
+ *  las adicionales. Es la función que tiene que usar cualquier filtro, en
+ *  lugar de comparar contra `category` a secas. */
+export function categoriasDe(product: Product): Categoria[] {
+  return product.categoriasExtra?.length
+    ? [product.category, ...product.categoriasExtra]
+    : [product.category];
+}
 
 /* ──────────────────────────────────────────────
    Imágenes del catálogo.
    Los vapers y los termos todavía no tienen foto: se omite `image` y la
    card/modal muestran el placeholder.
+   Hay fotos compartidas por más de un producto, a propósito.
    ────────────────────────────────────────────── */
-const IMG_CARGADOR = "/images/cargador.webp";
-const IMG_FUNDA_IPHONE = "/images/funda-iphone.webp";
-const IMG_AIRPODS = "/images/airpods.webp";
 const IMG_SILICONE_CASE = "/images/silicone-case.webp";
 const IMG_AIRPODS_PRO_2 = "/images/airpods-pro-2.webp";
 const IMG_CABLE_CABEZAL = "/images/cable-cabezal-usbc.webp";
@@ -87,6 +107,8 @@ export const products: Product[] = [
     packPrecios: [5000, 8500, 12500, 16500],
     sinStock: true,
     category: "accesorios",
+    /* Aparece también en Accesorios Apple, siendo UN solo producto. */
+    categoriasExtra: ["accesorios-apple"],
   },
   {
     id: "promo-airpods-pro-2",
@@ -101,9 +123,9 @@ export const products: Product[] = [
   },
   {
     id: "promo-cable-cabezal",
-    name: "Cable y cabezal iPhone USB-C",
+    name: "Cable y cabezal USB C - USB C",
     description:
-      "Cable USB-C de 1 metro más cabezal de 20W para carga rápida. Los dos en su caja original.",
+      "Cable de 1 metro con USB C en los dos extremos, más cabezal de 20W para carga rápida. Los dos en su caja original.",
     image: IMG_CABLE_CABEZAL,
     price: 20000,
     category: "accesorios",
@@ -206,39 +228,23 @@ export const products: Product[] = [
     category: "termos",
   },
 
-  // ═══ ACCESORIOS APPLE ═══
-  {
-    id: "apl-5",
-    name: "Protectores de iPhone del 11 al 16",
-    description: "Protectores de pantalla para iPhone 11 al 16. Elegí el modelo.",
-    image: IMG_FUNDA_IPHONE,
-    price: 7900,
-    options: [{ label: "Modelo", values: MODELOS_IPHONE_11_16 }],
-    category: "accesorios-apple",
-  },
-  {
-    id: "apl-6",
-    name: "Protector de iPhone 17",
-    description: "Protector de pantalla para iPhone 17.",
-    image: IMG_FUNDA_IPHONE,
-    price: 7900,
-    /* EJEMPLO */
-    badges: ["nuevo"],
-    category: "accesorios-apple",
-  },
+  /* ═══ ACCESORIOS APPLE ═══
+     Ojo: la Silicone Case también sale acá, vía `categoriasExtra`. Está
+     definida arriba, en Promos, y es UN solo producto. */
   {
     id: "apl-2",
     name: "AirPods",
     description: "Auriculares inalámbricos con estuche de carga.",
-    image: IMG_AIRPODS,
+    image: IMG_AIRPODS_PRO_2,
     price: 52300,
     category: "accesorios-apple",
   },
   {
     id: "apl-3",
-    name: "Cargadores",
-    description: "Cargadores para iPhone con cable y cabezal.",
-    image: IMG_CARGADOR,
+    name: "Cargadores USB C - USB C",
+    description:
+      "Cargadores con cable USB C en los dos extremos, más el cabezal para carga rápida.",
+    image: IMG_CABLE_CABEZAL,
     price: 11400,
     category: "accesorios-apple",
   },

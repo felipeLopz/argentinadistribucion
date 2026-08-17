@@ -3,12 +3,15 @@ import { products, type Product } from "./products";
 /* ══════════════════════════════════════════════════════════════
    CONFIGURACIÓN DE STOCK — granularidad por producto
 
-   Decisión tomada (granularidad MIXTA): no todos los productos llevan
-   stock con el mismo detalle que sus opciones de compra.
+   Permite granularidad MIXTA: un producto puede ofrecerse con más detalle
+   del que se lleva en el stock. Por ejemplo, ofrecer 11 colores × 6
+   modelos (66 combinaciones) pero llevar stock sólo por modelo (6 filas),
+   coordinando el color por WhatsApp al cerrar la venta.
 
-   Ejemplo clave: las fundas 11-16 se ofrecen en 11 colores × 6 modelos
-   (66 combinaciones), pero el stock se lleva SOLO por modelo (6 filas).
-   El color se coordina por WhatsApp al cerrar la venta.
+   ⚠️ Hoy NINGÚN producto usa esto: al salir los protectores del catálogo,
+   no quedó ninguno con `options`. La maquinaria se conserva a propósito,
+   porque los celulares usados que vienen más adelante van a necesitar
+   variantes (color, capacidad).
 
    Este archivo es "puro": no toca la base de datos, así que lo pueden
    importar tanto el servidor como los componentes del navegador.
@@ -16,10 +19,9 @@ import { products, type Product } from "./products";
 
 /** Grupos de opciones por los que SÍ se lleva stock, por producto.
  *  Si un producto con opciones no figura acá, se lleva stock por todas
- *  sus opciones. Si no tiene opciones, lleva una sola fila (clave ""). */
-export const STOCK_GROUPS: Record<string, string[]> = {
-  "apl-5": ["Modelo"], // protectores 11-16: solo modelo, NO por color
-};
+ *  sus opciones. Si no tiene opciones, lleva una sola fila (clave "").
+ *  Vacío por ahora: ningún producto tiene opciones. */
+export const STOCK_GROUPS: Record<string, string[]> = {};
 
 /** Stock indexado: { productId: { stockKey: cantidad } } */
 export type MapaDeStock = Record<string, Record<string, number>>;
@@ -43,7 +45,7 @@ export function gruposDeStock(product: Product): string[] {
 }
 
 /** true si el stock de este producto se distingue por ese grupo de opciones.
- *  Ej: en las fundas 11-16 es true para "Modelo" y false para "Color". */
+ *  Ej: con stock por modelo, sería true para "Modelo" y false para "Color". */
 export function esGrupoDeStock(product: Product, label: string): boolean {
   return gruposDeStock(product).includes(label);
 }
@@ -52,9 +54,9 @@ export function esGrupoDeStock(product: Product, label: string): boolean {
  * Clave de stock a partir de las opciones elegidas en el modal.
  * Devuelve "" para productos sin opciones.
  *
- * Ojo: NO siempre coincide con la `variante` del carrito. Para las fundas
- * 11-16 la variante es "Negro Mate - iPhone 13" pero la clave de stock es
- * "iPhone 13", porque el stock se lleva solo por modelo.
+ * Ojo: NO siempre coincide con la `variante` del carrito. Con stock por
+ * modelo, la variante podría ser "Negro Mate - Modelo X" mientras la clave
+ * de stock es sólo "Modelo X".
  */
 export function stockKeyDesdeOpciones(
   product: Product,

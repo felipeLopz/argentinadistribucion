@@ -1,4 +1,4 @@
-import { CATEGORIAS, type Product } from "./products";
+import { CATEGORIAS, categoriasDe, type Categoria, type Product } from "./products";
 
 /* ══════════════════════════════════════════════════════════════
    FILTROS DEL CATÁLOGO — lógica pura
@@ -14,7 +14,7 @@ import { CATEGORIAS, type Product } from "./products";
    ══════════════════════════════════════════════════════════════ */
 
 /** Categoría seleccionada. "todo" = no filtrar por categoría. */
-export type CategoriaFiltro = "todo" | Product["category"];
+export type CategoriaFiltro = "todo" | Categoria;
 
 /** Criterios de orden disponibles en el selector. */
 export type OrdenId = "catalogo" | "precio-asc" | "precio-desc" | "alfabetico";
@@ -191,7 +191,10 @@ export function aplicarFiltros(lista: Product[], filtros: Filtros): Product[] {
   const { categoria, precioMin, precioMax } = filtros;
 
   const filtrados = lista.filter((p) => {
-    if (categoria !== "todo" && p.category !== categoria) return false;
+    /* Multi-categoría: se pregunta por TODAS las del producto, no sólo la
+       principal. La deduplicación es gratis: `lista` tiene cada producto
+       una sola vez, así que filtrar nunca lo repite. */
+    if (categoria !== "todo" && !categoriasDe(p).includes(categoria)) return false;
     if (q !== "" && !coincideBusqueda(p, q)) return false;
 
     if (precioMin !== null || precioMax !== null) {

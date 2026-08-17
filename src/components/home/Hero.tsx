@@ -53,7 +53,7 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mx-auto mt-6 max-w-[560px] text-[17px] leading-[1.65] text-[var(--mut)]"
         >
-          Vapers, termos Stanley y accesorios para iPhone, con atención
+          Vapers, termos Stanley y accesorios Apple, con atención
           personalizada por WhatsApp y envíos a todo el país.
         </motion.p>
 

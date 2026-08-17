@@ -1,4 +1,4 @@
-import type { Product } from "./products";
+import { categoriasDe, type Categoria, type Product } from "./products";
 
 /* ══════════════════════════════════════════════════════════════
    PROMOCIONES — badges, ofertas y urgencia de stock
@@ -36,10 +36,14 @@ export interface DatosPromo {
    urgencia. Es una regla del sistema y no una convención que haya que
    recordar: aunque un vaper quede marcado en products.ts, `resolverPromo`
    lo ignora. El renglón neutro de stock ("Quedan N") sí se muestra. */
-const CATEGORIAS_SIN_PROMOCION: ReadonlySet<Product["category"]> = new Set(["vapers"]);
+const CATEGORIAS_SIN_PROMOCION: ReadonlySet<Categoria> = new Set(["vapers"]);
 
+/** Con multi-categoría alcanza con que UNA de sus categorías esté
+ *  restringida para que el producto no lleve promoción. Se falla del lado
+ *  seguro: es más barato no promocionar de más que promocionar algo que no
+ *  corresponde. */
 export function admitePromocion(product: Product): boolean {
-  return !CATEGORIAS_SIN_PROMOCION.has(product.category);
+  return !categoriasDe(product).some((c) => CATEGORIAS_SIN_PROMOCION.has(c));
 }
 
 /** Desde cuántas unidades para abajo se considera "últimas". */

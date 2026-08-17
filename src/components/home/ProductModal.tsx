@@ -79,7 +79,7 @@ export default function ProductModal({
   const stock = !conStock ? Number.MAX_SAFE_INTEGER : stockActual ?? 1;
 
   /* Variante auto-descriptiva que se guarda en el carrito y va al WhatsApp:
-     "iPhone 13" (opciones) · "3 fundas" (promo por cantidad) · "" (sin nada).
+     "Negro" (opciones) · "3 fundas" (promo por cantidad) · "" (sin nada).
      En la promo es lo que le da identidad propia a cada pack: dos packs de
      distinto tamaño son dos ítems separados en el carrito. */
   const variante = esPromoPack

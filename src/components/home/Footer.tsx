@@ -38,7 +38,7 @@ export default function Footer() {
               <span className="text-lg font-extrabold text-white">{storeName}</span>
             </div>
             <p className="max-w-[280px] text-sm leading-relaxed text-[var(--mut)]">
-              Tu tienda de confianza en vapers, termos Stanley y accesorios para iPhone.
+              Tu tienda de confianza en vapers, termos Stanley y accesorios Apple.
             </p>
             {/* Redes sociales */}
             <div className="mt-5 flex items-center gap-3">

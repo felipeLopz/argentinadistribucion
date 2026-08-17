@@ -27,7 +27,7 @@ const archivo = Archivo({
 const SITE_NAME = "Distribuidor Argentino KOI";
 const SITE_TITLE = "Distribuidor Argentino KOI | Vapers, Termos y Accesorios Apple";
 const SITE_DESCRIPTION =
-  "Tienda online de vapers, termos Stanley y accesorios para iPhone: fundas, protectores, cargadores y auriculares. Atencion personalizada por WhatsApp y envios a todo el pais.";
+  "Tienda online de vapers, termos Stanley y accesorios Apple: fundas, cables, cargadores y auriculares. Atencion personalizada por WhatsApp y envios a todo el pais.";
 
 export const metadata: Metadata = {
   /* Necesaria para que las imágenes OG con rutas relativas
@@ -56,9 +56,9 @@ export const metadata: Metadata = {
     "vapers argentina",
     "termos stanley",
     "accesorios apple",
-    "fundas iphone",
-    "protectores de pantalla",
-    "cargadores iphone",
+    "fundas apple",
+    "cables usb c",
+    "cargadores apple",
     "distribuidor mendoza",
   ],
   icons: {
