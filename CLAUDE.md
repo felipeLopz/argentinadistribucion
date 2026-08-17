@@ -2,7 +2,7 @@
 
 > Archivo de memoria entre sesiones. Leelo al retomar el proyecto para saber
 > todo lo necesario sin re-explicar. **Actualizalo al terminar cada sesión con
-> cambios relevantes** (ver sección 9).
+> cambios relevantes** (ver sección 10).
 
 ---
 
@@ -57,7 +57,9 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 
 | Ruta | Para qué sirve |
 |---|---|
-| `src/lib/products.ts` | **Catálogo** (array `products` + interface `Product`), `CATEGORIAS` (chips), `navSections` (anclas del navbar), `contactConfig`, `storeName`. **Se edita a mano.** Campos opcionales del producto: `image` (si falta, va el placeholder), `packPrecios` (promo por cantidad), `cartName`, `sinStock`. |
+| `src/lib/products.ts` | **Catálogo** (array `products` + interface `Product`), `Categoria`, `categoriasDe()`, `CATEGORIAS` (chips), `navSections` (anclas del navbar), `contactConfig`, `storeName`. **Se edita a mano.** Campos opcionales del producto: `image` (si falta, va el placeholder), `categoriasExtra` (multi-categoría), `packPrecios` (promo por cantidad), `cartName`, `sinStock`, `badges`, `precioAnterior`. |
+| `src/lib/promos.ts` | **Lógica pura de badges y ofertas**: `resolverPromo()`, la cadena de prioridad, el cálculo del ahorro, `UMBRAL_URGENCIA` y `admitePromocion()` (la regla que excluye a los vapers). Ver sección 6. |
+| `src/hooks/use-promocion.ts` | **De dónde salen** los datos promocionales. Hoy, del catálogo. **Es la única costura a cambiar** para editarlos desde el panel. |
 | `src/lib/filtros.ts` | **Lógica pura de los filtros**, sin React ni base: `Filtros`, `FILTROS_VACIOS`, `ORDENES`, `aplicarFiltros`, `coincideBusqueda`, `hayFiltrosActivos`, `rangoDePrecios`, `diagnosticarVacio`, y el ida y vuelta con la URL (`serializarFiltros` / `parsearFiltros`). **Es el punto de extensión para filtros nuevos.** |
 | `src/lib/filtros-context.tsx` | Estado de los filtros (reducer + contexto) y **sincronización con la URL** (History API). Mismo patrón que `CartProvider`/`StockProvider`. |
 | `src/lib/cart-context.tsx` | Lógica del **carrito**: React Context + localStorage (clave `argentina-distributor-cart`). `addItem/removeItem/updateQuantity/clearCart` + totales. |
@@ -98,8 +100,9 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 | `Catalogo` | **Sección única del catálogo**: barra de filtros + grilla plana + estado vacío. Acá vive el arreglo del "tirón" (ver sección 4). |
 | `BarraFiltros` | Chips de categoría, rango de precio, orden y contador. **Sticky** abajo del navbar. En mobile, precio y orden se pliegan detrás de "Filtros". |
 | `CatalogoVacio` | **Único** estado vacío: se diagnostica solo (texto / precio / categoría / combinación) y ofrece un atajo puntual + "Limpiar filtros". |
-| `ProductCard` | Tarjeta. Clickeable, abre el modal. |
-| `CardPrecio` | Bloque de **precio + disponibilidad** de la tarjeta. **Punto de entrada de la Fase 4** (badges, precio tachado, últimas unidades). |
+| `ProductCard` | Tarjeta. Clickeable, abre el modal. Cuelga el badge sobre la foto. |
+| `CardPrecio` | Bloque de **precio + disponibilidad**: precio anterior tachado, ahorro, y el renglón "Quedan N" / "¡Últimas N unidades!". |
+| `BadgeProducto` | La **pastilla de promoción**, sin posicionamiento: la ubica quien la usa (la card, absoluta sobre la foto; el modal, en flujo al lado de la categoría). |
 | `SinFoto` | **Placeholder** de los productos sin imagen. 3 tamaños (`sm`/`md`/`lg`) para carrito, card y modal. |
 | `ProductModal` | Vista rápida: opciones, stock, cantidad, promo por cantidad. |
 | `CartPanel` | Panel lateral del carrito. |
@@ -137,6 +140,7 @@ y `CatalogoVacio`.
     categoría. El **precio** va en una **pill azul centrada** (`PRICE_PILL`, en
     `CardPrecio.tsx`).
   - **Sin foto**: se renderiza `SinFoto` en el mismo hueco, así el layout no cambia.
+  - **Badge de promoción**: arriba a la izquierda de la foto, uno solo (ver sección 6).
   - **Promo por cantidad ("Silicone Case")**: abajo del precio dice
     "Promo por cantidad · hasta 4" en vez de la disponibilidad. El resto pasa en el
     modal: **tabla de precios** visible al abrir, selector con **tope 4** y aviso con
@@ -158,6 +162,16 @@ y `CatalogoVacio`.
 - **El catálogo es una sola sección filtrable** (`#catalogo`), no secciones apiladas.
   La **grilla es plana** a propósito: si estuviera agrupada por categoría, ordenar por
   precio sólo ordenaría dentro de cada grupo. La categoría la comunica el chip activo.
+- **Un producto puede estar en VARIAS categorías** (`categoriasExtra`). Hoy la Silicone
+  Case sale en **Promos** y en **Accesorios Apple**, siendo **un solo producto**.
+  - `products` lo guarda **una única vez**, así que "Ver todo" lo muestra una vez: la
+    deduplicación sale gratis, porque filtrar una lista nunca repite elementos.
+    ⚠️ Si algún día se arma la grilla concatenando categorías, ahí sí aparecería
+    duplicado. No hacerlo: filtrar con `categoriasDe()`, nunca concatenar.
+  - ⚠️ **La suma de los contadores de los chips es mayor que "Ver todo"** (hoy 17
+    contra 16). Es **esperado**: la Silicone Case cuenta en sus dos categorías.
+  - `category` sigue siendo la **principal** (es la que muestra el badge del modal);
+    `categoriasExtra` son las adicionales.
 - **Las categorías NO van en el navbar.** Viven sólo en los chips. Tenerlas en los dos
   lados daría dos formas distintas de hacer lo mismo. `navSections` quedó con
   **Inicio** y **Contacto** nada más; el footer sí lista categorías, pero sus links
@@ -222,16 +236,96 @@ La URL se lee en un **efecto** y no en el estado inicial, también a propósito:
 se prerenderiza con los filtros vacíos, así que arrancar distinto en el cliente
 rompería la hidratación. El costo es un frame con el catálogo sin filtrar.
 
-## 6. Estado actual y pendientes
+## 6. Badges, ofertas y urgencia
 
-**Catálogo actual — 18 productos, 4 categorías** (en `products.ts`, en este orden):
+**Qué se muestra**
+
+- **Badges manuales**, marcados en `products.ts` (`badges: [...]`): **OFERTA**,
+  **NUEVO INGRESO** y **MÁS COMPRADO**. Van arriba a la izquierda de la foto, y
+  también en el modal al lado del badge de categoría.
+- **Precio anterior tachado** (`precioAnterior`), con el ahorro en pesos y porcentaje
+  ("Ahorrás $7.000 (22%)"). Se muestra en la card y en el modal.
+  Un dato mal cargado (anterior **igual o menor** al actual) **se ignora**, en vez de
+  mostrar un ahorro negativo o 0%.
+- **"¡Últimas N unidades!"**: variante urgente del renglón "Quedan N", cuando el stock
+  total es **≤ 3** (`UMBRAL_URGENCIA`). Sale **solo del stock**, no se marca a mano.
+
+**Se muestra UN SOLO badge**, por prioridad:
+
+> **OFERTA → NUEVO INGRESO → MÁS COMPRADO**
+
+Tres pastillas apiladas sobre una foto de 262px tapan el producto y se anulan entre sí.
+El orden va de lo más accionable a lo más informativo.
+
+⚠️ **La urgencia NO compite por el badge.** Vive en el renglón de disponibilidad, así
+que un producto con poco stock **y** oferta muestra **las dos cosas**: badge OFERTA
+arriba, "¡Últimas 2 unidades!" abajo. (Hubo un badge "ÚLTIMOS N" en la primera versión;
+se quitó porque duplicaba el mensaje del renglón.)
+
+**Agotado apaga la promoción**: sin stock no se muestra ni el badge ni la oferta. El
+cartel de "Agotado" manda, y un "Ahorrás $7.000" en lila brillante al lado de "Agotado"
+se contradice.
+
+**La oferta pone su badge sola**: con sólo cargar `precioAnterior` aparece OFERTA, sin
+marcar nada más.
+
+### ⚠️ Regla del sistema: los vapers NO llevan promoción
+
+`CATEGORIAS_SIN_PROMOCION` en `promos.ts` excluye a `vapers` de **todo**: sin badges,
+sin precio tachado y sin urgencia. Sí muestran el renglón neutro "Quedan N".
+
+**El motivo es legal, no estético**: son productos con nicotina y su publicidad está
+regulada. **No quitar esta regla.**
+
+Es una **regla del sistema y no una convención**: `resolverPromo` la aplica *antes* de
+mirar los datos, así que un vaper marcado a mano igual no muestra nada. De hecho
+`vap-1` está marcado a propósito con `badges: ["oferta"]` y `precioAnterior: 42000`
+**para poder comprobarlo** — si alguna vez le aparece un badge, la regla se rompió.
+
+Con multi-categoría alcanza con que **una** de las categorías del producto esté
+restringida para que no lleve promoción: se falla del lado seguro.
+
+### Cómo migrar los badges al panel de admin
+
+Está preparado para que sea **agregar la fuente de datos, no rehacer componentes**.
+Ningún componente lee `product.badges` ni `product.precioAnterior`: consumen el objeto
+`PromoResuelta` que devuelve `resolverPromo`.
+
+```
+products.ts ──► use-promocion.ts ──► promos.ts ──► BadgeProducto / CardPrecio / ProductModal
+ (la fuente)     (LA COSTURA)        (las reglas)          (sólo dibujan)
+```
+
+**`src/hooks/use-promocion.ts` es el único archivo a cambiar.** Los pasos, con el mismo
+patrón que ya usa el stock:
+
+1. tabla `promos` (`product_id`, `badges`, `precio_anterior`) y su endpoint público de
+   solo lectura, igual que `/api/stock`;
+2. un `PromoProvider` que la lea desde el navegador, calcado de `StockProvider`;
+3. en `use-promocion.ts`, reemplazar `datosDelCatalogo(product)` por
+   `usePromoContext().datosDe(product.id)`.
+
+`promos.ts` y los tres componentes **no se tocan**. Los campos de `products.ts` pueden
+quedar como fallback o eliminarse; se decide en ese momento.
+
+## 7. Estado actual y pendientes
+
+**Catálogo actual — 16 productos, 4 categorías** (en `products.ts`, en este orden):
 
 | Categoría (`category`) | Chip | Productos |
 |---|---|---|
-| `accesorios` | **Promos** | Silicone Case 11-17 (promo por cantidad, sin stock), AirPods Pro 2, Cable y cabezal USB-C |
+| `accesorios` | **Promos** | Silicone Case 11-17 (promo por cantidad, sin stock), AirPods Pro 2, Cable y cabezal USB C - USB C |
 | `vapers` | **Vapers** | 5 dispositivos recargables + 2 líquidos 30ml + 1 kit — todos $35.000, **sin foto** |
 | `termos` | **Termos** | Termo Stanley 750ml en rosa, azul y blanco — $45.000, **sin foto** |
-| `accesorios-apple` | **Apple** | Protectores 11-16, Protector 17, AirPods, Cargadores |
+| `accesorios-apple` | **Apple** | **Silicone Case** (vía `categoriasExtra`), AirPods, Cargadores USB C - USB C |
+
+⚠️ Los contadores dan **3 · 8 · 3 · 3 = 17** contra **16** de "Ver todo": la Silicone
+Case cuenta en dos categorías. Es esperado.
+
+**"iPhone" en el nombre de la Silicone Case es a propósito.** El rubro se nombra
+"accesorios **Apple**" en todos lados (hero, footer, metadata), pero ese producto dice
+"(iPhone 11 al 17)" porque indica **qué modelos le entran**, no el rubro. Cambiarlo a
+"Apple 11 al 17" no significaría nada.
 
 Las descripciones de los vapers son **deliberadamente técnicas** (formato, batería,
 capacidad), sin adjetivos promocionales ni nada que invite al consumo. Es un producto
@@ -239,13 +333,15 @@ regulado: si se amplía, mantener ese tono.
 
 **Terminado** ✅
 
-- **Sistema de stock real** (Neon Postgres), por variante y con **granularidad mixta**
-  (`STOCK_GROUPS`): protectores 11-16 (`apl-5`) **por modelo** (6 filas, no 66); el
-  resto, una fila con clave `""`. Los marcados `sinStock` **no llevan fila**.
-  **22 filas** en total. La web muestra **"Quedan N" / "Agotado"** y **bloquea agregar**
-  lo agotado; mientras carga dice "Verificando stock…". `/api/stock` es **SOLO
-  LECTURA** (POST/PUT/DELETE → 405). **Fallar cerrado**: si la base no responde, todo
-  se trata como agotado — la **única** excepción es `sinStock`.
+- **Sistema de stock real** (Neon Postgres). Hoy cada producto lleva **una fila** con
+  clave `""`; los marcados `sinStock` **no llevan ninguna**. Son **15 filas** en total.
+  La web muestra **"Quedan N" / "Agotado"** y **bloquea agregar** lo agotado; mientras
+  carga dice "Verificando stock…". `/api/stock` es **SOLO LECTURA** (POST/PUT/DELETE
+  → 405). **Fallar cerrado**: si la base no responde, todo se trata como agotado — la
+  **única** excepción es `sinStock`.
+  ⚠️ **`STOCK_GROUPS` quedó VACÍO** al salir los protectores: ningún producto tiene
+  `options`. La maquinaria de variantes **se conservó a propósito** — los celulares
+  usados que vienen van a necesitarla (color, capacidad). No borrarla.
 - **Panel privado** en **`/admindistribucion`**, no enlazado y con `noindex`. Login con
   email + bcrypt, sesión **JWT en cookie `HttpOnly` + `Secure` + `SameSite=Lax`** de 7
   días. Permite **ver, editar, descontar (−1) y agotar**, con buscador. Los casilleros
@@ -265,38 +361,47 @@ regulado: si se amplía, mantener ese tono.
   entran 8 vapers y 3 termos; placeholder `SinFoto` para los productos sin imagen.
 - **Catálogo filtrable** (Fase 3): chips, precio, orden, contador, estado vacío único,
   URL con History API, arreglo del tirón, y `CardPrecio` extraído.
+- **Badges y ofertas** (Fase 4, ver sección 6): badges manuales, precio anterior
+  tachado con el ahorro, "¡Últimas N unidades!" con umbral 3, la regla que excluye a
+  los vapers, y la resolución aislada para migrarla al panel.
+- **Actualización de accesorios Apple**: fuera los protectores `apl-5`/`apl-6`; fotos
+  reasignadas (AirPods → `airpods-pro-2.webp`, Cargadores → `cable-cabezal-usbc.webp`);
+  los dos productos de cable pasaron a **USB C - USB C**; y la Silicone Case ahora sale
+  también en Apple vía `categoriasExtra`.
 
 **Pendiente** ⏳
 
-- [ ] **Cargar el stock de los productos nuevos desde el panel.** Los 11 productos de
-  vapers y termos (`vap-1`…`vap-8`, `ter-1`…`ter-3`) **no tienen fila**: aparecen con
-  el badge **"SIN CARGAR"**. Se cargan escribiendo el número y dando Guardar.
-  ⚠️ **No correr el seed** para esto: les pondría 10 de relleno (ver sección 7).
-  Las filas viejas también siguen con **10 de relleno**
-  (`STOCK_INICIAL_POR_DEFECTO` en `stock.ts`).
-- [ ] **Fotos reales.** Sin foto: los 8 vapers y los 3 termos (muestran `SinFoto`).
-  Con placeholder prestado: **protectores 11-16** (`apl-5`) y **protector 17**
-  (`apl-6`), que reusan `IMG_FUNDA_IPHONE`. Para ponerlas alcanza con agregar
-  `image:` en `products.ts` — el placeholder deja de renderizarse solo.
-- [ ] **Fase 4 — marketing en las cards.** La estructura ya está lista en
-  `CardPrecio.tsx`; **nada de esto está implementado**:
-  - **Badges** (NUEVO / OFERTA / MÁS VENDIDO) → el hueco de la imagen en
-    `ProductCard` ya es `relative`, van absolutos ahí.
-  - **Precio tachado + % de ahorro** → un `precioAnterior?: number` en `Product` y dos
-    renglones alrededor de la pill, dentro de `CardPrecio`.
-  - **"¡Últimas N unidades!"** → es una variante del renglón "Quedan N" que ya existe:
-    una constante de umbral, y cambia el texto y el color. **No toca el sistema de
-    stock.**
+- [ ] **Cargar el stock de los productos nuevos desde el panel.** Los 11 de vapers y
+  termos (`vap-1`…`vap-8`, `ter-1`…`ter-3`) **no tienen fila**: aparecen con el badge
+  **"SIN CARGAR"**. Se cargan escribiendo el número y dando Guardar.
+  ⚠️ **No correr el seed** para esto: les pondría 10 de relleno (ver sección 8).
+  Es el pendiente **más viejo y el más urgente**: hasta que no se carguen, esos
+  productos se ven **"Agotado"** en producción.
+- [ ] **Fotos reales** de los 8 vapers y los 3 termos (hoy muestran `SinFoto`). Alcanza
+  con agregar `image:` en `products.ts` — el placeholder deja de renderizarse solo.
+- [ ] **Borrar las 7 filas huérfanas de los protectores** (ver abajo).
+- [ ] **Panel para los badges**: editarlos desde `/admindistribucion` en vez de a mano.
+  Ya está preparado — ver "Cómo migrar los badges al panel" en la sección 6.
+- [ ] **Celulares usados** (cuando entren al catálogo). Traen dos cosas nuevas:
+  - **Filtro de atributos** ("Nuevos / Usados"): la arquitectura ya lo contempla, es un
+    campo en `Filtros` + su condición en `aplicarFiltros` (ver sección 5).
+  - **Fichas técnicas y comparador**: hoy `Product` no tiene dónde guardar specs
+    (memoria, batería, estado). Habría que sumar un campo estructurado y una vista de
+    comparación. **No hay nada hecho de esto.**
 
-**Limpieza opcional de la base**: quedaron filas huérfanas de los productos borrados
-en las fases 2 y 3. No molestan (nadie las lee, todo se arma desde el catálogo), pero
-si se quiere dejar prolijo:
+**Limpieza de la base**: quedaron filas huérfanas de los productos borrados. No
+molestan (nadie las lee, todo se arma desde el catálogo), pero si se quiere dejar
+prolijo:
 
 ```sql
+-- 7 filas de los protectores (apl-5 llevaba 6, una por modelo)
+DELETE FROM stock WHERE product_id IN ('apl-5','apl-6');
+
+-- y las de las tandas anteriores, si nunca se corrieron
 DELETE FROM stock WHERE product_id IN ('paq-1','paq-2','paq-3','paq-4','paq-5','paq-6','alb-1','alb-2','ind-1','apl-1','apl-4','promo-1','promo-2','promo-3');
 ```
 
-## 7. Notas / cómo operar el stock
+## 8. Notas / cómo operar el stock
 
 - **Entrar al panel**: `https://<dominio>/admindistribucion` (en local,
   `http://localhost:3000/admindistribucion`). **No hay ningún link al panel** en la web:
@@ -333,7 +438,7 @@ DELETE FROM stock WHERE product_id IN ('paq-1','paq-2','paq-3','paq-4','paq-5','
 - **Los productos con `sinStock` no aparecen en el panel** (no tienen casilleros) y las
   escrituras sobre ellos se rechazan. Es a propósito: están siempre disponibles.
 
-## 8. Cómo correr el proyecto
+## 9. Cómo correr el proyecto
 
 - **Local (Windows)**:
   ```
@@ -353,7 +458,7 @@ DELETE FROM stock WHERE product_id IN ('paq-1','paq-2','paq-3','paq-4','paq-5','
 - **Deploy**: `git push origin main` dispara el **deploy automático en Vercel**.
   Repo: `github.com/felipeLopz/argentinadistribucion`, rama `main`.
 
-## 9. Mantenimiento de este archivo
+## 10. Mantenimiento de este archivo
 
 **Actualizá este `CLAUDE.md` al terminar cada sesión con cambios relevantes**
 (marcá pendientes como hechos, agregá decisiones nuevas), para que sirva de contexto
