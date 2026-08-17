@@ -11,6 +11,8 @@ import { esGrupoDeStock, gruposDeStock, llevaStock } from "@/lib/stock-config";
 import { useDialogoAccesible } from "@/hooks/use-dialogo-accesible";
 import { categoryTitles } from "./categories";
 import SinFoto from "./SinFoto";
+import BadgeProducto from "./BadgeProducto";
+import { usePromocion } from "@/hooks/use-promocion";
 
 /* ═══════════════════════════════════════════════
    PRODUCT MODAL — Panel deslizante con detalle del producto
@@ -26,7 +28,7 @@ export default function ProductModal({
   onClose: () => void;
 }) {
   const { addItem, justAdded } = useCart();
-  const { stockDeClave, stockDeOpciones, estado: estadoStock } = useStock();
+  const { stockDeClave, stockDeOpciones, stockTotal, estado: estadoStock } = useStock();
   const [opciones, setOpciones] = useState<Record<string, string>>({});
   const [cantidad, setCantidad] = useState(1);
   const [agregado, setAgregado] = useState(false);
@@ -67,6 +69,11 @@ export default function ProductModal({
     : stockDeClave(product.id, "");
 
   const agotado = conStock && stockActual === 0;
+
+  /* Promoción resuelta (badge, oferta, urgencia). Se calcula con el stock
+     TOTAL del producto, igual que la card, para que digan lo mismo.
+     Va antes de cualquier return temprano: el orden no debe cambiar. */
+  const promo = usePromocion(product, product && conStock ? stockTotal(product.id) : null);
   /* Tope del selector: el stock disponible, o el tope del pack en las
      promos por cantidad. Sin control de stock, no hay techo. */
   const stock = !conStock ? Number.MAX_SAFE_INTEGER : stockActual ?? 1;
@@ -240,12 +247,13 @@ export default function ProductModal({
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy)] via-[var(--navy)]/30 to-transparent" />
 
-                {/* Badge categoría */}
-                <div className="absolute left-4 top-4">
+                {/* Badge de categoría + el de promoción, si hay */}
+                <div className="absolute left-4 top-4 flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[rgba(20,15,38,0.85)] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--mut)] backdrop-blur-md">
                     <Star className="h-3 w-3 text-[var(--blue-l)]" />
                     {categoriaLabel}
                   </span>
+                  {promo.badge && !agotado && <BadgeProducto badge={promo.badge} />}
                 </div>
 
                 {/* Nombre y precio sobre la imagen */}
@@ -343,13 +351,26 @@ export default function ProductModal({
                     </p>
                   </div>
                 ) : (
-                  <div className="flex items-end gap-3">
-                    <span className="text-3xl font-black text-white">
-                      ${precioUnitario.toLocaleString("es-AR")}
-                    </span>
-                    <span className="mb-0.5 text-sm text-[var(--mut)]">
-                      {tieneOpciones ? "por unidad" : "por pack"}
-                    </span>
+                  <div>
+                    <div className="flex items-end gap-3">
+                      <span className="text-3xl font-black text-white">
+                        ${precioUnitario.toLocaleString("es-AR")}
+                      </span>
+                      {/* Precio viejo tachado, cuando hay oferta */}
+                      {promo.oferta && !agotado && (
+                        <span className="mb-1 text-base font-semibold text-[var(--mut)] line-through">
+                          ${promo.oferta.anterior.toLocaleString("es-AR")}
+                        </span>
+                      )}
+                      <span className="mb-0.5 text-sm text-[var(--mut)]">
+                        {tieneOpciones ? "por unidad" : "por pack"}
+                      </span>
+                    </div>
+                    {promo.oferta && !agotado && (
+                      <span className="mt-2 inline-flex rounded-[8px] bg-[rgba(167,139,250,0.14)] px-3 py-1.5 text-[13px] font-bold text-[var(--gold-l)]">
+                        Ahorrás ${promo.oferta.ahorro.toLocaleString("es-AR")} ({promo.oferta.porcentaje}%)
+                      </span>
+                    )}
                   </div>
                 )}
 

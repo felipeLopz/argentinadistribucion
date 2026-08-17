@@ -1,24 +1,18 @@
 "use client";
 
-import { Ban } from "lucide-react";
+import { Ban, Timer } from "lucide-react";
 import type { Product } from "@/lib/products";
 import type { EstadoStock } from "@/lib/stock-context";
+import type { PromoResuelta } from "@/lib/promos";
 
 /* ═══════════════════════════════════════════════
    CARD PRECIO — bloque de precio + disponibilidad de la tarjeta
 
-   Se extrajo de ProductCard para tener UN solo lugar donde vive todo lo
-   que la card dice sobre plata y stock. Es el punto de entrada de las
-   mejoras de marketing que vienen después:
+   Único lugar donde la card habla de plata y de stock.
 
-     · badges (NUEVO / OFERTA / MÁS VENDIDO) → van sobre la imagen, que ya
-       es `relative` en ProductCard;
-     · precio tachado + % de ahorro → un `precioAnterior` en Product y dos
-       renglones acá, alrededor de la pill;
-     · "¡Últimas N unidades!" → es una variante del renglón "Quedan N" de
-       más abajo: una constante de umbral y cambia el texto y el color.
-
-   Nada de eso está implementado todavía: esto es sólo la estructura.
+   No decide nada de promoción: recibe `promo` ya resuelta (ver promos.ts).
+   Por eso el día que los badges y las ofertas se editen desde el panel,
+   este archivo no se toca.
    ═══════════════════════════════════════════════ */
 
 /* Pill de precio (azul), ajustado a su contenido. */
@@ -31,6 +25,7 @@ export default function CardPrecio({
   agotado,
   total,
   estadoStock,
+  promo,
 }: {
   product: Product;
   /** false = producto siempre disponible: no se consulta la base. */
@@ -39,13 +34,34 @@ export default function CardPrecio({
   /** Stock sumado de todas las variantes. null = todavía no se sabe. */
   total: number | null;
   estadoStock: EstadoStock;
+  promo: PromoResuelta;
 }) {
+  /* Agotado apaga la oferta, igual que apaga el badge: mostrar
+     "Ahorrás $7.000" en lila brillante justo al lado de "Agotado" se
+     contradice, y el precio ya se ve tachado por estar sin stock. */
+  const oferta = agotado ? null : promo.oferta;
+  const { urgencia } = promo;
+
   return (
     <div className="mt-auto flex flex-col items-center gap-2">
+      {/* Precio anterior tachado, sólo cuando hay oferta válida */}
+      {oferta && (
+        <span className="text-[13px] font-semibold text-[var(--mut)] line-through">
+          ${oferta.anterior.toLocaleString("es-AR")}
+        </span>
+      )}
+
       {/* Precio */}
       <span className={`${PRICE_PILL}${agotado ? " opacity-50 line-through" : ""}`}>
         ${product.price!.toLocaleString("es-AR")}
       </span>
+
+      {/* Cuánto se ahorra, en pesos y en porcentaje */}
+      {oferta && (
+        <span className="rounded-[7px] bg-[rgba(167,139,250,0.14)] px-2.5 py-1 text-[11.5px] font-bold text-[var(--gold-l)]">
+          Ahorrás ${oferta.ahorro.toLocaleString("es-AR")} ({oferta.porcentaje}%)
+        </span>
+      )}
 
       {/* Disponibilidad. Mientras carga no decimos "Agotado" (sería falso):
           se avisa que se está consultando. Los productos sin stock
@@ -64,6 +80,13 @@ export default function CardPrecio({
         <span className="inline-flex items-center gap-1 text-[12px] font-bold text-red-400">
           <Ban className="h-3.5 w-3.5" />
           Agotado
+        </span>
+      ) : urgencia !== null ? (
+        /* Variante urgente del renglón de siempre. `urgencia` ya viene
+           filtrada por categoría: en los vapers es null y cae al neutro. */
+        <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[#ff6b8a]">
+          <Timer className="h-3.5 w-3.5" />
+          ¡Últimas {urgencia} {urgencia === 1 ? "unidad" : "unidades"}!
         </span>
       ) : total !== null ? (
         <span className="text-[12px] font-semibold text-[var(--mut)]">Quedan {total}</span>

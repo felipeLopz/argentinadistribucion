@@ -8,6 +8,8 @@ import { useStock } from "@/lib/stock-context";
 import { llevaStock } from "@/lib/stock-config";
 import SinFoto from "./SinFoto";
 import CardPrecio from "./CardPrecio";
+import BadgeProducto from "./BadgeProducto";
+import { usePromocion } from "@/hooks/use-promocion";
 
 /* Ancho fijo de tarjeta compartido por TODAS las cards (mockup: 262px) */
 const CARD_W = "w-[262px] shrink-0 max-sm:w-full max-sm:max-w-[360px]";
@@ -64,6 +66,10 @@ export function ProductCard({
   const total = hasPrice && !isProximamente && conStock ? stockTotal(product.id) : null;
   const agotado = total === 0;
 
+  /* Badge, oferta y urgencia ya resueltos. La regla por categoría (los
+     vapers no llevan promoción) vive adentro, no acá. */
+  const promo = usePromocion(product, total);
+
   const open = isClickable && onOpen ? onOpen : undefined;
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!open) return;
@@ -113,6 +119,17 @@ export function ProductCard({
         ) : (
           <SinFoto size="md" className={agotado ? "opacity-40 grayscale" : ""} />
         )}
+
+        {/* Badge sobre la foto. Se oculta si el producto está agotado: el
+            cartel de "Agotado" manda, y un "OFERTA" sobre algo que no se
+            puede comprar es ruido.
+            pointer-events-none: la card entera es clickeable, el badge no
+            debe robarle el click. */}
+        {promo.badge && !agotado && (
+          <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-[calc(100%-24px)]">
+            <BadgeProducto badge={promo.badge} />
+          </div>
+        )}
       </div>
 
       {/* Contenido */}
@@ -134,6 +151,7 @@ export function ProductCard({
             agotado={agotado}
             total={total}
             estadoStock={estado}
+            promo={promo}
           />
         ) : (
           <button

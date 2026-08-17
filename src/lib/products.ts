@@ -1,3 +1,5 @@
+import type { BadgeManualId } from "./promos";
+
 /* Grupo de opciones obligatorias de un producto (ej. Color, Modelo).
    Es una lista de valores a elegir; el stock de cada valor lo resuelve
    stock-config.ts, que puede llevarlo con menos detalle que las opciones. */
@@ -37,6 +39,20 @@ export interface Product {
   /** true = siempre disponible: no lleva stock en la base. Ni la web lo
    *  consulta, ni el seed le crea filas, ni el panel lo lista. */
   sinStock?: boolean;
+
+  /* ─── Promoción (ver src/lib/promos.ts) ───
+     Se marcan a mano por ahora; están pensados para migrar al panel de
+     admin sin tocar componentes. El badge "ÚLTIMOS N" NO se marca acá:
+     sale solo del stock.
+
+     ⚠️ Los productos de categorías reguladas (hoy `vapers`) IGNORAN estos
+     dos campos: es una regla del sistema, no algo que haya que recordar. */
+
+  /** Badges manuales. Si hay más de uno, se muestra el de mayor prioridad. */
+  badges?: BadgeManualId[];
+
+  /** Precio tachado. Se ignora si no es mayor al precio actual. */
+  precioAnterior?: number;
 }
 
 /* Opciones reutilizables para los protectores de iPhone */
@@ -79,6 +95,8 @@ export const products: Product[] = [
       "AirPods Pro 2 con estuche de carga, cable USB-C y almohadillas de repuesto en todos los talles.",
     image: IMG_AIRPODS_PRO_2,
     price: 25000,
+    /* EJEMPLO: con precio anterior, el badge OFERTA sale solo. */
+    precioAnterior: 32000,
     category: "accesorios",
   },
   {
@@ -99,6 +117,11 @@ export const products: Product[] = [
     name: "Vaper Recargable Pod - Negro",
     description: "Dispositivo recargable con cápsula reemplazable y carga por USB-C. Color negro.",
     price: 35000,
+    /* EJEMPLO A PROPÓSITO: marcado con badge y precio anterior, pero la
+       categoría `vapers` no admite promoción, así que NO se muestra
+       ninguna de las dos cosas. Sirve para comprobar la regla. */
+    badges: ["oferta"],
+    precioAnterior: 42000,
     category: "vapers",
   },
   {
@@ -160,6 +183,8 @@ export const products: Product[] = [
     name: "Termo Stanley 750ml - Rosa",
     description: "Termo de acero inoxidable de 750 ml, con tapa a rosca y sorbete. Color rosa.",
     price: 45000,
+    /* EJEMPLO */
+    badges: ["mas-comprados"],
     category: "termos",
   },
   {
@@ -167,6 +192,8 @@ export const products: Product[] = [
     name: "Termo Stanley 750ml - Azul",
     description: "Termo de acero inoxidable de 750 ml, con tapa a rosca y sorbete. Color azul.",
     price: 45000,
+    /* EJEMPLO: ahorro de $7.000 (13%) */
+    precioAnterior: 52000,
     category: "termos",
   },
   {
@@ -174,6 +201,8 @@ export const products: Product[] = [
     name: "Termo Stanley 750ml - Blanco",
     description: "Termo de acero inoxidable de 750 ml, con tapa a rosca y sorbete. Color blanco.",
     price: 45000,
+    /* EJEMPLO de prioridad: con dos badges marcados gana NUEVO INGRESO. */
+    badges: ["mas-comprados", "nuevo"],
     category: "termos",
   },
 
@@ -193,6 +222,8 @@ export const products: Product[] = [
     description: "Protector de pantalla para iPhone 17.",
     image: IMG_FUNDA_IPHONE,
     price: 7900,
+    /* EJEMPLO */
+    badges: ["nuevo"],
     category: "accesorios-apple",
   },
   {
