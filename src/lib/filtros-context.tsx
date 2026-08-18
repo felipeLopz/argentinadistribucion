@@ -98,7 +98,7 @@ const FiltrosContext = createContext<FiltrosContextType | null>(null);
 export function FiltrosProvider({ children }: { children: ReactNode }) {
   const [{ filtros, tocado }, dispatch] = useReducer(reducer, ESTADO_INICIAL);
 
-  /* El catálogo es un array estático de 18 productos, así que filtrar es
+  /* El catálogo es un array estático de 17 productos, así que filtrar es
      barato; el memo es para no romper la identidad de `resultados` en
      cada render y evitar re-renders en cascada de la grilla. */
   const resultados = useMemo(() => aplicarFiltros(products, filtros), [filtros]);

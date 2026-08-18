@@ -225,7 +225,7 @@ y `CatalogoVacio`.
 - **Buscador**: el del navbar. **No hay dos mecanismos**: escribe en el mismo estado
   que lee la grilla. Matchea por nombre **o** descripción, sin distinguir mayúsculas.
 - **Precio**: rango desde/hasta. ⚠️ Con un tope activo, los productos **sin precio**
-  quedan afuera (hoy no aplica: los 18 tienen precio).
+  quedan afuera (hoy no aplica: los 17 tienen precio).
 - **Orden**: por defecto (el de `products.ts`), precio asc, precio desc, alfabético.
   El default es el orden del archivo **a propósito**: se controla a mano qué va primero.
 - **Contador**: cuántos productos hay en la vista actual.
