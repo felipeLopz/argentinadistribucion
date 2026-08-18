@@ -42,6 +42,9 @@ export default function ProductModal({
   const packPrecios = product?.packPrecios;
   const esPromoPack = !!packPrecios && packPrecios.length > 0;
   const topePack = packPrecios?.length ?? 0;
+  /* Con qué palabra se nombra cada ítem del pack. Genérico por defecto,
+     para que una promo cargada desde el panel no diga "3 fundas". */
+  const sustantivoPack = product?.sustantivoPack ?? ["unidad", "unidades"];
 
   const subtotal = esPromoPack
     ? packPrecios![Math.min(Math.max(cantidad, 1), topePack) - 1]
@@ -54,8 +57,9 @@ export default function ProductModal({
 
   /* ─── Stock de la selección actual ───
      null = todavía no se sabe (cargando, o falta elegir opciones).
-     0 = agotado. Ojo con la granularidad mixta: en los protectores 11-16 el
-     stock se resuelve por MODELO (lo maneja stock-config). */
+     0 = agotado. Ojo con la granularidad mixta: si un producto llevara el
+     stock con menos detalle que sus opciones (ej. sólo por Modelo aunque
+     ofrezca Color y Modelo), lo resuelve stock-config. */
   const seleccionCompleta = tieneOpciones ? opcionesCompletas : true;
 
   /* Productos siempre disponibles: no se consulta la base (no tienen fila) */
@@ -80,10 +84,16 @@ export default function ProductModal({
 
   /* Variante auto-descriptiva que se guarda en el carrito y va al WhatsApp:
      "Negro" (opciones) · "3 fundas" (promo por cantidad) · "" (sin nada).
+
+     El sustantivo sale de `sustantivoPack` y NO está hardcodeado, porque
+     ahora una promo por cantidad se puede cargar desde el panel sobre
+     cualquier producto: un cable diría "3 fundas" en el carrito y en el
+     mensaje de WhatsApp. Para la Silicone Case el texto es idéntico al de
+     antes, porque su sustantivo es exactamente ["funda", "fundas"].
      En la promo es lo que le da identidad propia a cada pack: dos packs de
      distinto tamaño son dos ítems separados en el carrito. */
   const variante = esPromoPack
-    ? `${cantidad} funda${cantidad !== 1 ? "s" : ""}`
+    ? `${cantidad} ${cantidad === 1 ? sustantivoPack[0] : sustantivoPack[1]}`
     : tieneOpciones
     ? grupos.map((g) => opciones[g.label]).join(" - ")
     : "";
@@ -336,7 +346,7 @@ export default function ProductModal({
                             }`}
                           >
                             <span className="font-semibold">
-                              {n} {n === 1 ? "funda" : "fundas"}
+                              {n} {n === 1 ? sustantivoPack[0] : sustantivoPack[1]}
                             </span>
                             <span className={`font-extrabold tabular-nums ${elegida ? "text-white" : "text-[var(--ink)]"}`}>
                               ${precio.toLocaleString("es-AR")}
@@ -380,9 +390,10 @@ export default function ProductModal({
                   Envíos a todo el país
                 </div>
 
-                {/* Selectores de opciones (Modelo).
+                {/* Selectores de opciones.
                     Solo los grupos que DEFINEN stock muestran disponibilidad:
-                    en los protectores 11-16 eso es "Modelo". */}
+                    si un producto llevara stock sólo por Modelo, sería ese
+                    grupo y no Color. */}
                 {tieneOpciones && grupos.map((grupo) => {
                   const esStock = esGrupoDeStock(product!, grupo.label);
                   /* Para saber el stock de un valor candidato, los demás grupos
@@ -450,7 +461,7 @@ export default function ProductModal({
                   <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
                     <Package className="h-4 w-4 text-[var(--blue-l)]" />
                     {esPromoPack
-                      ? "Cantidad de fundas"
+                      ? `Cantidad de ${sustantivoPack[1]}`
                       : `Cantidad de ${tieneOpciones ? "unidades" : "packs"}`}
                   </label>
                   <div className={`flex items-center gap-4${!puedeAgregar ? " pointer-events-none opacity-40" : ""}`}>
@@ -493,7 +504,7 @@ export default function ProductModal({
                         Sobrepasaste la promo
                       </p>
                       <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--mut)]">
-                        La promo llega hasta {topePack} fundas por pack. Si querés hacer
+                        La promo llega hasta {topePack} {sustantivoPack[1]} por pack. Si querés hacer
                         precio con más, consultanos por WhatsApp. También podés agregar
                         este pack y armar otro.
                       </p>

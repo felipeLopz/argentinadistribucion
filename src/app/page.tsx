@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { Product } from "@/lib/products";
 import { FiltrosProvider } from "@/lib/filtros-context";
+import { useContenido } from "@/lib/contenido-context";
 import Navbar from "@/components/home/Navbar";
 import Hero from "@/components/home/Hero";
 import Catalogo from "@/components/home/Catalogo";
@@ -31,7 +31,14 @@ function HomeContenido() {
   /* El carrito y el modal siguen siendo estado local de la home; los
      filtros (incluida la búsqueda) viven en el contexto. */
   const [cartOpen, setCartOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  /* Del modal se guarda el ID, no el objeto: así el detalle se relee del
+     catálogo efectivo y toma las descripciones o los precios por cantidad
+     que se hayan editado desde el panel, aunque hayan llegado con el modal
+     ya abierto. Guardar el objeto dejaría una copia congelada. */
+  const [idAbierto, setIdAbierto] = useState<string | null>(null);
+  const { productoPorId } = useContenido();
+  const selectedProduct = idAbierto ? productoPorId(idAbierto) : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--navy)]">
@@ -39,7 +46,7 @@ function HomeContenido() {
 
       <main className="flex-1">
         <Hero />
-        <Catalogo onProductClick={setSelectedProduct} />
+        <Catalogo onProductClick={(p) => setIdAbierto(p.id)} />
         <ContactSection />
       </main>
 
@@ -51,7 +58,7 @@ function HomeContenido() {
       <ProductModal
         product={selectedProduct}
         isOpen={!!selectedProduct}
-        onClose={() => setSelectedProduct(null)}
+        onClose={() => setIdAbierto(null)}
       />
       <ScrollToTop />
     </div>

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from "@/lib/cart-context";
 import { StockProvider } from "@/lib/stock-context";
+import { ContenidoProvider } from "@/lib/contenido-context";
 import { SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({
@@ -80,8 +81,13 @@ export default function RootLayout({
       >
         <CartProvider>
           <StockProvider>
-            {children}
-            <Toaster />
+            {/* Textos y precios por cantidad editables desde el panel.
+                Va acá arriba porque los filtros (que buscan por
+                descripción) tienen que ver el catálogo ya resuelto. */}
+            <ContenidoProvider>
+              {children}
+              <Toaster />
+            </ContenidoProvider>
           </StockProvider>
         </CartProvider>
       </body>

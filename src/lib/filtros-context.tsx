@@ -10,7 +10,8 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { products, type Product } from "./products";
+import { type Product } from "./products";
+import { useContenido } from "./contenido-context";
 import {
   aplicarFiltros,
   FILTROS_VACIOS,
@@ -98,10 +99,21 @@ const FiltrosContext = createContext<FiltrosContextType | null>(null);
 export function FiltrosProvider({ children }: { children: ReactNode }) {
   const [{ filtros, tocado }, dispatch] = useReducer(reducer, ESTADO_INICIAL);
 
+  /* El catálogo EFECTIVO: el de products.ts con las descripciones y los
+     precios por cantidad que se hayan editado desde el panel ya aplicados.
+
+     Se filtra sobre este y no sobre `products` a propósito: así el
+     buscador —que matchea por descripción— encuentra por el texto que el
+     visitante realmente ve, y no por el que quedó en el código.
+
+     Mientras los overrides no llegan (o si la base falla) esto ES
+     `products`, con la misma identidad de array: no hay re-render. */
+  const { productos } = useContenido();
+
   /* El catálogo es un array estático de 17 productos, así que filtrar es
      barato; el memo es para no romper la identidad de `resultados` en
      cada render y evitar re-renders en cascada de la grilla. */
-  const resultados = useMemo(() => aplicarFiltros(products, filtros), [filtros]);
+  const resultados = useMemo(() => aplicarFiltros(productos, filtros), [productos, filtros]);
 
   const setCategoria = useCallback((valor: CategoriaFiltro) => dispatch({ tipo: "categoria", valor }), []);
   const setBusqueda = useCallback((valor: string) => dispatch({ tipo: "busqueda", valor }), []);

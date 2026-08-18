@@ -8,10 +8,13 @@ import { products, type Product } from "./products";
    modelos (66 combinaciones) pero llevar stock sólo por modelo (6 filas),
    coordinando el color por WhatsApp al cerrar la venta.
 
-   ⚠️ Hoy NINGÚN producto usa esto: al salir los protectores del catálogo,
-   no quedó ninguno con `options`. La maquinaria se conserva a propósito,
-   porque los celulares usados que vienen más adelante van a necesitar
-   variantes (color, capacidad).
+   ⚠️ Hoy NINGÚN producto usa esto, y no es lo mismo que "no hay productos
+   con opciones": los que tienen selector (cable, templado, cargadores)
+   llevan stock por CADA valor, que es el comportamiento por defecto.
+   STOCK_GROUPS sólo hace falta para llevarlo con MENOS detalle que las
+   opciones. La maquinaria se conserva a propósito, porque los celulares
+   usados que vienen más adelante van a necesitar variantes (color,
+   capacidad) sin contar stock por cada combinación.
 
    Este archivo es "puro": no toca la base de datos, así que lo pueden
    importar tanto el servidor como los componentes del navegador.
@@ -20,7 +23,8 @@ import { products, type Product } from "./products";
 /** Grupos de opciones por los que SÍ se lleva stock, por producto.
  *  Si un producto con opciones no figura acá, se lleva stock por todas
  *  sus opciones. Si no tiene opciones, lleva una sola fila (clave "").
- *  Vacío por ahora: ningún producto tiene opciones. */
+ *  Vacío por ahora: los productos con opciones llevan stock por cada
+ *  valor, que ya es el default. */
 export const STOCK_GROUPS: Record<string, string[]> = {};
 
 /** Stock indexado: { productId: { stockKey: cantidad } } */

@@ -77,15 +77,19 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 | `src/lib/db.ts` | Cliente de Neon. **Solo servidor**, conexión perezosa. |
 | `src/lib/stock.ts` | Lectura/escritura del stock en la base. **Solo servidor**. |
 | `src/lib/stock-context.tsx` | `StockProvider`: la web pública lee `/api/stock` desde el navegador. |
+| `src/lib/contenido.ts` | **Lógica pura del contenido editable**: precedencia (override de la base > `products.ts`) y validación de `packPrecios`. Sin React ni base. ⚠️ **FALLA ABIERTO**, al revés que el stock. Ver sección 6. |
+| `src/lib/contenido-db.ts` | Tabla `contenido_overrides` y sus lecturas/escrituras. **Solo servidor**. |
+| `src/lib/contenido-context.tsx` | `ContenidoProvider`: expone el **catálogo efectivo** (`productos`) ya resuelto. Lo consumen `filtros-context` y `page.tsx`. |
 | `src/lib/auth-session.ts` | JWT + cookie. **Compatible con Edge** (sin bcrypt): lo usa el middleware. |
 | `src/lib/auth.ts` | Parseo de `ADMIN_USERS`, bcrypt, `requerirSesion()`. Runtime Node. |
 | `src/lib/rate-limit.ts` | Límite de intentos de login **contra la base** (tabla `login_attempts`). |
 | `src/lib/site.ts` | **URL de producción del sitio** (`SITE_URL`). Única fuente de verdad: la usan `metadataBase` y el sitemap. |
 | `src/middleware.ts` | Primera barrera del panel (matcher acotado a `/admindistribucion` y `/api/admindistribucion`). |
 | `src/app/api/stock/route.ts` | **Endpoint público, SOLO LECTURA** del stock. |
+| `src/app/api/contenido/route.ts` | **Endpoint público, SOLO LECTURA** de los overrides de contenido. |
 | `src/app/api/stock/seed/route.ts` | Carga inicial/sincronización, protegida por `SEED_TOKEN`. Idempotente. |
-| `src/app/api/admindistribucion/` | Rutas privadas: `login`, `logout`, `stock` (lectura + escrituras). |
-| `src/app/admindistribucion/` | **Panel privado**: `login/page.tsx`, `page.tsx`, `PanelStock.tsx`, `BotonSalir.tsx`. |
+| `src/app/api/admindistribucion/` | Rutas privadas: `login`, `logout`, `stock` y `contenido` (lectura + escrituras). |
+| `src/app/admindistribucion/` | **Panel privado**: `login/page.tsx`, `page.tsx`, `PanelStock.tsx`, `PanelContenido.tsx`, `BotonSalir.tsx`. |
 | `scripts/hash-password.mjs` | Genera el hash bcrypt de una contraseña (entrada oculta). |
 | `src/app/opengraph-image.tsx` | Genera la **imagen de la tarjeta al compartir** (PNG 1200x630) con el theme del sitio. |
 | `src/app/twitter-image.tsx` | Reexporta la de arriba para Twitter/X. |
@@ -353,6 +357,58 @@ patrón que ya usa el stock:
 `promos.ts` y los tres componentes **no se tocan**. Los campos de `products.ts` pueden
 quedar como fallback o eliminarse; se decide en ese momento.
 
+### Contenido editable desde el panel (descripciones y packPrecios) — HECHO
+
+Ya se puede editar desde `/admindistribucion`, **sin tocar código ni hacer deploy**:
+la **descripción** de cualquier producto y sus **precios por cantidad**
+(`packPrecios`), incluso cargándoselos a productos que no los tienen.
+
+`products.ts` sigue siendo la **base**; la tabla `contenido_overrides` guarda
+sólo lo editado. Es la misma costura que describe el apartado de arriba para los
+badges, pero ya construida: **sirve de implementación de referencia**.
+
+```
+products.ts ──► contenido-db.ts ──► /api/contenido ──► ContenidoProvider ──► filtros-context ──► cards / modal / carrito
+  (la base)      (los overrides)     (lectura pública)   (catálogo efectivo)     (y el buscador)
+```
+
+> ### ⚠️⚠️ ESTO FALLA ABIERTO — ES LO CONTRARIO AL STOCK
+>
+> Si la base no responde, se usan **los valores de `products.ts`** y la web
+> funciona igual. El stock falla **cerrado** (sin datos → agotado) porque prometer
+> stock inexistente cuesta una venta caída; acá el criterio es el opuesto, porque
+> un producto **sin descripción o sin precio no se puede vender**.
+>
+> **NO "corregirlo" para que se parezca al stock.** Está anotado en
+> `contenido.ts`, `contenido-db.ts` y `contenido-context.tsx` justamente porque
+> parece una inconsistencia y no lo es.
+
+**Decisiones a tener presentes**
+
+- **Se filtra sobre el catálogo efectivo, no sobre `products`.** El buscador matchea
+  por descripción, así que tiene que buscar por el texto que el visitante ve. Por eso
+  `FiltrosProvider` consume `useContenido().productos`, y lo mismo hace
+  `CatalogoVacio` para diagnosticar.
+- **`aplicarOverrides` devuelve el MISMO array si no hay nada que pisar**, y el mismo
+  objeto por producto sin cambios. Sin esa identidad, cada carga de overrides
+  re-renderizaría la grilla entera. No romperlo.
+- **Tres estados por campo**: `NULL` = sin override (manda el código) · valor = manda
+  el override · `pack_precios = '[]'` = **promo apagada a propósito**, que es cómo se
+  saca de la web una promo que el código sí define.
+- **Un override inválido se descarta y queda el código.** Vale también para una fila
+  corrupta o editada a mano en la base: `resolverContenido` no lanza nunca.
+- **Validación de `packPrecios`**: enteros positivos, sin escalones vacíos,
+  consecutivos desde 1 (la **posición es la cantidad**), y **ningún pack más caro que
+  N veces el precio de 1** — si pasa eso, conviene comprar suelto y es un error de
+  carga. Las mismas funciones puras corren en el navegador (aviso instantáneo) y en
+  el servidor (que es el que manda).
+- **`sustantivoPack`** (`products.ts`): cómo se nombra cada ítem del pack
+  (`["funda", "fundas"]`). Por defecto **"unidad"/"unidades"**, que sirve para
+  cualquier producto. Antes estaba **hardcodeado en "fundas"** en cuatro lugares del
+  modal —incluida la `variante` que va al carrito y al mensaje de WhatsApp—, así que
+  una promo cargada sobre un cable habría dicho "3 fundas" en el pedido.
+  **No es editable desde el panel a propósito**: es redacción, va por código.
+
 ## 7. Estado actual y pendientes
 
 **Catálogo actual — 17 productos, 4 categorías** (en `products.ts`, en este orden):
@@ -447,6 +503,10 @@ regulado: si se amplía, mantener ese tono.
     del antiespía) y AirPods con cancelación de ruido.
 - **Agrupación por categoría en "Ver todo"** y arreglo del espacio vacío en mobile al
   cambiar de chip (ver secciones 4 y 5).
+- **Contenido editable desde el panel** (descripciones y `packPrecios`, ver sección 6):
+  lógica pura + tabla `contenido_overrides` + endpoint público de solo lectura +
+  rutas privadas + sección nueva en `/admindistribucion`. **Falla ABIERTO.**
+  `/` sigue `○ Static`. La tabla **se crea sola** la primera vez que entrás al panel.
 
 **Pendiente** ⏳
 
@@ -519,6 +579,15 @@ DELETE FROM stock WHERE product_id IN ('paq-1','paq-2','paq-3','paq-4','paq-5','
 - **El stock se cambia SOLO desde el panel.** No baja solo cuando alguien consulta por
   WhatsApp: la venta se cierra por chat, así que al confirmarla hay que entrar al panel
   y usar **"−1"** (o "Agotar" / editar el número).
+- **Editar descripciones y precios por cantidad**: en el mismo panel, sección
+  **"Descripciones y precios por cantidad"**. Cada campo dice si está **DEL CÓDIGO** o
+  **EDITADO**, muestra el valor de `products.ts` como referencia cuando lo pisaste, y
+  tiene **"Volver al código"** para borrar el override. Los escalones se agregan y se
+  quitan de a uno; **la posición es la cantidad**, así que quitar el del medio
+  renumera los de abajo. Guardar con la lista vacía **apaga** la promo (queda como
+  "PROMO APAGADA"). Ver sección 6.
+  ⚠️ **La tabla `contenido_overrides` se crea sola** al entrar al panel; no hay que
+  correr ningún seed.
 - **El cliente todavía NO tiene acceso al panel** (decisión de negocio: las
   actualizaciones las hago yo y se cobran aparte). Ni siquiera sabe que existe.
 - **Si algún día se le da el panel al cliente**: conviene antes revisar los textos y la
@@ -555,6 +624,9 @@ DELETE FROM stock WHERE product_id IN ('paq-1','paq-2','paq-3','paq-4','paq-5','
   por el "fallar cerrado", **todo se ve agotado**. Para probar con stock hay que crear
   un `.env.local` (ya cubierto por `.gitignore`) con `DATABASE_URL`, y sumar
   `ADMIN_USERS` + `AUTH_SECRET` si además se quiere entrar al panel.
+  En cambio `/api/contenido` también devuelve 503 sin base, pero **no se nota**: por
+  el "fallar abierto" la web muestra los textos y precios de `products.ts`. Los 503 de
+  la consola en local son esperados.
 - **Chequeos antes de commitear**: `npx tsc --noEmit` y `npm run build`.
   `npm run lint` reporta **4 errores preexistentes** de `react-hooks/set-state-in-effect`
   en `ProductModal.tsx`, `cart-context.tsx` y `stock-context.tsx`. Es la línea base: si

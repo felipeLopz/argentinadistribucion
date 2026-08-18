@@ -52,6 +52,16 @@ export interface Product {
      el pack ya armado como un ítem de cantidad 1. */
   packPrecios?: number[];
 
+  /** Cómo se nombra cada ítem en la tabla del modal: ["funda", "fundas"].
+   *  Si no está, se usa "unidad"/"unidades", que sirve para cualquier
+   *  producto. Va en singular y plural porque en castellano no alcanza con
+   *  sumarle una "s" ("unidad" → "unidades").
+   *
+   *  No es editable desde el panel a propósito: una promo por cantidad
+   *  cargada ahí sale como "unidades", que es correcto para todo. Poner
+   *  un sustantivo propio es un detalle de redacción, y va por código. */
+  sustantivoPack?: [singular: string, plural: string];
+
   /** Nombre corto con el que el ítem entra al carrito y al mensaje de
    *  WhatsApp, cuando el del catálogo es demasiado largo para esa línea.
    *  Si no está, se usa `name`. */
@@ -114,6 +124,7 @@ export const products: Product[] = [
        pack sale de packPrecios y lo resuelve el modal. */
     price: 5000,
     packPrecios: [5000, 8500, 12500, 16500],
+    sustantivoPack: ["funda", "fundas"],
     sinStock: true,
     category: "accesorios",
   },

@@ -41,9 +41,13 @@ function catalogoDeStock() {
  * en stock-config.ts — la MISMA fuente de verdad que usa la web pública
  * para leer el stock.
  *
- * Esto hace imposible cargar un casillero "fantasma": por ejemplo, en las
- * fundas 11-16 el stock se lleva por MODELO, así que intentar guardar por
- * color ("Negro Mate") se rechaza, porque la web nunca leería esa clave.
+ * Esto hace imposible cargar un casillero "fantasma": si un producto
+ * ofreciera Color y Modelo pero llevara el stock sólo por Modelo (vía
+ * STOCK_GROUPS), intentar guardar por color ("Negro Mate") se rechazaría,
+ * porque la web nunca leería esa clave.
+ *
+ * Hoy no hay ninguno así: STOCK_GROUPS está vacío y el stock va por cada
+ * valor de opción. El caso se contempla para los celulares usados.
  */
 function validarPar(
   productId: string,

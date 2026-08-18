@@ -2,9 +2,10 @@
 
 import { motion } from "framer-motion";
 import { SearchX, Tag, LayoutGrid, PackageSearch, RotateCcw } from "lucide-react";
-import { CATEGORIAS, products } from "@/lib/products";
+import { CATEGORIAS } from "@/lib/products";
 import { diagnosticarVacio } from "@/lib/filtros";
 import { useFiltros } from "@/lib/filtros-context";
+import { useContenido } from "@/lib/contenido-context";
 
 /* ═══════════════════════════════════════════════
    CATÁLOGO VACÍO — único estado vacío de la grilla
@@ -21,7 +22,11 @@ const MAX_LARGO = 48;
 
 export default function CatalogoVacio() {
   const { filtros, hayFiltros, limpiar, setBusqueda, setCategoria, setPrecio } = useFiltros();
-  const { culpable, siSeQuita } = diagnosticarVacio(products, filtros);
+  /* Se diagnostica sobre el catálogo EFECTIVO, el mismo que filtró la
+     grilla: si no, con una descripción editada el diagnóstico podría
+     sugerir aflojar un filtro que en realidad no es el culpable. */
+  const { productos } = useContenido();
+  const { culpable, siSeQuita } = diagnosticarVacio(productos, filtros);
 
   const termino =
     filtros.busqueda.trim().length > MAX_LARGO
