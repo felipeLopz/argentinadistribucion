@@ -31,8 +31,13 @@ export interface Product {
    *  guarda una única vez, así que "Ver todo" lo muestra una vez y el
    *  contador de cada chip lo cuenta.
    *
-   *  Ojo: por eso la suma de los contadores de los chips puede ser mayor
-   *  que el total de "Ver todo". Es esperado, no un error de conteo. */
+   *  Ojo: cuando se usa, la suma de los contadores de los chips queda
+   *  mayor que el total de "Ver todo". Es esperado, no un error de conteo.
+   *
+   *  ⚠️ HOY NINGÚN PRODUCTO LO USA, y es a propósito: las promos estuvieron
+   *  un rato también en Accesorios Apple y las dos categorías terminaban
+   *  mostrando casi lo mismo. NO borrar el campo — se va a volver a
+   *  necesitar apenas un producto pertenezca de verdad a dos categorías. */
   categoriasExtra?: Categoria[];
 
   status?: "consultar" | "proximamente";
@@ -111,8 +116,6 @@ export const products: Product[] = [
     packPrecios: [5000, 8500, 12500, 16500],
     sinStock: true,
     category: "accesorios",
-    /* Aparece también en Accesorios Apple, siendo UN solo producto. */
-    categoriasExtra: ["accesorios-apple"],
   },
   {
     /* ⚠️ Convive con `promo-airpods-anc` ($49.990). La diferencia —
@@ -126,8 +129,6 @@ export const products: Product[] = [
     image: IMG_AIRPODS_PRO_2,
     price: 25000,
     category: "accesorios",
-    /* Aparece también en Accesorios Apple, siendo UN solo producto. */
-    categoriasExtra: ["accesorios-apple"],
   },
   {
     /* ⚠️ Convive con `promo-airpods-pro-2` ($25.000). Lo que los separa,
@@ -140,8 +141,6 @@ export const products: Product[] = [
     image: IMG_AIRPODS_ANC,
     price: 49990,
     category: "accesorios",
-    /* Aparece también en Accesorios Apple, siendo UN solo producto. */
-    categoriasExtra: ["accesorios-apple"],
   },
   {
     id: "promo-cable-cabezal",
@@ -154,8 +153,6 @@ export const products: Product[] = [
        lleva por separado (una fila por ficha). */
     options: [{ label: "Ficha", values: FICHAS_CABLE }],
     category: "accesorios",
-    /* Aparece también en Accesorios Apple, siendo UN solo producto. */
-    categoriasExtra: ["accesorios-apple"],
   },
   {
     id: "promo-templado-funda",
@@ -166,8 +163,6 @@ export const products: Product[] = [
     price: 8500,
     options: [{ label: "Templado", values: ["9D", "Anti espía"] }],
     category: "accesorios",
-    /* Aparece también en Accesorios Apple, siendo UN solo producto. */
-    categoriasExtra: ["accesorios-apple"],
   },
 
   // ═══ VAPERS ═══
@@ -268,8 +263,10 @@ export const products: Product[] = [
   },
 
   /* ═══ ACCESORIOS APPLE ═══
-     Ojo: la Silicone Case también sale acá, vía `categoriasExtra`. Está
-     definida arriba, en Promos, y es UN solo producto. */
+     Hoy queda un solo producto: las promos volvieron a vivir sólo en
+     Promos (tenerlas en las dos hacía que las dos categorías mostraran
+     casi lo mismo). Se van a sumar acá los productos sueltos —funda sola,
+     templado solo, cable solo— cuando lleguen los precios. */
   {
     id: "apl-3",
     name: "Cargadores",

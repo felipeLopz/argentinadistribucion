@@ -70,6 +70,61 @@ export function hayFiltrosActivos(filtros: Filtros): boolean {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   AGRUPACIÓN POR CATEGORÍA
+
+   En "Ver todo" la grilla va SIEMPRE agrupada, con el título de cada
+   categoría arriba de su bloque. Con un chip puntual va plana, porque son
+   todos de la misma categoría y no hay nada que separar.
+
+   Eso es todo: ni el orden ni la búsqueda cambian la decisión.
+
+   ⚠️ Consecuencia asumida y decidida: con la vista partida en bloques, el
+   orden se aplica DENTRO de cada uno. "Precio de menor a mayor" ordena los
+   vapers entre sí y los termos entre sí, no el catálogo entero. Se prefiere
+   así: un catálogo mezclado sin separaciones es más difícil de recorrer que
+   uno ordenado por bloques.
+
+   NO reintroducir una condición que aplane al ordenar o al buscar: ya
+   estuvo y se sacó a propósito. */
+
+export interface GrupoDeCategoria {
+  id: Categoria;
+  label: string;
+  productos: Product[];
+}
+
+/** ¿Corresponde mostrar la grilla agrupada, con estos filtros?
+ *  Sólo depende de la categoría: en "Ver todo" siempre se agrupa. */
+export function correspondeAgrupar(filtros: Filtros): boolean {
+  return filtros.categoria === "todo";
+}
+
+/**
+ * Parte los resultados en bloques por categoría, en el orden de CATEGORIAS
+ * (el mismo de los chips).
+ *
+ * Cada producto va en su categoría PRINCIPAL y aparece UNA sola vez, aunque
+ * tenga `categoriasExtra`: si no, un producto multi-categoría saldría
+ * repetido en dos bloques dentro de la misma pantalla.
+ *
+ * Los grupos vacíos se omiten, así una búsqueda sólo muestra los bloques
+ * que tienen resultados.
+ *
+ * El orden que venga en `resultados` se conserva dentro de cada bloque:
+ * `filter` respeta la posición relativa, así que lo que ya ordenó
+ * `aplicarFiltros` sigue ordenado acá.
+ */
+export function agruparPorCategoria(resultados: Product[]): GrupoDeCategoria[] {
+  return CATEGORIAS.filter((c) => c.id !== "todo")
+    .map((c) => ({
+      id: c.id as Categoria,
+      label: c.label,
+      productos: resultados.filter((p) => p.category === c.id),
+    }))
+    .filter((g) => g.productos.length > 0);
+}
+
+/* ══════════════════════════════════════════════════════════════
    FILTROS ↔ URL
 
    Permite compartir un link ya filtrado ("mirá los vapers"), que para una

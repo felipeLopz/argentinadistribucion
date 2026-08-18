@@ -1,20 +1,32 @@
 "use client";
 
 import { useRef } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import type { Product } from "@/lib/products";
+import { agruparPorCategoria, correspondeAgrupar } from "@/lib/filtros";
 import { useFiltros } from "@/lib/filtros-context";
 import BarraFiltros from "./BarraFiltros";
 import { ProductCard } from "./ProductCard";
 import CatalogoVacio from "./CatalogoVacio";
+import EncabezadoGrupo from "./EncabezadoGrupo";
 
 /* ═══════════════════════════════════════════════
-   CATÁLOGO — una sola sección con barra de filtros y grilla plana
+   CATÁLOGO — una sola sección con barra de filtros y grilla
 
-   Reemplaza a las 4 secciones apiladas por categoría. La grilla es plana
-   a propósito: si estuviera agrupada por categoría, ordenar por precio
-   sólo ordenaría dentro de cada grupo y dejaría de significar algo. La
-   categoría la comunica el chip activo.
+   Reemplaza a las 4 secciones apiladas por categoría.
+
+   ─── Agrupada o plana ───
+   En "Ver todo" la grilla va SIEMPRE agrupada: un bloque por categoría con
+   su encabezado, en el orden de los chips. Es lo que hace navegable un
+   catálogo mezclado, y vale igual con cualquier orden y con búsqueda
+   activa (ahí sólo se muestran los bloques que tienen resultados).
+
+   Se aplana en un solo caso: con un chip puntual, porque son todos de la
+   misma categoría y no hay nada que separar.
+
+   El orden elegido se aplica DENTRO de cada bloque — decisión tomada, ver
+   la nota en `correspondeAgrupar()` (filtros.ts), que es donde vive la
+   regla. No reintroducir un aplanado al ordenar o al buscar.
 
    ─── Sobre el "tirón" al cambiar de filtro ───
    Pasar de 18 cards a 3 acorta el documento de golpe. Si el usuario está
@@ -58,7 +70,7 @@ function altoNavbar(): number {
 }
 
 export default function Catalogo({ onProductClick }: { onProductClick: (p: Product) => void }) {
-  const { resultados, tocado } = useFiltros();
+  const { filtros, resultados, tocado } = useFiltros();
 
   /* Ancla de altura cero JUSTO antes de la barra. Se mide sobre esto y no
      sobre la barra misma porque la barra es sticky: una vez pegada, su
@@ -88,6 +100,10 @@ export default function Catalogo({ onProductClick }: { onProductClick: (p: Produ
     }
   };
 
+  /* Sólo se aplana con un chip puntual; en "Ver todo" va siempre agrupado,
+     con cualquier orden y con búsqueda. La regla vive en filtros.ts. */
+  const agrupado = correspondeAgrupar(filtros);
+
   return (
     <section id="catalogo" className="font-archivo">
       <div ref={anclaRef} aria-hidden="true" />
@@ -98,29 +114,83 @@ export default function Catalogo({ onProductClick }: { onProductClick: (p: Produ
           /* Un solo estado vacío para los tres motivos (texto, precio,
              categoría) y sus combinaciones: él se diagnostica solo. */
           <CatalogoVacio />
-        ) : (
-          /* `relative` porque popLayout saca a las cards que salen del flujo
-             y las posiciona absolutas respecto de este contenedor. */
-          <div className="relative flex flex-wrap justify-center gap-[22px]">
-            {/* popLayout: la card que sale deja de ocupar lugar YA (así el
-                alto se ajusta en el mismo commit que corrige el scroll) y
-                se desvanece por encima, en vez de cortarse de golpe. */}
-            <AnimatePresence mode="popLayout" initial={false}>
-              {resultados.map((product, i) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  index={i}
-                  /* Sólo la carga inicial se escalona: una vez que el
-                     usuario filtra, las cards entran todas juntas. */
-                  escalonar={!tocado}
-                  onOpen={() => onProductClick(product)}
+        ) : agrupado ? (
+          /* "Ver todo": un bloque por categoría, con cualquier orden. El
+             fundido entre agrupado y plano evita que la vista salte de
+             golpe al cambiar de chip. */
+          <motion.div
+            key="agrupado"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="space-y-12"
+          >
+            {agruparPorCategoria(resultados).map((grupo) => (
+              <div key={grupo.id}>
+                <EncabezadoGrupo
+                  categoria={grupo.id}
+                  label={grupo.label}
+                  cantidad={grupo.productos.length}
                 />
-              ))}
-            </AnimatePresence>
-          </div>
+                <Grilla
+                  productos={grupo.productos}
+                  escalonar={!tocado}
+                  onProductClick={onProductClick}
+                />
+              </div>
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="plano"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
+            <Grilla
+              productos={resultados}
+              escalonar={!tocado}
+              onProductClick={onProductClick}
+            />
+          </motion.div>
         )}
       </div>
     </section>
+  );
+}
+
+/* La grilla de cards. Se usa igual en el modo plano y dentro de cada
+   bloque del modo agrupado, así el markup y las animaciones no se
+   duplican. */
+function Grilla({
+  productos,
+  escalonar,
+  onProductClick,
+}: {
+  productos: Product[];
+  escalonar: boolean;
+  onProductClick: (p: Product) => void;
+}) {
+  return (
+    /* `relative` porque popLayout saca a las cards que salen del flujo y
+       las posiciona absolutas respecto de este contenedor. */
+    <div className="relative flex flex-wrap justify-center gap-[22px]">
+      {/* popLayout: la card que sale deja de ocupar lugar YA (así el alto se
+          ajusta en el mismo commit que corrige el scroll) y se desvanece
+          por encima, en vez de cortarse de golpe. */}
+      <AnimatePresence mode="popLayout" initial={false}>
+        {productos.map((product, i) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            index={i}
+            /* Sólo la carga inicial se escalona: una vez que el usuario
+               filtra, las cards entran todas juntas. */
+            escalonar={escalonar}
+            onOpen={() => onProductClick(product)}
+          />
+        ))}
+      </AnimatePresence>
+    </div>
   );
 }
