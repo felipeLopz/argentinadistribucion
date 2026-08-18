@@ -60,7 +60,7 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 | `src/lib/products.ts` | **Catálogo** (array `products` + interface `Product`), `Categoria`, `categoriasDe()`, `CATEGORIAS` (chips), `navSections` (anclas del navbar), `contactConfig`, `storeName`. **Se edita a mano.** Campos opcionales del producto: `image` (si falta, va el placeholder), `categoriasExtra` (multi-categoría), `packPrecios` (promo por cantidad), `cartName`, `sinStock`, `badges`, `precioAnterior`. |
 | `src/lib/promos.ts` | **Lógica pura de badges y ofertas**: `resolverPromo()`, la cadena de prioridad, el cálculo del ahorro, `UMBRAL_URGENCIA` y `admitePromocion()` (la regla que excluye a los vapers). Ver sección 6. |
 | `src/hooks/use-promocion.ts` | **De dónde salen** los datos promocionales. Hoy, del catálogo. **Es la única costura a cambiar** para editarlos desde el panel. |
-| `src/lib/filtros.ts` | **Lógica pura de los filtros**, sin React ni base: `Filtros`, `FILTROS_VACIOS`, `ORDENES`, `aplicarFiltros`, `coincideBusqueda`, `hayFiltrosActivos`, `rangoDePrecios`, `diagnosticarVacio`, y el ida y vuelta con la URL (`serializarFiltros` / `parsearFiltros`). **Es el punto de extensión para filtros nuevos.** |
+| `src/lib/filtros.ts` | **Lógica pura de los filtros**, sin React ni base: `Filtros`, `FILTROS_VACIOS`, `ORDENES`, `aplicarFiltros`, `coincideBusqueda`, `hayFiltrosActivos`, `rangoDePrecios`, `diagnosticarVacio`, la **agrupación por categoría** (`correspondeAgrupar` / `agruparPorCategoria`) y el ida y vuelta con la URL (`serializarFiltros` / `parsearFiltros`). **Es el punto de extensión para filtros nuevos.** |
 | `src/lib/filtros-context.tsx` | Estado de los filtros (reducer + contexto) y **sincronización con la URL** (History API). Mismo patrón que `CartProvider`/`StockProvider`. |
 | `src/lib/cart-context.tsx` | Lógica del **carrito**: React Context + localStorage (clave `argentina-distributor-cart`). `addItem/removeItem/updateQuantity/clearCart` + totales. |
 | `src/lib/utils.ts` | Helper `cn()` (clases). |
@@ -97,9 +97,10 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 |---|---|
 | `Navbar` | Logo, buscador (lee del contexto de filtros), links **Inicio** y **Contacto**, y el carrito. **Sin categorías**, a propósito. |
 | `Hero` | Título "KOI tu tienda de confianza", pill del rubro, CTA a `#catalogo`. |
-| `Catalogo` | **Sección única del catálogo**: barra de filtros + grilla plana + estado vacío. Acá vive el arreglo del "tirón" (ver sección 4). |
+| `Catalogo` | **Sección única del catálogo**: barra de filtros + grilla (agrupada o plana) + estado vacío. Acá vive el arreglo del "tirón" y del salto en mobile (ver sección 4). |
 | `BarraFiltros` | Chips de categoría, rango de precio, orden y contador. **Sticky** abajo del navbar. En mobile, precio y orden se pliegan detrás de "Filtros". |
 | `CatalogoVacio` | **Único** estado vacío: se diagnostica solo (texto / precio / categoría / combinación) y ofrece un atajo puntual + "Limpiar filtros". |
+| `EncabezadoGrupo` | Título de cada bloque de categoría en "Ver todo" (ícono + nombre + contador + hairline). Reusa el encabezado de sección que tenía el catálogo antes de los filtros. |
 | `ProductCard` | Tarjeta. Clickeable, abre el modal. Cuelga el badge sobre la foto. |
 | `CardPrecio` | Bloque de **precio + disponibilidad**: precio anterior tachado, ahorro, y el renglón "Quedan N" / "¡Últimas N unidades!". |
 | `BadgeProducto` | La **pastilla de promoción**, sin posicionamiento: la ubica quien la usa (la card, absoluta sobre la foto; el modal, en flujo al lado de la categoría). |
@@ -160,28 +161,50 @@ y `CatalogoVacio`.
   separados. Si aparece otra promo rara, seguir este camino en vez de tocar
   `cart-context.tsx`.
 - **El catálogo es una sola sección filtrable** (`#catalogo`), no secciones apiladas.
-  La **grilla es plana** a propósito: si estuviera agrupada por categoría, ordenar por
-  precio sólo ordenaría dentro de cada grupo. La categoría la comunica el chip activo.
-- **Un producto puede estar en VARIAS categorías** (`categoriasExtra`). Hoy la Silicone
-  Case sale en **Promos** y en **Accesorios Apple**, siendo **un solo producto**.
-  - `products` lo guarda **una única vez**, así que "Ver todo" lo muestra una vez: la
-    deduplicación sale gratis, porque filtrar una lista nunca repite elementos.
-    ⚠️ Si algún día se arma la grilla concatenando categorías, ahí sí aparecería
-    duplicado. No hacerlo: filtrar con `categoriasDe()`, nunca concatenar.
-  - ⚠️ **La suma de los contadores de los chips es mayor que "Ver todo"** (hoy 17
-    contra 16). Es **esperado**: la Silicone Case cuenta en sus dos categorías.
-  - `category` sigue siendo la **principal** (es la que muestra el badge del modal);
-    `categoriasExtra` son las adicionales.
+- **La grilla se AGRUPA por categoría en "Ver todo"**, con un bloque por categoría en
+  el orden de los chips (`EncabezadoGrupo`). Con un chip puntual va **plana**, porque
+  son todos de la misma categoría y no hay nada que separar. La regla vive en
+  `correspondeAgrupar()` (`filtros.ts`) y es de una línea: agrupa si la categoría es
+  `"todo"`. Ver sección 5.
+- **Multi-categoría (`categoriasExtra`): existe pero HOY NO LO USA NADIE, a propósito.**
+  Un producto puede pertenecer a varias categorías sin dejar de ser uno solo
+  (`products` lo guarda una única vez, así que "Ver todo" lo muestra una vez y la
+  deduplicación sale gratis).
+  - Se usó un tiempo para que las promos salieran también en Accesorios Apple, y se
+    revirtió: las dos categorías terminaban mostrando **casi lo mismo** (5 de 6
+    productos repetidos). Hoy cada producto está en una sola categoría y **la suma de
+    los contadores de los chips coincide con "Ver todo"** (17).
+  - ⚠️ **NO borrar el campo ni `categoriasDe()`**: se va a volver a necesitar apenas
+    un producto pertenezca de verdad a dos categorías.
+  - Si se reactiva: `category` es la **principal** (la del badge del modal y la del
+    bloque en "Ver todo"), `categoriasExtra` son las adicionales, y ahí sí la suma de
+    los chips vuelve a quedar mayor que el total. Filtrar siempre con
+    `categoriasDe()`, **nunca concatenando categorías** — eso sí duplicaría.
 - **Las categorías NO van en el navbar.** Viven sólo en los chips. Tenerlas en los dos
   lados daría dos formas distintas de hacer lo mismo. `navSections` quedó con
   **Inicio** y **Contacto** nada más; el footer sí lista categorías, pero sus links
   **activan el chip**, no scrollean.
-- **El "tirón" al cambiar de filtro** (`Catalogo.tsx`): pasar de 18 cards a 3 acorta el
-  documento y el navegador **clampea** el scroll. Se arregla con el **orden de las
-  operaciones**: primero el scroll (instantáneo, y sólo si el usuario está por debajo
-  del inicio de la grilla), después el cambio de filtro. Corregir *después* no sirve:
-  las cards salen con animación, así que la altura colapsa un frame más tarde.
-  ⚠️ **No volver a poner scroll suave acá**: compite con el cambio de altura.
+- **El salto al cambiar de categoría** (`Catalogo.tsx`) — dos problemas distintos que
+  se arreglaron juntos, y las dos soluciones son frágiles si se tocan:
+  1. **El "tirón"**: pasar de 17 cards a 3 acorta el documento y el navegador
+     **clampea** el scroll. Se arregla con el **orden de las operaciones**: primero el
+     scroll, después el cambio de filtro. Corregir *después* no sirve, porque las
+     cards salen con animación y la altura colapsa un frame más tarde.
+     ⚠️ **El scroll va INSTANTÁNEO, nunca suave**: una animación de scroll compitiendo
+     con el cambio de altura es exactamente el tirón que se quiere evitar.
+  2. **El espacio vacío en mobile**: al principio sólo se reposicionaba si el usuario
+     estaba **por debajo** del inicio de la grilla. En mobile el **hero mide más que
+     la pantalla** (865px contra 812), así que el chip se toca cuando recién asoma al
+     pie — con el usuario **ARRIBA** del catálogo — y entonces no se scrolleaba nada:
+     la primera card quedaba a 810px de un viewport de 812.
+     ⚠️ **Reposiciona en las DOS direcciones.** No volver a la condición de una sola.
+  - En desktop eso también cambió la conducta (antes, tocar un chip desde arriba no
+    hacía nada). **Se dejó igual a propósito**: en los dos tamaños, tocar una
+    categoría baja al catálogo.
+- **El alto del navbar NO se hardcodea.** El `Navbar` se mide y publica su alto real
+  en la variable CSS `--alto-navbar` (75px normal, **129px con el buscador mobile
+  desplegado**). La usan el `sticky` de la barra de filtros y el salto al catálogo.
+  Antes era un `74` hardcodeado que además quedaba corto al abrir el buscador.
 - **Eliminado a propósito (NO reintroducir)**:
   - La página de detalle `/producto/[id]`.
   - El **botón flotante del carrito** (`CartIcon`) y el **flotante de WhatsApp**.
@@ -210,6 +233,28 @@ y `CatalogoVacio`.
   que afloja un filtro por vez y ve cuál devuelve resultados. Prioridad
   **precio → categoría → búsqueda**: lo que el usuario escribió es lo que más quiere
   conservar, así que se sugiere aflojar los controles antes de abandonar la búsqueda.
+
+**La agrupación por categoría**
+
+En **"Ver todo" la grilla va SIEMPRE agrupada**: un bloque por categoría con su
+encabezado, en el orden de los chips. Con un **chip puntual va plana**, porque son
+todos de la misma categoría y no hay nada que separar.
+
+`correspondeAgrupar()` es de una línea a propósito: **sólo mira la categoría**. Ni el
+orden ni la búsqueda entran en la decisión.
+
+- **El orden se aplica DENTRO de cada bloque.** "Precio de menor a mayor" ordena los
+  vapers entre sí y los termos entre sí, no el catálogo entero. Es una consecuencia
+  asumida y decidida: un catálogo mezclado sin separaciones es más difícil de recorrer
+  que uno ordenado por bloques. No hace falta código extra — `aplicarFiltros` ordena
+  la lista completa y `filter` respeta la posición relativa, así que cada bloque queda
+  ordenado solo.
+- **Con búsqueda activa también agrupa**, mostrando únicamente los bloques que tienen
+  resultados (buscar "vaper" muestra sólo el bloque Vapers).
+- ⚠️ **NO reintroducir un aplanado al ordenar o al buscar.** Estuvo implementado un
+  rato —con el argumento de que agrupar y ordenar son incompatibles— y **se sacó a
+  propósito**. Si aparece de nuevo esa condición en `correspondeAgrupar()`, es una
+  regresión.
 
 **Dónde vive el estado**
 
@@ -310,22 +355,43 @@ quedar como fallback o eliminarse; se decide en ese momento.
 
 ## 7. Estado actual y pendientes
 
-**Catálogo actual — 16 productos, 4 categorías** (en `products.ts`, en este orden):
+**Catálogo actual — 17 productos, 4 categorías** (en `products.ts`, en este orden):
 
-| Categoría (`category`) | Chip | Productos |
+| Categoría (`category`) | Chip | # | Productos |
+|---|---|---|---|
+| `accesorios` | **Promos** | 5 | Silicone Case 11-17 ($5.000, promo por cantidad, sin stock) · **AirPods Pro 2 (sin cancelación de ruido)** $25.000 · **AirPods Pro 2 con cancelación de ruido + funda** $49.990 · Cable y cabezal $20.000 · **Promo templado + funda** $8.500 |
+| `vapers` | **Vapers** | 8 | 5 dispositivos recargables + 2 líquidos 30ml + 1 kit — todos $35.000, **sin foto** |
+| `termos` | **Termos** | 3 | Termo Stanley 750ml en rosa, azul y blanco — $45.000, **sin foto** |
+| `accesorios-apple` | **Apple** | 1 | Cargadores $11.400 |
+
+La suma de los chips (5+8+3+1) **coincide** con "Ver todo" (17): ya no hay
+multi-categoría (ver sección 4).
+
+**Productos con selector de opciones** (el modal obliga a elegir antes de agregar, y
+la opción viaja al carrito y al mensaje de WhatsApp):
+
+| Producto | Grupo | Valores |
 |---|---|---|
-| `accesorios` | **Promos** | Silicone Case 11-17 (promo por cantidad, sin stock), AirPods Pro 2, Cable y cabezal USB C - USB C |
-| `vapers` | **Vapers** | 5 dispositivos recargables + 2 líquidos 30ml + 1 kit — todos $35.000, **sin foto** |
-| `termos` | **Termos** | Termo Stanley 750ml en rosa, azul y blanco — $45.000, **sin foto** |
-| `accesorios-apple` | **Apple** | **Silicone Case** (vía `categoriasExtra`), AirPods, Cargadores USB C - USB C |
+| Cable y cabezal (Promos) | `Ficha` | `C - C` · `C - Lightning` |
+| Cargadores (Apple) | `Ficha` | `C - C` · `C - Lightning` |
+| Promo templado + funda | `Templado` | `9D` · `Anti espía` |
 
-⚠️ Los contadores dan **3 · 8 · 3 · 3 = 17** contra **16** de "Ver todo": la Silicone
-Case cuenta en dos categorías. Es esperado.
+⚠️ **Los dos AirPods y por qué la aclaración va en el NOMBRE.** Conviven un
+**AirPods Pro 2 (sin cancelación de ruido)** a $25.000 y un **AirPods Pro 2 con
+cancelación de ruido + funda** a $49.990. A esa diferencia de precio, el comprador
+tiene que entender de una qué está pagando, y la descripción sola no alcanza porque en
+la card se corta a dos líneas. **El cliente confirmó que el de $25.000 no la tiene**;
+no es una suposición. **No sacar la aclaración del nombre.**
 
 **"iPhone" en el nombre de la Silicone Case es a propósito.** El rubro se nombra
 "accesorios **Apple**" en todos lados (hero, footer, metadata), pero ese producto dice
 "(iPhone 11 al 17)" porque indica **qué modelos le entran**, no el rubro. Cambiarlo a
 "Apple 11 al 17" no significaría nada.
+
+**Accesorios Apple quedó con un solo producto**, y es transitorio: se van a sumar los
+**productos sueltos** (funda sola, templado solo, cable solo) cuando lleguen los
+precios del cliente. No "arreglarlo" volviendo a poner `categoriasExtra` en las
+promos: eso ya se probó y se revirtió.
 
 Las descripciones de los vapers son **deliberadamente técnicas** (formato, batería,
 capacidad), sin adjetivos promocionales ni nada que invite al consumo. Es un producto
@@ -333,15 +399,17 @@ regulado: si se amplía, mantener ese tono.
 
 **Terminado** ✅
 
-- **Sistema de stock real** (Neon Postgres). Hoy cada producto lleva **una fila** con
-  clave `""`; los marcados `sinStock` **no llevan ninguna**. Son **15 filas** en total.
-  La web muestra **"Quedan N" / "Agotado"** y **bloquea agregar** lo agotado; mientras
-  carga dice "Verificando stock…". `/api/stock` es **SOLO LECTURA** (POST/PUT/DELETE
-  → 405). **Fallar cerrado**: si la base no responde, todo se trata como agotado — la
-  **única** excepción es `sinStock`.
-  ⚠️ **`STOCK_GROUPS` quedó VACÍO** al salir los protectores: ningún producto tiene
-  `options`. La maquinaria de variantes **se conservó a propósito** — los celulares
-  usados que vienen van a necesitarla (color, capacidad). No borrarla.
+- **Sistema de stock real** (Neon Postgres). **19 filas** en total: la mayoría lleva
+  una fila con clave `""`, y los **3 productos con selector** llevan **una por opción**
+  (`C - C` / `C - Lightning`, `9D` / `Anti espía`). Los marcados `sinStock` **no llevan
+  ninguna**. La web muestra **"Quedan N" / "Agotado"** y **bloquea agregar** lo
+  agotado; mientras carga dice "Verificando stock…". `/api/stock` es **SOLO LECTURA**
+  (POST/PUT/DELETE → 405). **Fallar cerrado**: si la base no responde, todo se trata
+  como agotado — la **única** excepción es `sinStock`.
+  ⚠️ **`STOCK_GROUPS` sigue VACÍO**: las opciones de hoy llevan stock por cada valor,
+  que es el comportamiento por defecto. `STOCK_GROUPS` sólo hace falta para llevar el
+  stock con MENOS detalle que las opciones (ej. ofrecer 11 colores × 6 modelos pero
+  contar sólo por modelo). Se conserva para los celulares usados que vienen.
 - **Panel privado** en **`/admindistribucion`**, no enlazado y con `noindex`. Login con
   email + bcrypt, sesión **JWT en cookie `HttpOnly` + `Secure` + `SameSite=Lax`** de 7
   días. Permite **ver, editar, descontar (−1) y agotar**, con buscador. Los casilleros
@@ -364,22 +432,52 @@ regulado: si se amplía, mantener ese tono.
 - **Badges y ofertas** (Fase 4, ver sección 6): badges manuales, precio anterior
   tachado con el ahorro, "¡Últimas N unidades!" con umbral 3, la regla que excluye a
   los vapers, y la resolución aislada para migrarla al panel.
-- **Actualización de accesorios Apple**: fuera los protectores `apl-5`/`apl-6`; fotos
-  reasignadas (AirPods → `airpods-pro-2.webp`, Cargadores → `cable-cabezal-usbc.webp`);
-  los dos productos de cable pasaron a **USB C - USB C**; y la Silicone Case ahora sale
-  también en Apple vía `categoriasExtra`.
+- **Actualización de accesorios Apple**: fuera los protectores `apl-5`/`apl-6` y
+  fotos reasignadas.
+- **Catálogo con los datos del cliente** (última tanda):
+  - **Nuevos**: `promo-templado-funda` (Promo templado + funda, $8.500, selector de
+    templado) y `promo-airpods-anc` (AirPods Pro 2 con cancelación de ruido + funda,
+    $49.990).
+  - **Eliminados**: los protectores `apl-5`/`apl-6`, y el `apl-2` "AirPods" de $52.300
+    — era el más caro, el más vago y compartía foto con el de $25.000.
+  - **Selectores de opciones** en cable, cargadores y templado (ver tabla arriba).
+  - **Se sacó el `precioAnterior: 32000`** del AirPods de $25.000: era un ejemplo de
+    prueba que quedó publicado anunciando un descuento **que nunca existió**.
+  - **Fotos nuevas**: silicone case (las 4 fundas en tonos neutros), templado (render
+    del antiespía) y AirPods con cancelación de ruido.
+- **Agrupación por categoría en "Ver todo"** y arreglo del espacio vacío en mobile al
+  cambiar de chip (ver secciones 4 y 5).
 
 **Pendiente** ⏳
 
-- [ ] **Cargar el stock de los productos nuevos desde el panel.** Los 11 de vapers y
-  termos (`vap-1`…`vap-8`, `ter-1`…`ter-3`) **no tienen fila**: aparecen con el badge
-  **"SIN CARGAR"**. Se cargan escribiendo el número y dando Guardar.
-  ⚠️ **No correr el seed** para esto: les pondría 10 de relleno (ver sección 8).
-  Es el pendiente **más viejo y el más urgente**: hasta que no se carguen, esos
-  productos se ven **"Agotado"** en producción.
+- [ ] **Cargar el stock desde el panel.** Es el pendiente **más viejo y el más
+  urgente**: hasta que no se carguen, esos productos se ven **"Agotado"** en
+  producción. Aparecen con el badge **"SIN CARGAR"**; se cargan escribiendo el número
+  y dando Guardar. ⚠️ **No correr el seed**: les pondría 10 de relleno (ver sección 8).
+
+  | Producto | Claves a cargar |
+  |---|---|
+  | `vap-1`…`vap-8`, `ter-1`…`ter-3` | `""` (11 filas) |
+  | `promo-airpods-pro-2` | `""` |
+  | `promo-airpods-anc` | `""` |
+  | `promo-cable-cabezal` | `C - C` · `C - Lightning` |
+  | `promo-templado-funda` | `9D` · `Anti espía` |
+  | `apl-3` (Cargadores) | `C - C` · `C - Lightning` |
+
 - [ ] **Fotos reales** de los 8 vapers y los 3 termos (hoy muestran `SinFoto`). Alcanza
   con agregar `image:` en `products.ts` — el placeholder deja de renderizarse solo.
-- [ ] **Borrar las 7 filas huérfanas de los protectores** (ver abajo).
+- [ ] **Foto del templado que muestre el combo completo.** Pasaron dos y ninguna sirve
+  del todo: la primera eran 5 fundas **sin templado**, la actual es un render del
+  **templado sin funda**. El producto es "funda + templado".
+- [ ] **Preguntarle al cliente por los Cargadores** (`apl-3`, $11.400). Confirmó que es
+  cable + cabezal más económico que la promo de $20.000, pero **no qué lo diferencia**.
+  Falta: **largo del cable** (la promo dice 1 metro), **watts del cabezal** (la promo
+  dice 20W), y si la diferencia es de specs o de calidad/marca. La descripción está
+  escrita **sin inventar specs** a propósito; completarla cuando haya respuesta.
+- [ ] **Sumar los productos sueltos a Accesorios Apple**: funda sola, templado solo,
+  cable solo. Faltan los precios del cliente. Es lo que va a sacar a esa categoría de
+  tener un solo producto.
+- [ ] **Limpiar las filas huérfanas de la base** (ver abajo).
 - [ ] **Panel para los badges**: editarlos desde `/admindistribucion` en vez de a mano.
   Ya está preparado — ver "Cómo migrar los badges al panel" en la sección 6.
 - [ ] **Celulares usados** (cuando entren al catálogo). Traen dos cosas nuevas:
@@ -389,15 +487,21 @@ regulado: si se amplía, mantener ese tono.
     (memoria, batería, estado). Habría que sumar un campo estructurado y una vista de
     comparación. **No hay nada hecho de esto.**
 
-**Limpieza de la base**: quedaron filas huérfanas de los productos borrados. No
-molestan (nadie las lee, todo se arma desde el catálogo), pero si se quiere dejar
-prolijo:
+**Limpieza de la base**: quedaron filas huérfanas de productos borrados y de productos
+que **cambiaron de clave** al sumarles un selector (antes tenían una fila `""`, ahora
+una por opción). No molestan —nadie las lee, todo se arma desde el catálogo— pero si
+se quiere dejar prolijo:
 
 ```sql
--- 7 filas de los protectores (apl-5 llevaba 6, una por modelo)
-DELETE FROM stock WHERE product_id IN ('apl-5','apl-6');
+-- Productos eliminados
+--   apl-5 (6 filas, una por modelo) y apl-6: protectores
+--   apl-2: el AirPods de $52.300
+DELETE FROM stock WHERE product_id IN ('apl-5','apl-6','apl-2');
 
--- y las de las tandas anteriores, si nunca se corrieron
+-- Cambiaron de clave "" a una fila por ficha (C - C / C - Lightning)
+DELETE FROM stock WHERE product_id IN ('promo-cable-cabezal','apl-3') AND stock_key = '';
+
+-- Y las de las tandas del rubro viejo, si nunca se corrieron
 DELETE FROM stock WHERE product_id IN ('paq-1','paq-2','paq-3','paq-4','paq-5','paq-6','alb-1','alb-2','ind-1','apl-1','apl-4','promo-1','promo-2','promo-3');
 ```
 
