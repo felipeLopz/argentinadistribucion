@@ -88,7 +88,12 @@ export function categoriasDe(product: Product): Categoria[] {
    ────────────────────────────────────────────── */
 const IMG_SILICONE_CASE = "/images/silicone-case.webp";
 const IMG_AIRPODS_PRO_2 = "/images/airpods-pro-2.webp";
+const IMG_AIRPODS_ANC = "/images/airpods-anc.webp";
 const IMG_CABLE_CABEZAL = "/images/cable-cabezal-usbc.webp";
+const IMG_TEMPLADO_FUNDA = "/images/promo-templado-funda.webp";
+
+/* Opciones reutilizables */
+const FICHAS_CABLE = ["C - C", "C - Lightning"];
 
 export const products: Product[] = [
   // ═══ PROMOS ═══
@@ -98,8 +103,7 @@ export const products: Product[] = [
     /* Entra al carrito como "Silicone Case" a secas: la línea del pedido
        ya lleva la cantidad y el precio del pack al lado. */
     cartName: "Silicone Case",
-    description:
-      "Fundas de silicona para iPhone 11 al 17, en todos los colores. Promo por cantidad: cuantas más llevás, mejor el precio.",
+    description: "Fundas de silicona para iPhone 11 al 17.",
     image: IMG_SILICONE_CASE,
     /* Precio de UNA unidad: es el que muestra la card. El precio real del
        pack sale de packPrecios y lo resuelve el modal. */
@@ -111,24 +115,59 @@ export const products: Product[] = [
     categoriasExtra: ["accesorios-apple"],
   },
   {
+    /* ⚠️ Convive con `promo-airpods-anc` ($49.990). La diferencia —
+       confirmada por el cliente— es la cancelación de ruido, y va
+       explícita en el nombre y en la descripción de los dos: a $25.000 vs
+       $49.990, el comprador tiene que entender de una qué está pagando. */
     id: "promo-airpods-pro-2",
-    name: "AirPods Pro 2",
+    name: "AirPods Pro 2 (sin cancelación de ruido)",
     description:
-      "AirPods Pro 2 con estuche de carga, cable USB-C y almohadillas de repuesto en todos los talles.",
+      "AirPods Pro 2 con estuche de carga, cable USB-C y almohadillas de repuesto en todos los talles. No incluyen cancelación de ruido.",
     image: IMG_AIRPODS_PRO_2,
     price: 25000,
-    /* EJEMPLO: con precio anterior, el badge OFERTA sale solo. */
-    precioAnterior: 32000,
     category: "accesorios",
+    /* Aparece también en Accesorios Apple, siendo UN solo producto. */
+    categoriasExtra: ["accesorios-apple"],
+  },
+  {
+    /* ⚠️ Convive con `promo-airpods-pro-2` ($25.000). Lo que los separa,
+       según el cliente, es la cancelación de ruido y la funda de regalo.
+       NO afirmar que el otro no la tiene: eso no está confirmado. */
+    id: "promo-airpods-anc",
+    name: "AirPods Pro 2 con cancelación de ruido + funda",
+    description:
+      "AirPods Pro 2 con estuche de carga, cable de C a C, almohadillas de repuesto + funda de regalo a elección. La funda la elegís por WhatsApp al coordinar la entrega.",
+    image: IMG_AIRPODS_ANC,
+    price: 49990,
+    category: "accesorios",
+    /* Aparece también en Accesorios Apple, siendo UN solo producto. */
+    categoriasExtra: ["accesorios-apple"],
   },
   {
     id: "promo-cable-cabezal",
-    name: "Cable y cabezal USB C - USB C",
+    name: "Cable y cabezal",
     description:
-      "Cable de 1 metro con USB C en los dos extremos, más cabezal de 20W para carga rápida. Los dos en su caja original.",
+      "Cable de 1 metro (ficha C-C ó C-Lightning) + cabezal de 20W para carga rápida.",
     image: IMG_CABLE_CABEZAL,
     price: 20000,
+    /* Dos fichas distintas = dos productos físicos, así que el stock se
+       lleva por separado (una fila por ficha). */
+    options: [{ label: "Ficha", values: FICHAS_CABLE }],
     category: "accesorios",
+    /* Aparece también en Accesorios Apple, siendo UN solo producto. */
+    categoriasExtra: ["accesorios-apple"],
+  },
+  {
+    id: "promo-templado-funda",
+    name: "Promo templado + funda",
+    description:
+      "Funda de silicona + templado 9D o templado anti espía (iPhone 11 al 17).",
+    image: IMG_TEMPLADO_FUNDA,
+    price: 8500,
+    options: [{ label: "Templado", values: ["9D", "Anti espía"] }],
+    category: "accesorios",
+    /* Aparece también en Accesorios Apple, siendo UN solo producto. */
+    categoriasExtra: ["accesorios-apple"],
   },
 
   // ═══ VAPERS ═══
@@ -232,20 +271,17 @@ export const products: Product[] = [
      Ojo: la Silicone Case también sale acá, vía `categoriasExtra`. Está
      definida arriba, en Promos, y es UN solo producto. */
   {
-    id: "apl-2",
-    name: "AirPods",
-    description: "Auriculares inalámbricos con estuche de carga.",
-    image: IMG_AIRPODS_PRO_2,
-    price: 52300,
-    category: "accesorios-apple",
-  },
-  {
     id: "apl-3",
-    name: "Cargadores USB C - USB C",
+    name: "Cargadores",
+    /* ⚠️ Descripción deliberadamente sin specs: el cliente confirmó que es
+       cable + cabezal más económico que la promo, pero NO qué lo diferencia
+       (largo del cable, watts del cabezal). No inventar: preguntar. */
     description:
-      "Cargadores con cable USB C en los dos extremos, más el cabezal para carga rápida.",
+      "Cable + cabezal para cargar, en su versión más económica. Elegí el tipo de ficha del cable.",
     image: IMG_CABLE_CABEZAL,
     price: 11400,
+    /* Mismas fichas que la promo: es el mismo tipo de cable. */
+    options: [{ label: "Ficha", values: FICHAS_CABLE }],
     category: "accesorios-apple",
   },
 ];

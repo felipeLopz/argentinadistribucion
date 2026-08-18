@@ -37,14 +37,25 @@ import CatalogoVacio from "./CatalogoVacio";
    salen se van con animación, así que la altura no colapsa en el mismo
    commit sino un frame más tarde. Corregir antes evita esa carrera.
 
-   Y sólo se reposiciona si el usuario está POR DEBAJO del inicio de la
-   grilla: si ya la tiene en pantalla, mover el scroll sería exactamente
-   el tirón que se quiere evitar.
+   ⚠️ El reposicionamiento va en las DOS direcciones. Restringirlo a
+   "sólo si el usuario está por debajo" rompe mobile: ahí el hero mide más
+   que la pantalla, así que el chip se toca cuando recién asoma al pie —
+   con el usuario ARRIBA del catálogo— y entonces no se scrolleaba nada y
+   las cards quedaban fuera de la vista.
+
+   En desktop eso también cambió la conducta (antes, tocando un chip desde
+   arriba no pasaba nada). Se dejó igual a propósito, decisión tomada: en
+   los dos tamaños, tocar una categoría baja al catálogo.
    ═══════════════════════════════════════════════ */
 
-/* Alto del navbar: se descuenta al reposicionar, así la barra de filtros
-   queda visible en vez de tapada. */
-const ALTO_NAVBAR = 74;
+/** Alto real del navbar, que el propio Navbar publica midiéndose (en mobile
+ *  crece al desplegar el buscador). Se descuenta al reposicionar, así la
+ *  barra de filtros queda visible en vez de tapada. */
+function altoNavbar(): number {
+  const valor = getComputedStyle(document.documentElement).getPropertyValue("--alto-navbar");
+  const n = parseFloat(valor);
+  return Number.isFinite(n) ? n : 75;
+}
 
 export default function Catalogo({ onProductClick }: { onProductClick: (p: Product) => void }) {
   const { resultados, tocado } = useFiltros();
@@ -55,23 +66,32 @@ export default function Catalogo({ onProductClick }: { onProductClick: (p: Produ
   const anclaRef = useRef<HTMLDivElement>(null);
 
   /**
-   * Reposiciona al inicio de la grilla, si hace falta.
+   * Lleva el inicio de la grilla justo abajo del navbar.
    * Se llama ANTES de cambiar el filtro: con el contenido todavía viejo,
    * la posición de destino existe seguro y no hay clampeo posible.
+   *
+   * Reposiciona en las DOS direcciones. Al principio sólo lo hacía cuando
+   * el usuario estaba POR DEBAJO del catálogo, y eso rompía el caso más
+   * común de mobile: el hero mide más que la pantalla, así que se toca un
+   * chip cuando recién asoma al pie: ahí el usuario está ARRIBA del
+   * catálogo, no se scrolleaba nada, y las cards quedaban abajo de todo.
    */
-  const irAlCatalogoSiHaceFalta = () => {
+  const irAlCatalogo = () => {
     const ancla = anclaRef.current;
     if (!ancla) return;
-    const y = ancla.getBoundingClientRect().top + window.scrollY - ALTO_NAVBAR;
-    if (window.scrollY > y + 1) {
-      window.scrollTo({ top: Math.max(0, y), behavior: "instant" });
+    const y = Math.max(0, ancla.getBoundingClientRect().top + window.scrollY - altoNavbar());
+    /* La tolerancia evita un salto imperceptible cuando ya está en su lugar */
+    if (Math.abs(window.scrollY - y) > 2) {
+      /* Instantáneo, nunca suave: una animación de scroll compitiendo con
+         el cambio de altura es exactamente el "tirón" que se arregló. */
+      window.scrollTo({ top: y, behavior: "instant" });
     }
   };
 
   return (
     <section id="catalogo" className="font-archivo">
       <div ref={anclaRef} aria-hidden="true" />
-      <BarraFiltros onAntesDeCambiar={irAlCatalogoSiHaceFalta} />
+      <BarraFiltros onAntesDeCambiar={irAlCatalogo} />
 
       <div className="mx-auto max-w-[1240px] px-5 py-10 sm:px-7 sm:py-12">
         {resultados.length === 0 ? (

@@ -146,6 +146,12 @@
    los ~328 usos repartidos por los componentes; lo que cambia es el valor.
    ═══════════════════════════════════════════════════════════════ */
 :root {
+  /* Alto real del navbar. Este valor es sólo el arranque (el navbar mide
+     74px + 1 de borde); el Navbar lo pisa midiéndose de verdad, porque en
+     mobile crece cuando se despliega el buscador. Lo usan la barra de
+     filtros (para pegarse justo abajo) y el salto al catálogo. */
+  --alto-navbar: 75px;
+
   --navy: #140f26;
   --navy-2: #1c1436;
   --blue: #7c3aed;

@@ -22,6 +22,29 @@ export default function Navbar({ onCartToggle }: { onCartToggle: () => void }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [buscadorMobileAbierto, setBuscadorMobileAbierto] = useState(false);
   const inputMobileRef = useRef<HTMLInputElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
+  /* Publica el alto REAL del navbar en `--alto-navbar`, para que la barra
+     de filtros se pegue justo abajo y el salto al catálogo aterrice bien.
+     Se mide en vez de hardcodearse porque en mobile el navbar crece al
+     desplegar el buscador, y porque el borde inferior suma 1px.
+
+     Depende de `buscadorMobileAbierto` a propósito: es lo único que cambia
+     el alto, y así la medición no queda atada a que el ResizeObserver
+     entregue su callback. El observer va igual, como red para lo que no
+     pasa por estado (fuentes que cargan tarde, rotar la pantalla). */
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const publicar = () => {
+      const alto = el.getBoundingClientRect().height;
+      document.documentElement.style.setProperty("--alto-navbar", `${Math.round(alto)}px`);
+    };
+    publicar();
+    const observer = new ResizeObserver(publicar);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [buscadorMobileAbierto]);
 
   /* Al abrir el buscador mobile, el foco va al input (igual que antes) */
   useEffect(() => {
@@ -36,7 +59,10 @@ export default function Navbar({ onCartToggle }: { onCartToggle: () => void }) {
   };
 
   return (
-    <header className="font-archivo sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[rgba(20,15,38,0.82)] backdrop-blur-[14px]">
+    <header
+      ref={headerRef}
+      className="font-archivo sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[rgba(20,15,38,0.82)] backdrop-blur-[14px]"
+    >
       <div className="mx-auto max-w-[1240px] px-5 sm:px-7">
         <div className="flex h-[74px] items-center gap-6">
           {/* Logo */}

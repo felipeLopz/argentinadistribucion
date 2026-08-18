@@ -18,10 +18,10 @@ import { categoryIcons } from "./categories";
    comerse media pantalla. En desktop va todo a la vista.
    ═══════════════════════════════════════════════ */
 
-/* Alto del navbar (h-[74px]). La barra se pega justo abajo.
-   Ojo: en mobile, con el buscador desplegado el navbar crece y la barra
-   queda tapada un momento. */
-const TOP_STICKY = "top-[74px]";
+/* La barra se pega justo abajo del navbar. El alto NO va hardcodeado: lo
+   publica el propio Navbar en `--alto-navbar` midiéndose, porque en mobile
+   crece al desplegar el buscador. */
+const TOP_STICKY = "top-[var(--alto-navbar)]";
 
 /** "" cuando no hay tope; si no, el número. Nunca NaN ni negativos. */
 function parsePrecio(texto: string): number | null {
