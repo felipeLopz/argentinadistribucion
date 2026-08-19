@@ -21,7 +21,7 @@ const CARD_IMG_SIZES = "(max-width: 639px) 360px, 262px";
 /* Hover común a las cards (elevación + sombra). */
 const cardHover = {
   y: -8,
-  boxShadow: "0 24px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(167,139,250,0.15)",
+  boxShadow: "0 24px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(184,179,171,0.22)",
 };
 
 const cardReveal = {
@@ -96,7 +96,7 @@ export function ProductCard({
       role={open ? "button" : undefined}
       tabIndex={open ? 0 : undefined}
       aria-label={open ? `Ver ${product.name}` : undefined}
-      className={`group relative flex ${CARD_W} flex-col overflow-hidden rounded-[20px] border border-[var(--line)] bg-gradient-to-b from-[rgba(36,26,69,0.6)] to-[rgba(28,20,54,0.4)] ${
+      className={`group relative flex ${CARD_W} flex-col overflow-hidden rounded-[20px] border border-[var(--line)] bg-gradient-to-b from-[rgba(var(--navy-3-rgb),0.6)] to-[rgba(36,36,39,0.4)] ${
         open
           ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]/70"
           : ""
@@ -104,7 +104,7 @@ export function ProductCard({
     >
       {/* Imagen (o el placeholder, si el producto todavía no tiene foto).
           El contenedor es `relative`: ahí van a colgarse los badges. */}
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#241a45] to-[#1c1436]">
+      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[var(--navy-3)] to-[#242427]">
         {product.image ? (
           <Image
             src={product.image}

@@ -29,7 +29,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 rounded-full border border-[rgba(167,139,250,0.4)] bg-[rgba(167,139,250,0.12)] px-[18px] py-2 text-[13px] font-bold uppercase tracking-[0.03em] text-[var(--gold-l)]"
+          className="inline-flex items-center gap-2 rounded-full border border-[rgba(184,179,171,0.4)] bg-[rgba(184,179,171,0.12)] px-[18px] py-2 text-[13px] font-bold uppercase tracking-[0.03em] text-[var(--gold-l)]"
         >
           <Fish className="h-4 w-4" />
           Vapers · Termos · Apple
@@ -68,7 +68,7 @@ export default function Hero() {
             /* El catálogo es una sola sección desde que hay filtros: ya no
                hay una sección por categoría a la que apuntar. */
             href="#catalogo"
-            className="inline-flex items-center gap-2 rounded-[13px] bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] px-[30px] py-[15px] text-[15px] font-bold text-[#140f26] shadow-[0_10px_30px_rgba(167,139,250,0.35)] transition-[transform,box-shadow] duration-300 hover:-translate-y-[3px] hover:shadow-[0_16px_40px_rgba(167,139,250,0.5)]"
+            className="inline-flex items-center gap-2 rounded-[13px] bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] px-[30px] py-[15px] text-[15px] font-bold text-[#1c1c1e] shadow-[0_10px_30px_rgba(0,0,0,0.45)] transition-[transform,box-shadow] duration-300 hover:-translate-y-[3px] hover:shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
           >
             <ShoppingBag className="h-[18px] w-[18px]" />
             Ver Productos

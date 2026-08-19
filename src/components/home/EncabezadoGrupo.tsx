@@ -22,7 +22,7 @@ export default function EncabezadoGrupo({
 }) {
   return (
     <div className="mb-6 flex items-center gap-3.5">
-      <div className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-[13px] border border-[var(--line)] bg-[rgba(139,92,246,0.14)] text-[var(--blue-l)] [&>svg]:h-5 [&>svg]:w-5">
+      <div className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-[13px] border border-[var(--line)] bg-[rgba(196,191,183,0.14)] text-[var(--blue-l)] [&>svg]:h-5 [&>svg]:w-5">
         {categoryIcons[categoria]}
       </div>
       <div className="min-w-0">

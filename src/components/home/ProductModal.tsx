@@ -228,7 +228,7 @@ export default function ProductModal({
             <button
               onClick={onClose}
               aria-label="Cerrar"
-              className="absolute right-4 top-4 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-[var(--line)] bg-[rgba(20,15,38,0.85)] text-[var(--ink)] backdrop-blur-md transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)]"
+              className="absolute right-4 top-4 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-[var(--line)] bg-[rgba(28,28,30,0.85)] text-[var(--ink)] backdrop-blur-md transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)]"
             >
               <X className="h-5 w-5" />
             </button>
@@ -237,7 +237,7 @@ export default function ProductModal({
                 selectores, cantidad y descripción — una sola pieza. */}
             <div className="flex-1 overflow-y-auto">
               {/* Header con imagen de fondo */}
-              <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#241a45] to-[#1c1436] sm:h-72">
+              <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[var(--navy-3)] to-[#242427] sm:h-72">
                 {product.image ? (
                   <Image
                     src={product.image}
@@ -259,7 +259,7 @@ export default function ProductModal({
 
                 {/* Badge de categoría + el de promoción, si hay */}
                 <div className="absolute left-4 top-4 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[rgba(20,15,38,0.85)] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--mut)] backdrop-blur-md">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[rgba(28,28,30,0.85)] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--mut)] backdrop-blur-md">
                     <Star className="h-3 w-3 text-[var(--blue-l)]" />
                     {categoriaLabel}
                   </span>
@@ -295,7 +295,7 @@ export default function ProductModal({
                       ? "bg-green-500 text-white"
                       : !puedeAgregar
                       ? "cursor-not-allowed border border-[var(--line)] bg-white/[0.05] text-[var(--mut)]"
-                      : "cursor-pointer bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-white hover:-translate-y-px hover:brightness-110"
+                      : "cursor-pointer bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-[#1c1c1e] hover:-translate-y-px hover:brightness-110"
                   }`}
                 >
                   {showFeedback ? (
@@ -341,7 +341,7 @@ export default function ProductModal({
                             aria-current={elegida ? "true" : undefined}
                             className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition-colors ${
                               elegida
-                                ? "border-[var(--blue-l)] bg-[rgba(139,92,246,0.15)] text-white"
+                                ? "border-[var(--blue-l)] bg-[rgba(196,191,183,0.15)] text-white"
                                 : "border-transparent text-[var(--mut)]"
                             }`}
                           >
@@ -368,7 +368,7 @@ export default function ProductModal({
                       </span>
                       {/* Precio viejo tachado, cuando hay oferta */}
                       {promo.oferta && !agotado && (
-                        <span className="mb-1 text-base font-semibold text-[var(--mut)] line-through">
+                        <span className="mb-1 text-base font-semibold text-[var(--promo)] line-through">
                           ${promo.oferta.anterior.toLocaleString("es-AR")}
                         </span>
                       )}
@@ -377,7 +377,7 @@ export default function ProductModal({
                       </span>
                     </div>
                     {promo.oferta && !agotado && (
-                      <span className="mt-2 inline-flex rounded-[8px] bg-[rgba(167,139,250,0.14)] px-3 py-1.5 text-[13px] font-bold text-[var(--gold-l)]">
+                      <span className="mt-2 inline-flex rounded-[8px] bg-[rgba(63,184,196,0.14)] px-3 py-1.5 text-[13px] font-bold text-[var(--promo)]">
                         Ahorrás ${promo.oferta.ahorro.toLocaleString("es-AR")} ({promo.oferta.porcentaje}%)
                       </span>
                     )}
@@ -427,7 +427,7 @@ export default function ProductModal({
                                 agotadoV
                                   ? "cursor-not-allowed border-[var(--line)] bg-white/[0.03] opacity-50"
                                   : seleccionado
-                                  ? "scale-105 border-[var(--blue-l)] bg-[var(--blue)] text-white shadow-[0_8px_20px_rgba(124,58,237,0.4)]"
+                                  ? "scale-105 border-[var(--blue-l)] bg-[var(--blue)] text-[#1c1c1e] shadow-[0_8px_20px_rgba(0,0,0,0.45)]"
                                   : "cursor-pointer border-[var(--line)] text-[var(--ink)] hover:border-[var(--blue-l)] hover:bg-white/[0.04]"
                               }`}
                             >
@@ -479,7 +479,7 @@ export default function ProductModal({
                       <button
                         onClick={sumar}
                         aria-label="Sumar"
-                        className="flex h-11 w-11 cursor-pointer select-none items-center justify-center rounded-r-xl bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-xl font-bold text-white transition hover:brightness-110 active:scale-95"
+                        className="flex h-11 w-11 cursor-pointer select-none items-center justify-center rounded-r-xl bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-xl font-bold text-[#1c1c1e] transition hover:brightness-110 active:scale-95"
                       >
                         +
                       </button>
@@ -497,7 +497,7 @@ export default function ProductModal({
                   {avisoTope && (
                     <div
                       role="alert"
-                      className="mt-3 rounded-2xl border border-[var(--gold)]/50 bg-[rgba(167,139,250,0.12)] p-4"
+                      className="mt-3 rounded-2xl border border-[var(--gold)]/50 bg-[rgba(184,179,171,0.12)] p-4"
                     >
                       <p className="flex items-start gap-2 text-sm font-bold text-[var(--gold-l)]">
                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />

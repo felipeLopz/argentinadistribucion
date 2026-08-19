@@ -58,7 +58,7 @@ export default function CartPanel({
                 className="flex items-center gap-2 text-lg font-bold text-white"
               >
                 <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)]">
-                  <ShoppingCart className="h-4 w-4 text-white" />
+                  <ShoppingCart className="h-4 w-4 text-[#1c1c1e]" />
                 </div>
                 Mi Carrito ({totalItems})
               </h2>
@@ -91,7 +91,7 @@ export default function CartPanel({
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20, height: 0 }}
-                        className="flex gap-3 rounded-xl border border-[var(--line)] bg-gradient-to-b from-[rgba(36,26,69,0.6)] to-[rgba(28,20,54,0.4)] p-3"
+                        className="flex gap-3 rounded-xl border border-[var(--line)] bg-gradient-to-b from-[rgba(var(--navy-3-rgb),0.6)] to-[rgba(36,36,39,0.4)] p-3"
                       >
                         {/* Miniatura de tamaño fijo (64px): width/height explícitos
                             en vez de fill, así no necesita contenedor relative.
@@ -103,7 +103,7 @@ export default function CartPanel({
                             width={64}
                             height={64}
                             loading="lazy"
-                            className="h-16 w-16 rounded-lg bg-[#241a45] object-cover"
+                            className="h-16 w-16 rounded-lg bg-[var(--navy-3)] object-cover"
                           />
                         ) : (
                           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg">
@@ -145,7 +145,7 @@ export default function CartPanel({
                 </div>
                 <button
                   onClick={() => { onClose(); router.push("/carrito"); }}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] font-semibold text-white shadow-lg transition hover:-translate-y-px hover:brightness-110 cursor-pointer"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] font-semibold text-[#1c1c1e] shadow-lg transition hover:-translate-y-px hover:brightness-110 cursor-pointer"
                 >
                   <ShoppingCart className="h-5 w-5" />
                   Finalizar compra

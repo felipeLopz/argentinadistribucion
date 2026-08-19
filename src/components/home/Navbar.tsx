@@ -61,7 +61,7 @@ export default function Navbar({ onCartToggle }: { onCartToggle: () => void }) {
   return (
     <header
       ref={headerRef}
-      className="font-archivo sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[rgba(20,15,38,0.82)] backdrop-blur-[14px]"
+      className="font-archivo sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[rgba(28,28,30,0.82)] backdrop-blur-[14px]"
     >
       <div className="mx-auto max-w-[1240px] px-5 sm:px-7">
         <div className="flex h-[74px] items-center gap-6">
@@ -70,7 +70,7 @@ export default function Navbar({ onCartToggle }: { onCartToggle: () => void }) {
             onClick={() => handleNavClick("inicio")}
             className="flex items-center gap-[11px] shrink-0"
           >
-            <span className="grid h-[38px] w-[38px] place-items-center rounded-[11px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_22px_rgba(124,58,237,0.5)]">
+            <span className="grid h-[38px] w-[38px] place-items-center rounded-[11px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-[#1c1c1e] shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_22px_rgba(0,0,0,0.45)]">
               <Fish className="h-[19px] w-[19px]" />
             </span>
             <span className="hidden flex-col text-left leading-none sm:flex">
@@ -91,7 +91,7 @@ export default function Navbar({ onCartToggle }: { onCartToggle: () => void }) {
               placeholder="Buscar productos..."
               value={searchQuery}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="h-[42px] w-full rounded-[12px] border border-[var(--line)] bg-white/[0.04] pl-10 pr-9 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)] focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(167,139,250,0.18)]"
+              className="h-[42px] w-full rounded-[12px] border border-[var(--line)] bg-white/[0.04] pl-10 pr-9 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)] focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(184,179,171,0.30)]"
             />
             {searchQuery && (
               <button
@@ -136,7 +136,7 @@ export default function Navbar({ onCartToggle }: { onCartToggle: () => void }) {
               <motion.button
                 onClick={onCartToggle}
                 whileTap={{ scale: 0.9 }}
-                className="relative grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] text-[#140f26] shadow-[0_8px_22px_rgba(167,139,250,0.35)] transition-transform hover:-translate-y-0.5"
+                className="relative grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] text-[#1c1c1e] shadow-[0_8px_22px_rgba(0,0,0,0.45)] transition-transform hover:-translate-y-0.5"
                 aria-label="Carrito"
               >
                 <ShoppingCart className="h-5 w-5" />
@@ -147,7 +147,7 @@ export default function Navbar({ onCartToggle }: { onCartToggle: () => void }) {
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
-                      className="absolute -right-1.5 -top-1.5 grid h-5 min-w-[20px] place-items-center rounded-full border-2 border-[var(--navy)] bg-[var(--blue-l)] px-1 text-[11px] font-bold text-white"
+                      className="absolute -right-1.5 -top-1.5 grid h-5 min-w-[20px] place-items-center rounded-full border-2 border-[var(--navy)] bg-[var(--blue-l)] px-1 text-[11px] font-bold text-[#1c1c1e]"
                     >
                       {totalItems > 99 ? "99+" : totalItems}
                     </motion.span>
@@ -180,7 +180,7 @@ export default function Navbar({ onCartToggle }: { onCartToggle: () => void }) {
               placeholder="Buscar productos..."
               value={searchQuery}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="h-[42px] w-full rounded-[12px] border border-[var(--line)] bg-white/[0.04] pl-10 pr-4 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)] focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(167,139,250,0.18)]"
+              className="h-[42px] w-full rounded-[12px] border border-[var(--line)] bg-white/[0.04] pl-10 pr-4 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)] focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(184,179,171,0.30)]"
             />
           </div>
         </div>
@@ -194,7 +194,7 @@ export default function Navbar({ onCartToggle }: { onCartToggle: () => void }) {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="overflow-hidden border-t border-[var(--line)] bg-[rgba(20,15,38,0.95)] lg:hidden"
+            className="overflow-hidden border-t border-[var(--line)] bg-[rgba(28,28,30,0.95)] lg:hidden"
           >
             <div className="space-y-1 px-4 py-2">
               {navSections.map((section) => (

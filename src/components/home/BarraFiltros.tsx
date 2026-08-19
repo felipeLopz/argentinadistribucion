@@ -101,11 +101,11 @@ export default function BarraFiltros({ onAntesDeCambiar }: { onAntesDeCambiar?: 
   };
 
   const inputPrecio =
-    "h-10 w-full min-w-0 rounded-[10px] border border-[var(--line)] bg-white/[0.04] px-3 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)]/70 focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(167,139,250,0.18)]";
+    "h-10 w-full min-w-0 rounded-[10px] border border-[var(--line)] bg-white/[0.04] px-3 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--mut)]/70 focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(184,179,171,0.30)]";
 
   return (
     <div
-      className={`sticky ${TOP_STICKY} z-40 border-y border-[var(--line)] bg-[rgba(20,15,38,0.92)] backdrop-blur-[14px]`}
+      className={`sticky ${TOP_STICKY} z-40 border-y border-[var(--line)] bg-[rgba(28,28,30,0.92)] backdrop-blur-[14px]`}
     >
       <div className="mx-auto max-w-[1240px] px-5 py-3 sm:px-7">
         {/* ─── Chips de categoría ─── */}
@@ -126,12 +126,12 @@ export default function BarraFiltros({ onAntesDeCambiar }: { onAntesDeCambiar?: 
                   onClick={() => elegirCategoria(c.id as CategoriaFiltro)}
                   className={`inline-flex shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-[13.5px] font-bold transition ${
                     activa
-                      ? "border-transparent bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-white shadow-[0_6px_16px_rgba(124,58,237,0.45)]"
+                      ? "border-transparent bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-[#1c1c1e] shadow-[0_6px_16px_rgba(0,0,0,0.45)]"
                       : "border-[var(--line)] bg-white/[0.04] text-[var(--mut)] hover:border-[var(--blue-l)]/60 hover:text-[var(--ink)]"
                   }`}
                 >
                   {c.id !== "todo" && (
-                    <span className={`[&>svg]:h-4 [&>svg]:w-4 ${activa ? "text-white" : "text-[var(--blue-l)]"}`}>
+                    <span className={`[&>svg]:h-4 [&>svg]:w-4 ${activa ? "text-[#1c1c1e]" : "text-[var(--blue-l)]"}`}>
                       {categoryIcons[c.id]}
                     </span>
                   )}
@@ -145,13 +145,13 @@ export default function BarraFiltros({ onAntesDeCambiar }: { onAntesDeCambiar?: 
               que no roben el click del chip que tapan a medias. */}
           <div
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-[rgba(20,15,38,0.95)] to-transparent transition-opacity duration-200 ${
+            className={`pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-[rgba(28,28,30,0.95)] to-transparent transition-opacity duration-200 ${
               sombras.izq ? "opacity-100" : "opacity-0"
             }`}
           />
           <div
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[rgba(20,15,38,0.95)] to-transparent transition-opacity duration-200 ${
+            className={`pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[rgba(28,28,30,0.95)] to-transparent transition-opacity duration-200 ${
               sombras.der ? "opacity-100" : "opacity-0"
             }`}
           />
@@ -293,7 +293,7 @@ function Controles({
           id={idOrden}
           value={orden}
           onChange={(e) => setOrden(e.target.value as OrdenId)}
-          className="h-10 w-full min-w-0 cursor-pointer rounded-[10px] border border-[var(--line)] bg-white/[0.04] px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(167,139,250,0.18)] sm:max-w-[210px]"
+          className="h-10 w-full min-w-0 cursor-pointer rounded-[10px] border border-[var(--line)] bg-white/[0.04] px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] focus:shadow-[0_0_0_3px_rgba(184,179,171,0.30)] sm:max-w-[210px]"
         >
           {ORDENES.map((o) => (
             /* El fondo explícito es para el desplegable nativo, que no

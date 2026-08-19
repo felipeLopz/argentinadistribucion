@@ -37,16 +37,18 @@ export default function SinFoto({
       /* aria-hidden: no aporta nada al lector de pantalla — el nombre del
          producto ya está al lado, en texto. */
       aria-hidden="true"
-      className={`absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#241a45] to-[#1c1436] ${t.borde} ${className}`}
+      className={`absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-[var(--navy-3)] to-[#242427] ${t.borde} ${className}`}
     >
       <div
         className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--line)] ${
           size === "sm" ? "h-full w-full" : "px-5 py-4"
         }`}
       >
+        {/* El ícono puede quedar atenuado (es decorativo); el rótulo NO:
+            al 70% daba 3.25:1 sobre la superficie y no pasa AA. */}
         <ImageOff className={`${t.icono} text-[var(--mut)]/70`} />
         {t.texto && (
-          <span className={`${t.texto} font-semibold text-[var(--mut)]/70`}>Sin foto</span>
+          <span className={`${t.texto} font-semibold text-[var(--mut)]`}>Sin foto</span>
         )}
       </div>
     </div>

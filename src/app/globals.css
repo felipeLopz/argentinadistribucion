@@ -134,16 +134,28 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DISEÑO "VIOLETA PROFUNDO" — tokens base
+   DISEÑO "GRAFITO" — tokens base
    Paleta y utilidades reutilizables por el resto de las secciones.
 
-   Dos familias de acento, cada una con su rol:
-     · REALCES  (--gold / --gold-l): lila → rosa. Subrayado del navbar,
-       título del hero, íconos de sección, badges.
-     · ACCIONES (--blue / --blue-l): violeta profundo. Botones, pill de
-       precio, estados seleccionados.
+   Gris cálido monocromo. Como no hay tono que gastar, la jerarquía sale
+   de la FORMA (pastilla rellena vs texto suelto vs borde) y de un escalón
+   de luminosidad entre las dos familias:
+     · ACCIONES (--blue / --blue-l): el gris más luminoso, como RELLENO y
+       siempre con texto oscuro encima. Botones, pill de precio, chip
+       activo. Es lo que más pesa en la página.
+     · REALCES  (--gold / --gold-l): el mismo gris, pero usado en PRIMER
+       PLANO — subrayado del navbar, íconos, bordes, título del hero.
+
+   ⚠️ El acento es CLARO: el texto encima va oscuro (#1c1c1e), nunca
+   blanco. El blanco da 2.08:1 y no pasa contraste. Ver sección 3 del
+   CLAUDE.md, que lista los ratios medidos.
+
+   ⚠️ El cian de promociones (--promo) NO vive acá: es a propósito que sea
+   escaso. Si se usa para acciones generales, los badges dejan de
+   destacar, que es justamente lo que se quiere evitar.
+
    Los nombres de los tokens se conservan (gold/blue/navy) para no tocar
-   los ~328 usos repartidos por los componentes; lo que cambia es el valor.
+   los 406 usos repartidos por los componentes; lo que cambia es el valor.
    ═══════════════════════════════════════════════════════════════ */
 :root {
   /* Alto real del navbar. Este valor es sólo el arranque (el navbar mide
@@ -152,15 +164,39 @@
      filtros (para pegarse justo abajo) y el salto al catálogo. */
   --alto-navbar: 75px;
 
-  --navy: #140f26;
-  --navy-2: #1c1436;
-  --blue: #7c3aed;
-  --blue-l: #8b5cf6;
-  --gold: #a78bfa;
-  --gold-l: #f0abfc;
-  --ink: #efeafe;
-  --mut: #a396c9;
-  --line: rgba(167, 139, 250, 0.16);
+  --navy: #1c1c1e;
+  --navy-2: #242427;
+  /* Tercera superficie, la más clara: fondos de card, ítems del carrito y
+     bloques del panel. Existía desde siempre como color suelto sin nombre
+     (era #241a45), repetido a mano en 19 lugares.
+
+     Va en dos formas porque los fondos translúcidos necesitan su propio
+     alpha y rgba() no acepta un hex: --navy-3 para los degradés y los
+     rellenos opacos, --navy-3-rgb para los rgba(). Las dos tienen que
+     apuntar al MISMO color. */
+  --navy-3: #2c2c30;
+  --navy-3-rgb: 44, 44, 48;
+  --blue: #b8b3ab;
+  --blue-l: #c4bfb7;
+  --gold: #b8b3ab;
+  --gold-l: #d6d2cb;
+  --ink: #eceae7;
+  --mut: #a09b93;
+  --line: rgba(184, 179, 171, 0.16);
+
+  /* ─── Acento de PROMOCIONES ───
+     El único color de toda la paleta. Se usa en CUATRO lugares y nada más:
+     los badges, el precio anterior tachado, el ahorro y el renglón de
+     "¡Últimas N unidades!".
+
+     ⚠️ NO extenderlo al resto de la interfaz. Su fuerza viene de ser
+     escaso: si el cian aparece en botones y títulos, los badges dejan de
+     destacar, que es exactamente lo que se quiere evitar. Para cualquier
+     otro acento está la gama gris de arriba.
+
+     63,184,196 = --promo, para los fondos tintados que necesitan alpha. */
+  --promo: #3fb8c4;
+  --promo-ink: #1c1c1e;
 }
 
 /* Tipografía del diseño (variable de next/font, aplicada por subárbol) */
@@ -168,8 +204,8 @@
   font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Título con degradé de realce, lila → rosa (parte inferior del H1 del hero).
-   Toma los tokens, así que sigue la paleta sola. */
+/* Título con degradé de realce (parte inferior del H1 del hero): gris
+   cálido → gris claro. Toma los tokens, así que sigue la paleta sola. */
 .text-gold-gradient {
   background: linear-gradient(120deg, var(--gold), var(--gold-l), var(--gold));
   -webkit-background-clip: text;
@@ -177,27 +213,35 @@
   color: transparent;
 }
 
-/* Glows radiales del fondo del hero.
-   Los rgba van literales porque necesitan alpha propio:
-   124,58,237 = --blue · 167,139,250 = --gold · 139,92,246 = --blue-l */
+/* Glows radiales del fondo del hero. El rgba va literal porque necesita
+   alpha propio: 184,179,171 = el gris de acento.
+
+   ⚠️ Estos NO son halos alrededor de un elemento: son LUZ de fondo, la
+   que levanta la parte de arriba del hero. Por eso van en gris claro y no
+   en negro como las sombras: en negro el hero se oscurecería en vez de
+   iluminarse, y perdería el relieve del título.
+
+   Lo que sí evita la "mancha" es la opacidad: el violeta llegaba a 0.55
+   porque aportaba color; en gris eso sería una nube sucia, así que se
+   baja a un realce apenas perceptible. */
 .hero-glow {
   background:
-    radial-gradient(60% 55% at 50% 0%, rgba(124, 58, 237, 0.55), transparent 70%),
-    radial-gradient(40% 40% at 80% 20%, rgba(167, 139, 250, 0.12), transparent 60%),
-    radial-gradient(40% 40% at 15% 40%, rgba(139, 92, 246, 0.18), transparent 60%);
+    radial-gradient(60% 55% at 50% 0%, rgba(184, 179, 171, 0.10), transparent 70%),
+    radial-gradient(40% 40% at 80% 20%, rgba(184, 179, 171, 0.05), transparent 60%),
+    radial-gradient(40% 40% at 15% 40%, rgba(184, 179, 171, 0.06), transparent 60%);
 }
 
-/* Franjas verticales del hero (167,139,250 = --gold, el lila) */
+/* Franjas verticales del hero (184,179,171 = el gris de acento) */
 .hero-stripes {
   opacity: 0.5;
   background-image: repeating-linear-gradient(
     90deg,
     transparent 0 38px,
-    rgba(167, 139, 250, 0.05) 38px 39px
+    rgba(184, 179, 171, 0.05) 38px 39px
   );
 }
 
-/* Link del navbar con subrayado lila animado (toma var(--gold)) */
+/* Link del navbar con subrayado animado (toma var(--gold)) */
 .nav-underline::after {
   content: "";
   position: absolute;

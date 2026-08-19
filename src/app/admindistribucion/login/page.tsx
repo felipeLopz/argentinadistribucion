@@ -41,11 +41,11 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-5">
       <form
         onSubmit={entrar}
-        className="w-full max-w-sm rounded-2xl border border-[var(--line)] bg-[rgba(36,26,69,0.5)] p-7"
+        className="w-full max-w-sm rounded-2xl border border-[var(--line)] bg-[rgba(var(--navy-3-rgb),0.5)] p-7"
       >
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)]">
-            <Lock className="h-6 w-6 text-white" />
+            <Lock className="h-6 w-6 text-[#1c1c1e]" />
           </div>
           <h1 className="mt-3 text-lg font-bold text-white">Gestión de stock</h1>
           <p className="mt-1 text-[13px] text-[var(--mut)]">Acceso privado</p>
@@ -61,7 +61,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="mb-4 w-full rounded-xl border border-[var(--line)] bg-white/[0.04] px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[rgba(167,139,250,0.22)]"
+          className="mb-4 w-full rounded-xl border border-[var(--line)] bg-white/[0.04] px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[rgba(184,179,171,0.35)]"
         />
 
         <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-[var(--ink)]">
@@ -74,7 +74,7 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="mb-5 w-full rounded-xl border border-[var(--line)] bg-white/[0.04] px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[rgba(167,139,250,0.22)]"
+          className="mb-5 w-full rounded-xl border border-[var(--line)] bg-white/[0.04] px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[rgba(184,179,171,0.35)]"
         />
 
         {error && (
@@ -87,10 +87,10 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={enviando}
-          className={`flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-bold text-white transition ${
+          className={`flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-bold transition ${
             enviando
               ? "cursor-not-allowed bg-white/10 text-[var(--mut)]"
-              : "bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] hover:-translate-y-px hover:brightness-110"
+              : "bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-[#1c1c1e] hover:-translate-y-px hover:brightness-110"
           }`}
         >
           <LogIn className="h-4 w-4" />

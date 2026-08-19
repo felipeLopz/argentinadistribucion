@@ -305,7 +305,7 @@ export default function PanelContenido() {
           return (
             <div
               key={p.id}
-              className="rounded-2xl border border-[var(--line)] bg-[rgba(36,26,69,0.4)] p-5"
+              className="rounded-2xl border border-[var(--line)] bg-[rgba(var(--navy-3-rgb),0.4)] p-5"
             >
               <div className="mb-4 flex items-baseline justify-between gap-3">
                 <h3 className="text-base font-bold text-white">{p.nombre}</h3>
@@ -460,7 +460,7 @@ export default function PanelContenido() {
 
 function Etiqueta({ editado }: { editado: boolean }) {
   return editado ? (
-    <span className="rounded-md bg-[rgba(167,139,250,0.18)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--gold)]">
+    <span className="rounded-md bg-[rgba(184,179,171,0.18)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--gold)]">
       EDITADO
     </span>
   ) : (
@@ -475,7 +475,7 @@ function BotonGuardar({ onClick, disabled }: { onClick: () => void; disabled: bo
     <button
       onClick={onClick}
       disabled={disabled}
-      className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-110 disabled:opacity-40"
+      className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-3 py-1.5 text-xs font-bold text-[#1c1c1e] transition hover:brightness-110 disabled:opacity-40"
     >
       <Save className="h-3.5 w-3.5" />
       Guardar

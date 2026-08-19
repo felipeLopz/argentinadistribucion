@@ -10,23 +10,26 @@ import { ImageResponse } from "next/og";
    (b) son cuadradas 800x800 y OG pide 1200x630, así que quedarían
    recortadas o con franjas.
 
-   Usa la paleta "Violeta Profundo" del sitio para que la tarjeta sea
-   coherente con él.
+   Usa la paleta "Grafito" del sitio para que la tarjeta sea coherente
+   con él.
    ══════════════════════════════════════════════════════════════ */
 
 export const alt = "Distribuidor Argentino KOI — Vapers, Termos y Accesorios Apple";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-/* Tokens del theme "Violeta Profundo", replicados acá porque Satori no lee
-   el CSS del sitio. Se conservan los nombres (NAVY/GOLD) para que se
-   correspondan 1:1 con los tokens de globals.css; lo que cambia es el valor. */
-const NAVY = "#140f26"; // fondo base
-const NAVY_2 = "#1c1436"; // fondo secundario
-const GOLD = "#a78bfa"; // acento principal (lila)
-const GOLD_L = "#f0abfc"; // acento secundario (rosa)
-const INK = "#efeafe"; // texto principal
-const MUT = "#a396c9"; // texto atenuado
+/* Tokens del theme "Grafito", replicados acá porque Satori no lee el CSS
+   del sitio. Se conservan los nombres (NAVY/GOLD) para que se correspondan
+   1:1 con los tokens de globals.css; lo que cambia es el valor.
+
+   El cian de promociones (--promo) NO se replica: la tarjeta al compartir
+   no muestra badges ni ofertas. */
+const NAVY = "#1c1c1e"; // fondo base
+const NAVY_2 = "#242427"; // fondo secundario
+const GOLD = "#b8b3ab"; // acento (gris cálido)
+const GOLD_L = "#d6d2cb"; // acento claro
+const INK = "#eceae7"; // texto principal
+const MUT = "#a09b93"; // texto atenuado
 
 export default function OpengraphImage() {
   return new ImageResponse(

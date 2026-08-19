@@ -17,7 +17,7 @@ import type { PromoResuelta } from "@/lib/promos";
 
 /* Pill de precio (azul), ajustado a su contenido. */
 const PRICE_PILL =
-  "inline-flex w-fit items-center whitespace-nowrap rounded-[11px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-4 py-2 text-[22px] font-extrabold leading-none text-white shadow-[0_6px_16px_rgba(124,58,237,0.5)]";
+  "inline-flex w-fit items-center whitespace-nowrap rounded-[11px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-4 py-2 text-[22px] font-extrabold leading-none text-[#1c1c1e] shadow-[0_6px_16px_rgba(0,0,0,0.45)]";
 
 export default function CardPrecio({
   product,
@@ -46,7 +46,7 @@ export default function CardPrecio({
     <div className="mt-auto flex flex-col items-center gap-2">
       {/* Precio anterior tachado, sólo cuando hay oferta válida */}
       {oferta && (
-        <span className="text-[13px] font-semibold text-[var(--mut)] line-through">
+        <span className="text-[13px] font-semibold text-[var(--promo)] line-through">
           ${oferta.anterior.toLocaleString("es-AR")}
         </span>
       )}
@@ -58,7 +58,7 @@ export default function CardPrecio({
 
       {/* Cuánto se ahorra, en pesos y en porcentaje */}
       {oferta && (
-        <span className="rounded-[7px] bg-[rgba(167,139,250,0.14)] px-2.5 py-1 text-[11.5px] font-bold text-[var(--gold-l)]">
+        <span className="rounded-[7px] bg-[rgba(63,184,196,0.14)] px-2.5 py-1 text-[11.5px] font-bold text-[var(--promo)]">
           Ahorrás ${oferta.ahorro.toLocaleString("es-AR")} ({oferta.porcentaje}%)
         </span>
       )}
@@ -84,7 +84,7 @@ export default function CardPrecio({
       ) : urgencia !== null ? (
         /* Variante urgente del renglón de siempre. `urgencia` ya viene
            filtrada por categoría: en los vapers es null y cae al neutro. */
-        <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[#ff6b8a]">
+        <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[var(--promo)]">
           <Timer className="h-3.5 w-3.5" />
           ¡Últimas {urgencia} {urgencia === 1 ? "unidad" : "unidades"}!
         </span>

@@ -100,7 +100,7 @@ export default function CatalogoVacio() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="mx-auto max-w-[560px] rounded-[20px] border border-dashed border-[var(--line)] bg-[rgba(28,20,54,0.3)] px-5 py-[70px] text-center"
+      className="mx-auto max-w-[560px] rounded-[20px] border border-dashed border-[var(--line)] bg-[rgba(36,36,39,0.3)] px-5 py-[70px] text-center"
     >
       <div className="mx-auto mb-[18px] grid h-16 w-16 place-items-center rounded-full bg-white/5 text-[var(--mut)]">
         {caso.icono}
@@ -119,7 +119,7 @@ export default function CatalogoVacio() {
         {caso.atajo && (
           <button
             onClick={caso.atajo.accion}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-[13px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-[26px] py-[13px] text-[14px] font-bold text-white shadow-[0_10px_30px_rgba(124,58,237,0.35)] transition duration-300 hover:-translate-y-[2px] hover:brightness-110"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-[13px] bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-[26px] py-[13px] text-[14px] font-bold text-[#1c1c1e] shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition duration-300 hover:-translate-y-[2px] hover:brightness-110"
           >
             {caso.atajo.texto}
           </button>
@@ -132,7 +132,7 @@ export default function CatalogoVacio() {
             className={`inline-flex cursor-pointer items-center gap-2 rounded-[13px] px-[26px] py-[13px] text-[14px] font-bold transition duration-300 ${
               caso.atajo
                 ? "border border-[var(--line)] text-[var(--ink)] hover:border-[var(--gold)] hover:text-[var(--gold)]"
-                : "bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-white shadow-[0_10px_30px_rgba(124,58,237,0.35)] hover:-translate-y-[2px] hover:brightness-110"
+                : "bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-[#1c1c1e] shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:-translate-y-[2px] hover:brightness-110"
             }`}
           >
             <RotateCcw className="h-4 w-4" />

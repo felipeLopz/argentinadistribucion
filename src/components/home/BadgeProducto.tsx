@@ -11,12 +11,20 @@ import type { BadgeVisual } from "@/lib/promos";
    Qué badge mostrar NO se decide acá: llega resuelto desde promos.ts.
    ═══════════════════════════════════════════════ */
 
+/* Los tres tonos van en el MISMO cian (--promo), con texto oscuro: el
+   blanco da 2.37:1 sobre el cian y no pasa contraste.
+
+   Que los tres compartan color es a propósito. El cian es el único color
+   de la paleta y sólo se usa en promociones; si cada badge tuviera el
+   suyo, el cian dejaría de leerse como "esto es una promo". Se distinguen
+   por ÍCONO y por TEXTO, no por color.
+
+   El social queda en versión sutil (contorno y fondo oscuro) porque es el
+   menos accionable de los tres. */
 const TONOS = {
-  /* Lila → rosa con texto oscuro: el blanco no pasa contraste sobre estos
-     acentos (ver la nota de la paleta en CLAUDE.md). */
-  oferta: "bg-gradient-to-br from-[var(--gold)] to-[var(--gold-l)] text-[#140f26]",
-  nuevo: "bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] text-white",
-  social: "border border-[var(--line)] bg-[rgba(20,15,38,0.85)] text-[var(--gold-l)] backdrop-blur-[6px]",
+  oferta: "bg-[var(--promo)] text-[var(--promo-ink)]",
+  nuevo: "bg-[var(--promo)] text-[var(--promo-ink)]",
+  social: "border border-[var(--promo)]/50 bg-[rgba(28,28,30,0.85)] text-[var(--promo)] backdrop-blur-[6px]",
 } as const;
 
 const ICONOS = {

@@ -195,7 +195,7 @@ export default function PanelStock() {
         {filtrados.map((p) => (
           <div
             key={p.id}
-            className="rounded-2xl border border-[var(--line)] bg-[rgba(36,26,69,0.4)] p-5"
+            className="rounded-2xl border border-[var(--line)] bg-[rgba(var(--navy-3-rgb),0.4)] p-5"
           >
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <h2 className="text-base font-bold text-white">{p.nombre}</h2>
@@ -252,7 +252,7 @@ export default function PanelStock() {
                       onClick={() => guardar(p.id, v.key)}
                       disabled={trabajando}
                       title="Guardar este número"
-                      className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-110 disabled:opacity-40"
+                      className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-3 py-1.5 text-xs font-bold text-[#1c1c1e] transition hover:brightness-110 disabled:opacity-40"
                     >
                       <Save className="h-3.5 w-3.5" />
                       Guardar

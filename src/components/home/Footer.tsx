@@ -23,7 +23,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="font-archivo bg-gradient-to-b from-transparent to-[rgba(124,58,237,0.08)] text-[var(--mut)]">
+    <footer className="font-archivo bg-gradient-to-b from-transparent to-[rgba(184,179,171,0.08)] text-[var(--mut)]">
       {/* Hairline dorado superior */}
       <div className="h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent" />
 
@@ -33,7 +33,7 @@ export default function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="mb-4 flex items-center gap-2.5">
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)]">
-                <Fish className="h-5 w-5 text-white" />
+                <Fish className="h-5 w-5 text-[#1c1c1e]" />
               </div>
               <span className="text-lg font-extrabold text-white">{storeName}</span>
             </div>
