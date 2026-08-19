@@ -310,7 +310,7 @@ banda pegada, y es **imposible que corte el producto**.
   **activan el chip**, no scrollean.
 - **El salto al cambiar de categoría** (`Catalogo.tsx`) — dos problemas distintos que
   se arreglaron juntos, y las dos soluciones son frágiles si se tocan:
-  1. **El "tirón"**: pasar de 19 cards a 3 acorta el documento y el navegador
+  1. **El "tirón"**: pasar de 18 cards a 3 acorta el documento y el navegador
      **clampea** el scroll. Se arregla con el **orden de las operaciones**: primero el
      scroll, después el cambio de filtro. Corregir *después* no sirve, porque las
      cards salen con animación y la altura colapsa un frame más tarde.
@@ -349,7 +349,7 @@ banda pegada, y es **imposible que corte el producto**.
 - **Buscador**: el del navbar. **No hay dos mecanismos**: escribe en el mismo estado
   que lee la grilla. Matchea por nombre **o** descripción, sin distinguir mayúsculas.
 - **Precio**: rango desde/hasta. ⚠️ Con un tope activo, los productos **sin precio**
-  quedan afuera (hoy no aplica: los 19 tienen precio).
+  quedan afuera (hoy no aplica: los 18 tienen precio).
 - **Orden**: por defecto (el de `products.ts`), precio asc, precio desc, alfabético.
   El default es el orden del archivo **a propósito**: se controla a mano qué va primero.
 - **Contador**: cuántos productos hay en la vista actual.
@@ -573,8 +573,8 @@ products.ts ──► contenido-db.ts ──► /api/contenido ──► Conteni
 
 ## 7. Estado actual y pendientes
 
-**Catálogo actual — 19 productos, 4 categorías** (en `products.ts`, en este orden).
-⚠️ **De los 19, hoy se ven 8**: `vapers` y `termos` están en modo "Próximamente" y sus
+**Catálogo actual — 18 productos, 4 categorías** (en `products.ts`, en este orden).
+⚠️ **De los 18, hoy se ven 7**: `vapers` y `termos` están en modo "Próximamente" y sus
 11 productos están ocultos (ver sección 5). Siguen enteros en el archivo.
 
 | Categoría (`category`) | Chip | # | Productos |
@@ -582,9 +582,9 @@ products.ts ──► contenido-db.ts ──► /api/contenido ──► Conteni
 | `accesorios` | **Promos** | 5 | Silicone Case 11-17 ($5.000, promo por cantidad, sin stock) · **AirPods Pro 2 (sin cancelación de ruido)** $25.000 · **AirPods Pro 2 con cancelación de ruido + funda** $49.990 · Cable y cabezal $20.000 · **Promo templado + funda** $8.500 |
 | `vapers` | **Vapers** | 8 | 5 dispositivos recargables + 2 líquidos 30ml + 1 kit — todos $35.000, **sin foto** |
 | `termos` | **Termos** | 3 | Termo Stanley 750ml en rosa, azul y blanco — $45.000, **sin foto** |
-| `accesorios-apple` | **Apple** | 3 | **Funda de silicona iPhone 11** $5.000 (7 colores) · **Funda de silicona iPhone 12 y 12 Pro** $5.000 (14 colores) · Cargadores $11.400 |
+| `accesorios-apple` | **Apple** | 2 | **Funda de silicona iPhone 11** $5.000 (7 colores) · **Funda de silicona iPhone 12 y 12 Pro** $5.000 (14 colores) |
 
-La suma de los chips (5+8+3+3) **coincide** con "Ver todo" (19): ya no hay
+La suma de los chips (5+8+3+2) **coincide** con "Ver todo" (18): ya no hay
 multi-categoría (ver sección 4).
 
 **Productos con selector de opciones** (el modal obliga a elegir antes de agregar, y
@@ -593,7 +593,6 @@ la opción viaja al carrito y al mensaje de WhatsApp):
 | Producto | Grupo | Valores |
 |---|---|---|
 | Cable y cabezal (Promos) | `Ficha` | `C - C` · `C - Lightning` |
-| Cargadores (Apple) | `Ficha` | `C - C` · `C - Lightning` |
 | Promo templado + funda | `Templado` | `9D` · `Anti espía` |
 | **Funda iPhone 11** | `Color` | 7: Negro · Azul marino · Fucsia · Marrón · Naranja · Turquesa · Verde oliva |
 | **Funda iPhone 12 y 12 Pro** | `Color` | 14: Negro · Azul marino · Blanco · Borravino · Lila oscuro · Marrón · Morado · Naranja · Rojo desgastado · Rosado · Rosado claro · Verde · Verde agua · Verde militar |
@@ -623,10 +622,15 @@ no es una suposición. **No sacar la aclaración del nombre.**
 "(iPhone 11 al 17)" porque indica **qué modelos le entran**, no el rubro. Cambiarlo a
 "Apple 11 al 17" no significaría nada.
 
-**Accesorios Apple quedó con un solo producto**, y es transitorio: se van a sumar los
-**productos sueltos** (funda sola, templado solo, cable solo) cuando lleguen los
-precios del cliente. No "arreglarlo" volviendo a poner `categoriasExtra` en las
-promos: eso ya se probó y se revirtió.
+**Accesorios Apple quedó con las dos fundas.** Se eliminó el producto **Cargadores**
+(`apl-3`, $11.400): era el que estaba sin specs porque el cliente nunca aclaró qué lo
+diferenciaba de la promo de $20.000. Se van a sumar los **productos sueltos** que
+faltan (templado solo, cable solo) cuando lleguen los precios. No "arreglarlo"
+volviendo a poner `categoriasExtra` en las promos: eso ya se probó y se revirtió.
+
+⚠️ Al borrar `apl-3` **no se borró su imagen**: `cable-cabezal-usbc.webp` la
+**comparte** con "Cable y cabezal" de Promos, que se queda. Lo mismo con la constante
+`FICHAS_CABLE`, que ese producto sigue usando.
 
 Las descripciones de los vapers son **deliberadamente técnicas** (formato, batería,
 capacidad), sin adjetivos promocionales ni nada que invite al consumo. Es un producto
@@ -715,22 +719,17 @@ regulado: si se amplía, mantener ese tono.
   | `promo-airpods-anc` | `""` |
   | `promo-cable-cabezal` | `C - C` · `C - Lightning` |
   | `promo-templado-funda` | `9D` · `Anti espía` |
-  | `apl-3` (Cargadores) | `C - C` · `C - Lightning` |
   | **`apl-funda-11`** | **7 filas**, una por color: `Negro` · `Azul marino` · `Fucsia` · `Marrón` · `Naranja` · `Turquesa` · `Verde oliva` |
   | **`apl-funda-12`** | **14 filas**, una por color: `Negro` · `Azul marino` · `Blanco` · `Borravino` · `Lila oscuro` · `Marrón` · `Morado` · `Naranja` · `Rojo desgastado` · `Rosado` · `Rosado claro` · `Verde` · `Verde agua` · `Verde militar` |
 
-  Con las fundas son **21 filas nuevas**, así que el total a cargar pasó de 19 a **40**.
+  Son **38 filas** en total: las 21 de las fundas más las 17 que ya venían. (Eran 40
+  antes de eliminar `apl-3`, que aportaba 2.)
 
 - [ ] **Fotos reales** de los 8 vapers y los 3 termos (hoy muestran `SinFoto`). Alcanza
   con agregar `image:` en `products.ts` — el placeholder deja de renderizarse solo.
 - [ ] **Foto del templado que muestre el combo completo.** Pasaron dos y ninguna sirve
   del todo: la primera eran 5 fundas **sin templado**, la actual es un render del
   **templado sin funda**. El producto es "funda + templado".
-- [ ] **Preguntarle al cliente por los Cargadores** (`apl-3`, $11.400). Confirmó que es
-  cable + cabezal más económico que la promo de $20.000, pero **no qué lo diferencia**.
-  Falta: **largo del cable** (la promo dice 1 metro), **watts del cabezal** (la promo
-  dice 20W), y si la diferencia es de specs o de calidad/marca. La descripción está
-  escrita **sin inventar specs** a propósito; completarla cuando haya respuesta.
 - [ ] **Terminar los productos sueltos de Accesorios Apple**: ya entraron las **fundas
   por modelo**; faltan el **templado solo** y el **cable solo**, esperando precio del
   cliente.
@@ -758,10 +757,13 @@ se quiere dejar prolijo:
 -- Productos eliminados
 --   apl-5 (6 filas, una por modelo) y apl-6: protectores
 --   apl-2: el AirPods de $52.300
-DELETE FROM stock WHERE product_id IN ('apl-5','apl-6','apl-2');
+--   apl-3: Cargadores ($11.400). TODAS sus filas quedan huérfanas: la de
+--          clave "" que tuvo antes del selector, y las de C - C y
+--          C - Lightning, si se le llegó a cargar stock.
+DELETE FROM stock WHERE product_id IN ('apl-5','apl-6','apl-2','apl-3');
 
 -- Cambiaron de clave "" a una fila por ficha (C - C / C - Lightning)
-DELETE FROM stock WHERE product_id IN ('promo-cable-cabezal','apl-3') AND stock_key = '';
+DELETE FROM stock WHERE product_id = 'promo-cable-cabezal' AND stock_key = '';
 
 -- Y las de las tandas del rubro viejo, si nunca se corrieron
 DELETE FROM stock WHERE product_id IN ('paq-1','paq-2','paq-3','paq-4','paq-5','paq-6','alb-1','alb-2','ind-1','apl-1','apl-4','promo-1','promo-2','promo-3');

@@ -381,20 +381,6 @@ export const products: Product[] = [
     imagenesPorOpcion: { Color: FUNDA_12 },
     category: "accesorios-apple",
   },
-  {
-    id: "apl-3",
-    name: "Cargadores",
-    /* ⚠️ Descripción deliberadamente sin specs: el cliente confirmó que es
-       cable + cabezal más económico que la promo, pero NO qué lo diferencia
-       (largo del cable, watts del cabezal). No inventar: preguntar. */
-    description:
-      "Cable + cabezal para cargar, en su versión más económica. Elegí el tipo de ficha del cable.",
-    image: IMG_CABLE_CABEZAL,
-    price: 11400,
-    /* Mismas fichas que la promo: es el mismo tipo de cable. */
-    options: [{ label: "Ficha", values: FICHAS_CABLE }],
-    category: "accesorios-apple",
-  },
 ];
 
 /* ──────────────────────────────────────────────

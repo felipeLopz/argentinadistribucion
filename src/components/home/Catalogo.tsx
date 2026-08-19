@@ -30,7 +30,7 @@ import EncabezadoGrupo from "./EncabezadoGrupo";
    regla. No reintroducir un aplanado al ordenar o al buscar.
 
    ─── Sobre el "tirón" al cambiar de filtro ───
-   Pasar de 19 cards a 3 acorta el documento de golpe. Si el usuario está
+   Pasar de 18 cards a 3 acorta el documento de golpe. Si el usuario está
    scrolleado abajo, el navegador CLAMPEA su scroll al nuevo máximo, y eso
    se siente como un golpe seco. La primera versión encima lanzaba un
    scroll suave ANTES de que React re-renderizara, así que la animación y
