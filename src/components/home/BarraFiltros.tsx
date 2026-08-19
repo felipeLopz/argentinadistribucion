@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SlidersHorizontal, RotateCcw, ChevronDown } from "lucide-react";
 import { CATEGORIAS } from "@/lib/products";
-import { ORDENES, type CategoriaFiltro, type OrdenId } from "@/lib/filtros";
+import { esProximamente, ORDENES, type CategoriaFiltro, type OrdenId } from "@/lib/filtros";
 import { useFiltros } from "@/lib/filtros-context";
 import { categoryIcons } from "./categories";
 
@@ -159,8 +159,13 @@ export default function BarraFiltros({ onAntesDeCambiar }: { onAntesDeCambiar?: 
 
         {/* ─── Contador + botón "Filtros" (mobile) ─── */}
         <div className="mt-3 flex items-center gap-3">
+          {/* En una categoría oculta no se muestra "0 productos": sería
+              cierto pero daría a entender que no hay nada, cuando lo que
+              pasa es que todavía no se publicaron. Ver filtros.ts. */}
           <p className="text-[13px] font-semibold text-[var(--mut)]" aria-live="polite">
-            {total} {total === 1 ? "producto" : "productos"}
+            {esProximamente(filtros.categoria)
+              ? "Próximamente"
+              : `${total} ${total === 1 ? "producto" : "productos"}`}
           </p>
 
           {/* Sólo en mobile: pliega precio y orden */}

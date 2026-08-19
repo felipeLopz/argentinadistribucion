@@ -60,7 +60,7 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 | `src/lib/products.ts` | **Catálogo** (array `products` + interface `Product`), `Categoria`, `categoriasDe()`, **`imagenDeOpciones()`** (la foto según la variante elegida, ver sección 3), `CATEGORIAS` (chips), `navSections` (anclas del navbar), `contactConfig`, `storeName`. **Se edita a mano.** Campos opcionales del producto: `image` (la PRINCIPAL; si falta, va el placeholder), **`imagenesPorOpcion`** (una foto por valor de opción), `categoriasExtra` (multi-categoría), `packPrecios` (promo por cantidad), `sustantivoPack`, `cartName`, `sinStock`, `badges`, `precioAnterior`. |
 | `src/lib/promos.ts` | **Lógica pura de badges y ofertas**: `resolverPromo()`, la cadena de prioridad, el cálculo del ahorro, `UMBRAL_URGENCIA` y `admitePromocion()` (la regla que excluye a los vapers). Ver sección 6. |
 | `src/hooks/use-promocion.ts` | **De dónde salen** los datos promocionales. Hoy, del catálogo. **Es la única costura a cambiar** para editarlos desde el panel. |
-| `src/lib/filtros.ts` | **Lógica pura de los filtros**, sin React ni base: `Filtros`, `FILTROS_VACIOS`, `ORDENES`, `aplicarFiltros`, `coincideBusqueda`, `hayFiltrosActivos`, `rangoDePrecios`, `diagnosticarVacio`, la **agrupación por categoría** (`correspondeAgrupar` / `agruparPorCategoria`) y el ida y vuelta con la URL (`serializarFiltros` / `parsearFiltros`). **Es el punto de extensión para filtros nuevos.** |
+| `src/lib/filtros.ts` | **Lógica pura de los filtros**, sin React ni base: `Filtros`, `FILTROS_VACIOS`, `ORDENES`, `aplicarFiltros`, `coincideBusqueda`, `hayFiltrosActivos`, `rangoDePrecios`, `diagnosticarVacio`, la **agrupación por categoría** (`correspondeAgrupar` / `agruparPorCategoria`), el ida y vuelta con la URL (`serializarFiltros` / `parsearFiltros`) y el **interruptor `CATEGORIAS_PROXIMAMENTE`** (ver sección 5). **Es el punto de extensión para filtros nuevos.** |
 | `src/lib/filtros-context.tsx` | Estado de los filtros (reducer + contexto) y **sincronización con la URL** (History API). Mismo patrón que `CartProvider`/`StockProvider`. |
 | `src/lib/cart-context.tsx` | Lógica del **carrito**: React Context + localStorage (clave `argentina-distributor-cart`). `addItem/removeItem/updateQuantity/clearCart` + totales. |
 | `src/lib/utils.ts` | Helper `cn()` (clases). |
@@ -380,6 +380,48 @@ orden ni la búsqueda entran en la decisión.
   propósito**. Si aparece de nuevo esa condición en `correspondeAgrupar()`, es una
   regresión.
 
+### ⚠️ TEMPORAL: Vapers y Termos están en modo "Próximamente"
+
+Las dos categorías están **ocultas a propósito** porque no hay stock: mostrar 11
+productos todos en "Agotado" es peor que no mostrarlos. **No es un bug.**
+
+**El interruptor es una sola constante**, en `filtros.ts`:
+
+```ts
+export const CATEGORIAS_PROXIMAMENTE: readonly Categoria[] = ["vapers", "termos"];
+```
+
+**Para reactivar una categoría: sacarla de esa lista. Nada más.** No hay que tocar
+componentes, ni descomentar nada, ni volver a agregar productos. Con la lista vacía
+el sitio vuelve solo a su conducta normal y el cartel deja de existir.
+
+Qué hace estar en la lista:
+
+| | |
+|---|---|
+| El chip en la barra de filtros | **sigue visible** |
+| Al tocar el chip | sale un cartel de **"Próximamente"** en vez de la grilla |
+| El contador | dice **"Próximamente"** en vez de "0 productos" |
+| Sus productos | **no aparecen en ninguna vista**: ni en su categoría, ni en "Ver todo", ni en el buscador, ni por rango de precio |
+| `products.ts` | **intacto**: los productos siguen con sus datos, fotos y stock |
+| El panel de admin | **los sigue listando**, para poder cargarles stock mientras están ocultos |
+
+- **La compuerta vive dentro de `aplicarFiltros`**, antes que cualquier otro filtro.
+  Está ahí y no en el contexto para que la cubra también `diagnosticarVacio`, que
+  llama a la misma función: un solo lugar tapa la grilla, el buscador, la agrupación,
+  el contador y el diagnóstico del estado vacío.
+- **Con multi-categoría alcanza con que UNA de las categorías del producto esté
+  oculta** para que no se muestre. Se falla del lado de ocultar, igual que
+  `admitePromocion`.
+- El cartel es el componente local `Proximamente` de `Catalogo.tsx` (mismo lugar que
+  `Grilla`). Comparte la carcasa con `CatalogoVacio` y el ícono de reloj con el estado
+  "Próximamente" por producto que ya usaban las cards.
+  ⚠️ **Se chequea ANTES del estado vacío**: con la categoría oculta no queda ningún
+  producto, así que si no, saldría `CatalogoVacio` diciendo "no hay resultados", que
+  es otra cosa.
+- El campo `status: "proximamente"` de `Product` es **otra cosa**: es por producto y
+  hoy no lo usa nadie. Esto es por CATEGORÍA.
+
 **Dónde vive el estado**
 
 - `filtros.ts` — **puro**. Toda la semántica de "qué se muestra y en qué orden".
@@ -531,7 +573,9 @@ products.ts ──► contenido-db.ts ──► /api/contenido ──► Conteni
 
 ## 7. Estado actual y pendientes
 
-**Catálogo actual — 19 productos, 4 categorías** (en `products.ts`, en este orden):
+**Catálogo actual — 19 productos, 4 categorías** (en `products.ts`, en este orden).
+⚠️ **De los 19, hoy se ven 8**: `vapers` y `termos` están en modo "Próximamente" y sus
+11 productos están ocultos (ver sección 5). Siguen enteros en el archivo.
 
 | Categoría (`category`) | Chip | # | Productos |
 |---|---|---|---|
@@ -656,6 +700,9 @@ regulado: si se amplía, mantener ese tono.
 
 **Pendiente** ⏳
 
+- [ ] **Reactivar Vapers y Termos** cuando haya stock: sacarlas de
+  `CATEGORIAS_PROXIMAMENTE` en `filtros.ts` (ver sección 5). Es sacar dos strings de
+  una lista; no hay nada más que revertir.
 - [ ] **Cargar el stock desde el panel.** Es el pendiente **más viejo y el más
   urgente**: hasta que no se carguen, esos productos se ven **"Agotado"** en
   producción. Aparecen con el badge **"SIN CARGAR"**; se cargan escribiendo el número

@@ -2,8 +2,9 @@
 
 import { useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { Product } from "@/lib/products";
-import { agruparPorCategoria, correspondeAgrupar } from "@/lib/filtros";
+import { Clock } from "lucide-react";
+import { CATEGORIAS, type Product } from "@/lib/products";
+import { agruparPorCategoria, correspondeAgrupar, esProximamente } from "@/lib/filtros";
 import { useFiltros } from "@/lib/filtros-context";
 import BarraFiltros from "./BarraFiltros";
 import { ProductCard } from "./ProductCard";
@@ -110,7 +111,13 @@ export default function Catalogo({ onProductClick }: { onProductClick: (p: Produ
       <BarraFiltros onAntesDeCambiar={irAlCatalogo} />
 
       <div className="mx-auto max-w-[1240px] px-5 py-10 sm:px-7 sm:py-12">
-        {resultados.length === 0 ? (
+        {esProximamente(filtros.categoria) ? (
+          /* ⚠️ Va ANTES del estado vacío: con la categoría oculta no queda
+             ningún producto, así que si no se chequeara primero saldría
+             `CatalogoVacio` diciendo que no hay resultados, que es otra
+             cosa. El interruptor vive en filtros.ts. */
+          <Proximamente categoria={filtros.categoria} />
+        ) : resultados.length === 0 ? (
           /* Un solo estado vacío para los tres motivos (texto, precio,
              categoría) y sus combinaciones: él se diagnostica solo. */
           <CatalogoVacio />
@@ -156,6 +163,43 @@ export default function Catalogo({ onProductClick }: { onProductClick: (p: Produ
         )}
       </div>
     </section>
+  );
+}
+
+/* Cartel de una categoría en modo "Próximamente".
+   Se define acá y no en un archivo aparte porque es exactamente el mismo
+   caso que `Grilla`: una pieza que sólo usa este componente.
+
+   Comparte la carcasa con `CatalogoVacio` (misma tarjeta punteada, mismo
+   círculo del ícono) para que la sección se sienta igual, y el ícono de
+   reloj con el estado "Próximamente" que ya usan las cards. */
+function Proximamente({ categoria }: { categoria: string }) {
+  const label = CATEGORIAS.find((c) => c.id === categoria)?.label ?? categoria;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="mx-auto max-w-[560px] rounded-[20px] border border-dashed border-[var(--line)] bg-[rgba(var(--navy-3-rgb),0.3)] px-5 py-[70px] text-center"
+    >
+      <div className="mx-auto mb-[18px] grid h-16 w-16 place-items-center rounded-full bg-white/5 text-[var(--gold)]">
+        <Clock className="h-7 w-7" />
+      </div>
+
+      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--mut)]">
+        {label}
+      </p>
+
+      <h2 className="mt-2 text-[20px] font-extrabold leading-snug tracking-[-0.02em] text-white">
+        Próximamente
+      </h2>
+
+      <p className="mx-auto mt-3 max-w-[420px] text-[14px] leading-[1.6] text-[var(--mut)]">
+        Estamos preparando esta sección. Volvé en unos días, o escribinos por
+        WhatsApp y te avisamos cuando esté disponible.
+      </p>
+    </motion.div>
   );
 }
 

@@ -16,6 +16,42 @@ import { CATEGORIAS, categoriasDe, type Categoria, type Product } from "./produc
 /** Categoría seleccionada. "todo" = no filtrar por categoría. */
 export type CategoriaFiltro = "todo" | Categoria;
 
+/* ══════════════════════════════════════════════════════════════
+   ⚠️⚠️  INTERRUPTOR TEMPORAL — CATEGORÍAS EN "PRÓXIMAMENTE"  ⚠️⚠️
+
+   Las categorías que estén acá listadas:
+     · MANTIENEN su chip en la barra de filtros;
+     · al tocarlas muestran un cartel de "Próximamente" en vez de la grilla;
+     · sus productos NO aparecen en ninguna vista pública — ni en su
+       categoría, ni en "Ver todo", ni en los resultados del buscador.
+
+   ─── PARA REACTIVAR UNA CATEGORÍA ───
+   Sacarla de esta lista. Nada más: no hay que tocar ningún componente ni
+   descomentar nada. Con la lista vacía el sitio vuelve a su conducta
+   normal y el cartel deja de existir solo.
+
+   Los productos NO se borran: siguen enteros en products.ts con sus datos,
+   sus fotos y su stock, y el panel de admin los sigue listando para poder
+   cargarles stock mientras están ocultos.
+
+   Motivo actual: vapers y termos están sin stock; se ocultan hasta
+   reponer, para no mostrar un catálogo entero en "Agotado".
+   ══════════════════════════════════════════════════════════════ */
+export const CATEGORIAS_PROXIMAMENTE: readonly Categoria[] = ["vapers", "termos"];
+
+/** ¿La categoría elegida está en modo "Próximamente"?
+ *  "todo" nunca lo está: es la vista sin filtrar. */
+export function esProximamente(categoria: CategoriaFiltro): boolean {
+  return categoria !== "todo" && CATEGORIAS_PROXIMAMENTE.includes(categoria);
+}
+
+/** ¿Este producto pertenece a alguna categoría oculta?
+ *  Con multi-categoría alcanza con que UNA lo esté: se falla del lado de
+ *  ocultar, igual que hace `admitePromocion` con los vapers. */
+function estaOculto(product: Product): boolean {
+  return categoriasDe(product).some((c) => CATEGORIAS_PROXIMAMENTE.includes(c));
+}
+
 /** Criterios de orden disponibles en el selector. */
 export type OrdenId = "catalogo" | "precio-asc" | "precio-desc" | "alfabetico";
 
@@ -246,6 +282,12 @@ export function aplicarFiltros(lista: Product[], filtros: Filtros): Product[] {
   const { categoria, precioMin, precioMax } = filtros;
 
   const filtrados = lista.filter((p) => {
+    /* ⚠️ La compuerta de "Próximamente" va PRIMERO y no depende de ningún
+       filtro: es lo que garantiza que esos productos no se cuelen por
+       "Ver todo" ni por el buscador. Al estar acá adentro la cubre también
+       `diagnosticarVacio`, que llama a esta misma función. */
+    if (estaOculto(p)) return false;
+
     /* Multi-categoría: se pregunta por TODAS las del producto, no sólo la
        principal. La deduplicación es gratis: `lista` tiene cada producto
        una sola vez, así que filtrar nunca lo repite. */
