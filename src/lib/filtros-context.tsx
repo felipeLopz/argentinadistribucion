@@ -110,7 +110,7 @@ export function FiltrosProvider({ children }: { children: ReactNode }) {
      `products`, con la misma identidad de array: no hay re-render. */
   const { productos } = useContenido();
 
-  /* El catálogo es un array estático de 17 productos, así que filtrar es
+  /* El catálogo es un array estático de 19 productos, así que filtrar es
      barato; el memo es para no romper la identidad de `resultados` en
      cada render y evitar re-renders en cascada de la grilla. */
   const resultados = useMemo(() => aplicarFiltros(productos, filtros), [productos, filtros]);

@@ -16,10 +16,24 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  /** Ruta de la foto. **Opcional**: los productos que todavía no tienen
-   *  foto se muestran con el placeholder `SinFoto`. Cuando llegue la real,
-   *  alcanza con agregar acá la ruta. */
+  /** Ruta de la foto PRINCIPAL. **Opcional**: los productos que todavía no
+   *  tienen foto se muestran con el placeholder `SinFoto`. Cuando llegue la
+   *  real, alcanza con agregar acá la ruta.
+   *
+   *  Es la que ve el visitante en la grilla, antes de elegir nada, y el
+   *  respaldo de `imagenesPorOpcion`. */
   image?: string;
+
+  /** Fotos por valor de opción, para los productos que cambian de imagen
+   *  según lo que se elija (las fundas, que tienen una foto por color).
+   *
+   *  La clave de afuera es el LABEL del grupo (`"Color"`) y la de adentro
+   *  el valor (`"Fucsia"`). Se resuelve con `imagenDeOpciones()`.
+   *
+   *  Es opcional y aditivo: los productos con una sola foto no lo declaran
+   *  y siguen funcionando igual. Un valor sin foto propia cae en `image`,
+   *  así que nunca queda una imagen rota. */
+  imagenesPorOpcion?: Record<string, Record<string, string>>;
   price?: number;
   options?: ProductOption[];
 
@@ -95,6 +109,31 @@ export function categoriasDe(product: Product): Categoria[] {
     : [product.category];
 }
 
+/**
+ * Foto que corresponde a las opciones elegidas.
+ *
+ * Cae en la principal (`image`) cuando el producto no tiene fotos por
+ * variante, cuando todavía no se eligió nada, o cuando ese valor puntual no
+ * tiene foto propia. **Nunca devuelve una ruta que no exista**: si un color
+ * se queda sin foto, se ve la principal en vez de romperse.
+ *
+ * Es pura: la usan el modal (para la vista) y el armado del ítem del
+ * carrito, sin que ninguno de los dos sepa cómo están guardadas las fotos.
+ */
+export function imagenDeOpciones(
+  product: Product,
+  opciones: Record<string, string>
+): string | undefined {
+  const porGrupo = product.imagenesPorOpcion;
+  if (!porGrupo) return product.image;
+
+  for (const [label, porValor] of Object.entries(porGrupo)) {
+    const elegido = opciones[label];
+    if (elegido && porValor[elegido]) return porValor[elegido];
+  }
+  return product.image;
+}
+
 /* ──────────────────────────────────────────────
    Imágenes del catálogo.
    Los vapers y los termos todavía no tienen foto: se omite `image` y la
@@ -106,6 +145,38 @@ const IMG_AIRPODS_PRO_2 = "/images/airpods-pro-2.webp";
 const IMG_AIRPODS_ANC = "/images/airpods-anc.webp";
 const IMG_CABLE_CABEZAL = "/images/cable-cabezal-usbc.webp";
 const IMG_TEMPLADO_FUNDA = "/images/promo-templado-funda.webp";
+
+/* ─── Fotos de las fundas, una por color ───
+   Vienen del cliente en 9:16; se procesan a 800x800 WebP metiendo la foto
+   entera y rellenando los costados con ella misma desenfocada (un recorte
+   al centro le cortaba la funda). La NEGRA de cada modelo es la principal:
+   es la que se ve en la card antes de que el visitante elija color. */
+const FUNDA_11 = {
+  Negro: "/images/funda-11-negro.webp",
+  "Azul marino": "/images/funda-11-azul-marino.webp",
+  Fucsia: "/images/funda-11-fucsia.webp",
+  Marrón: "/images/funda-11-marron.webp",
+  Naranja: "/images/funda-11-naranja.webp",
+  Turquesa: "/images/funda-11-turquesa.webp",
+  "Verde oliva": "/images/funda-11-verde-oliva.webp",
+};
+
+const FUNDA_12 = {
+  Negro: "/images/funda-12-negro.webp",
+  "Azul marino": "/images/funda-12-azul-marino.webp",
+  Blanco: "/images/funda-12-blanco.webp",
+  Borravino: "/images/funda-12-borravino.webp",
+  "Lila oscuro": "/images/funda-12-lila-oscuro.webp",
+  Marrón: "/images/funda-12-marron.webp",
+  Morado: "/images/funda-12-morado.webp",
+  Naranja: "/images/funda-12-naranja.webp",
+  "Rojo desgastado": "/images/funda-12-rojo-desgastado.webp",
+  Rosado: "/images/funda-12-rosado.webp",
+  "Rosado claro": "/images/funda-12-rosado-claro.webp",
+  Verde: "/images/funda-12-verde.webp",
+  "Verde agua": "/images/funda-12-verde-agua.webp",
+  "Verde militar": "/images/funda-12-verde-militar.webp",
+};
 
 /* Opciones reutilizables */
 const FICHAS_CABLE = ["C - C", "C - Lightning"];
@@ -274,10 +345,42 @@ export const products: Product[] = [
   },
 
   /* ═══ ACCESORIOS APPLE ═══
-     Hoy queda un solo producto: las promos volvieron a vivir sólo en
-     Promos (tenerlas en las dos hacía que las dos categorías mostraran
-     casi lo mismo). Se van a sumar acá los productos sueltos —funda sola,
-     templado solo, cable solo— cuando lleguen los precios. */
+     Las promos viven sólo en Promos (tenerlas en las dos categorías hacía
+     que mostraran casi lo mismo). Acá van los productos SUELTOS. Ya están
+     las fundas por modelo; faltan el templado solo y el cable solo, que
+     esperan precio del cliente.
+
+     ⚠️ Las fundas conviven a propósito con la `Silicone Case` de Promos:
+     aquella es la promo POR CANTIDAD (packs de 2, 3 y 4, sin elegir
+     modelo ni color) y estas son la unidad suelta, con modelo y color. */
+  {
+    id: "apl-funda-11",
+    name: "Funda de silicona iPhone 11",
+    /* Sin specs inventadas: sólo lo que se ve en la foto y el packaging. */
+    description:
+      "Funda de silicona para iPhone 11, con interior suave y protección en los bordes. Elegí el color al comprar.",
+    image: FUNDA_11.Negro,
+    price: 5000,
+    /* Cada color es un producto físico distinto, así que el stock va por
+       color: `clavesDeStock` deriva una fila por valor. */
+    options: [{ label: "Color", values: Object.keys(FUNDA_11) }],
+    imagenesPorOpcion: { Color: FUNDA_11 },
+    category: "accesorios-apple",
+  },
+  {
+    /* ⚠️ Es UN producto, no dos: el packaging de la foto dice "12/12 PRO
+       Case". Es una sola funda y una sola pila de stock; separarlo en
+       "12" y "12 Pro" contaría el mismo stock dos veces. */
+    id: "apl-funda-12",
+    name: "Funda de silicona iPhone 12 y 12 Pro",
+    description:
+      "Funda de silicona para iPhone 12 y 12 Pro, que comparten medidas. Interior suave y protección en los bordes. Elegí el color al comprar.",
+    image: FUNDA_12.Negro,
+    price: 5000,
+    options: [{ label: "Color", values: Object.keys(FUNDA_12) }],
+    imagenesPorOpcion: { Color: FUNDA_12 },
+    category: "accesorios-apple",
+  },
   {
     id: "apl-3",
     name: "Cargadores",

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MessageCircle, ShoppingCart, Check, Star, Truck, Ban, Package, AlertTriangle, Tag } from "lucide-react";
-import { contactConfig, type Product } from "@/lib/products";
+import { contactConfig, imagenDeOpciones, type Product } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { useStock } from "@/lib/stock-context";
 import { esGrupoDeStock, gruposDeStock, llevaStock } from "@/lib/stock-config";
@@ -49,6 +49,13 @@ export default function ProductModal({
   const subtotal = esPromoPack
     ? packPrecios![Math.min(Math.max(cantidad, 1), topePack) - 1]
     : precioUnitario * cantidad;
+
+  /* ─── Foto que se está mostrando ───
+     En los productos con foto por variante (las fundas) cambia al elegir
+     el color; en el resto es siempre la principal. Es la MISMA que entra
+     al carrito, así que lo que se ve al agregar es lo que después aparece
+     en el panel del carrito y en /carrito. */
+  const imagenActual = product ? imagenDeOpciones(product, opciones) : undefined;
 
   /* Opciones genéricas (Color/Modelo) */
   const grupos = product?.options ?? [];
@@ -143,7 +150,13 @@ export default function ProductModal({
 
   const agregarAlCarrito = () => {
     /* La promo entra como UN ítem con el precio del pack ya resuelto: el
-       carrito solo hace precio × cantidad, y acá la cantidad es 1 pack. */
+       carrito solo hace precio × cantidad, y acá la cantidad es 1 pack.
+
+       La foto que se guarda es la del COLOR ELEGIDO, no la principal: el
+       ítem ya dice "Fucsia" en la variante, y mostrarle la funda negra al
+       lado sería contradecirse. Se resuelve ACÁ, antes de llamar a
+       `addItem`, para no tocar la lógica del carrito: el carrito sigue
+       guardando un string y sin saber que existen fotos por variante. */
     addItem(
       esPromoPack
         ? {
@@ -151,7 +164,7 @@ export default function ProductModal({
             name: product!.cartName ?? product!.name,
             /* El carrito guarda un string; "" = todavía sin foto, y las
                vistas del carrito muestran el placeholder. */
-            image: product!.image ?? "",
+            image: imagenActual ?? "",
             price: subtotal,
             variante,
             cantidad: 1,
@@ -159,9 +172,7 @@ export default function ProductModal({
         : {
             productId: product!.id,
             name: product!.cartName ?? product!.name,
-            /* El carrito guarda un string; "" = todavía sin foto, y las
-               vistas del carrito muestran el placeholder. */
-            image: product!.image ?? "",
+            image: imagenActual ?? "",
             price: product!.price!,
             variante,
             cantidad,
@@ -238,9 +249,12 @@ export default function ProductModal({
             <div className="flex-1 overflow-y-auto">
               {/* Header con imagen de fondo */}
               <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[var(--navy-3)] to-[#242427] sm:h-72">
-                {product.image ? (
+                {imagenActual ? (
                   <Image
-                    src={product.image}
+                    /* `key` para que React remonte el <Image> al cambiar de
+                       color: sin eso Next puede quedarse con la anterior. */
+                    key={imagenActual}
+                    src={imagenActual}
                     alt={product.name}
                     fill
                     /* El panel mide max-w-lg (512px) y ocupa todo el ancho en mobile */

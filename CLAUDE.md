@@ -57,7 +57,7 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 
 | Ruta | Para qué sirve |
 |---|---|
-| `src/lib/products.ts` | **Catálogo** (array `products` + interface `Product`), `Categoria`, `categoriasDe()`, `CATEGORIAS` (chips), `navSections` (anclas del navbar), `contactConfig`, `storeName`. **Se edita a mano.** Campos opcionales del producto: `image` (si falta, va el placeholder), `categoriasExtra` (multi-categoría), `packPrecios` (promo por cantidad), `cartName`, `sinStock`, `badges`, `precioAnterior`. |
+| `src/lib/products.ts` | **Catálogo** (array `products` + interface `Product`), `Categoria`, `categoriasDe()`, **`imagenDeOpciones()`** (la foto según la variante elegida, ver sección 3), `CATEGORIAS` (chips), `navSections` (anclas del navbar), `contactConfig`, `storeName`. **Se edita a mano.** Campos opcionales del producto: `image` (la PRINCIPAL; si falta, va el placeholder), **`imagenesPorOpcion`** (una foto por valor de opción), `categoriasExtra` (multi-categoría), `packPrecios` (promo por cantidad), `sustantivoPack`, `cartName`, `sinStock`, `badges`, `precioAnterior`. |
 | `src/lib/promos.ts` | **Lógica pura de badges y ofertas**: `resolverPromo()`, la cadena de prioridad, el cálculo del ahorro, `UMBRAL_URGENCIA` y `admitePromocion()` (la regla que excluye a los vapers). Ver sección 6. |
 | `src/hooks/use-promocion.ts` | **De dónde salen** los datos promocionales. Hoy, del catálogo. **Es la única costura a cambiar** para editarlos desde el panel. |
 | `src/lib/filtros.ts` | **Lógica pura de los filtros**, sin React ni base: `Filtros`, `FILTROS_VACIOS`, `ORDENES`, `aplicarFiltros`, `coincideBusqueda`, `hayFiltrosActivos`, `rangoDePrecios`, `diagnosticarVacio`, la **agrupación por categoría** (`correspondeAgrupar` / `agruparPorCategoria`) y el ida y vuelta con la URL (`serializarFiltros` / `parsearFiltros`). **Es el punto de extensión para filtros nuevos.** |
@@ -119,21 +119,92 @@ y `CatalogoVacio`.
 
 ## 3. Diseño
 
-- **Theme "Violeta Profundo"**: oscuro (fondo violeta) con **acentos lila y rosa**,
-  aplicado a todo el sitio **y al panel de admin**.
+- **Theme "Grafito"**: gris cálido monocromo, aplicado a todo el sitio **y al panel
+  de admin**. Es el tercer theme: nació como "Estadio Nocturno", pasó por "Violeta
+  Profundo" y hoy es Grafito. El camino está recorrido — el mapeo de abajo sirve de
+  guía si algún día hay un cuarto.
 - **Tokens de color**: en `src/app/globals.css`, bloque `:root`.
-  - **Fondos**: `--navy #140f26` (base), `--navy-2 #1c1436` (superficies).
-  - **Acciones** (botones, pill de precio, chip activo): `--blue #7c3aed`,
-    `--blue-l #8b5cf6`. El gradiente va `--blue-l` → `--blue`.
-  - **Realces** (subrayado del navbar, título del hero, íconos): `--gold #a78bfa`
-    (lila), `--gold-l #f0abfc` (rosa).
-  - **Texto y bordes**: `--ink #efeafe`, `--mut #a396c9`,
-    `--line rgba(167,139,250,.16)`.
-  ⚠️ **Los nombres de los tokens quedaron del theme viejo a propósito** (`--navy`,
-  `--blue`, `--gold`): renombrarlos obligaba a tocar ~328 usos. Lo que cambió es el
-  valor, no el nombre. Lo mismo con `.text-gold-gradient`, que hoy es lila → rosa.
-- **Texto sobre los botones de acento**: `#140f26`. El lila y el rosa son claros, así
-  que **el blanco NO pasa contraste** (1.76:1); `#140f26` da 6.85:1 (WCAG AA).
+  - **Fondos**: `--navy #1c1c1e` (base), `--navy-2 #242427` (superficie),
+    `--navy-3 #2c2c30` (superficie más clara: cards, ítems del carrito, bloques del
+    panel). `--navy-3` va **además** como `--navy-3-rgb: 44, 44, 48`, porque los
+    fondos translúcidos necesitan su propio alpha y `rgba()` no acepta un hex: se
+    escriben `rgba(var(--navy-3-rgb), 0.5)`. Las dos formas apuntan al mismo color.
+  - **Acciones** (botones, pill de precio, chip activo): `--blue #b8b3ab`,
+    `--blue-l #c4bfb7`. El degradé va `--blue-l` → `--blue`.
+  - **Realces** (subrayado del navbar, título del hero, íconos, bordes):
+    `--gold #b8b3ab`, `--gold-l #d6d2cb`.
+  - **Texto y bordes**: `--ink #eceae7`, `--mut #a09b93`,
+    `--line rgba(184,179,171,.16)`.
+  ⚠️ **Los nombres de los tokens quedaron del theme original a propósito** (`--navy`,
+  `--blue`, `--gold`): renombrarlos obligaba a tocar **406 usos**. Lo que cambia es el
+  valor, no el nombre. Lo mismo con `.text-gold-gradient`, que hoy es gris → gris claro.
+
+- **Las dos familias de acento, en una paleta sin tonos.** Antes se separaban por
+  color (lila vs violeta). En Grafito no hay tono que gastar, así que la jerarquía
+  sale de la **forma** —pastilla rellena vs texto suelto vs borde— más un escalón de
+  luminosidad. `--gold` se usa sobre todo en **primer plano** (37 veces como texto,
+  23 como borde) y `--blue` sobre todo como **relleno** (50 veces). No las unifiques
+  en un solo valor: el escalón es lo que sostiene la jerarquía.
+
+### ⚠️ El acento es CLARO: el texto encima va OSCURO
+
+Sobre cualquier relleno de acento el texto va **`#1c1c1e`**, nunca blanco.
+
+| Combinación | Ratio | |
+|---|---|---|
+| `--ink` sobre el fondo base | **14.17:1** | AAA |
+| `--ink` sobre superficies 2 y 3 | 12.89 / 11.58 | AAA |
+| `--mut` sobre las tres superficies | 6.16 / 5.61 / **5.04** | AA |
+| **`#1c1c1e` sobre el acento** | **8.16:1** | AAA ✅ |
+| blanco sobre el acento | **2.08:1** | ❌ **FALLA** |
+| **`#1c1c1e` sobre el cian de promos** | **7.18:1** | AAA ✅ |
+| blanco sobre el cian | **2.37:1** | ❌ **FALLA** |
+
+Medidos en el navegador sobre la página real, no calculados a mano.
+
+> **Nota histórica**: la versión anterior de este archivo decía que el blanco sobre
+> el lila daba **1.76:1**. El valor real era **2.72:1** (el 1.76 se parece al del
+> `--gold-l`). La conclusión no cambiaba —el blanco fallaba igual— pero el número
+> estaba mal.
+
+⚠️ **Fueron 25 lugares, no 18.** Al migrar hubo que invertir a texto oscuro 25
+puntos, y **un grep simple no los encuentra a todos**, porque:
+  - en 7 casos el relleno está en el contenedor y el `text-white` en el **ícono hijo**
+    (`<Fish>`, `<ShoppingCart>`, `<Lock>`), a veces a 5 líneas de distancia;
+  - 1 caso usa un **relleno sólido** (el contador del carrito, con `bg-` y el token
+    directo) y no un degradé, así que un grep que busque los degradés por su prefijo
+    `from-` no lo encuentra.
+  De los **77 `text-white`** del repo sólo esos 25 estaban sobre acento; los otros 52
+  van sobre fondo oscuro y **tienen que quedar blancos** (ojo con el `<h1>` del login
+  y el nombre de la tienda en el footer: están *al lado* de un contenedor de acento
+  pero no encima). La forma confiable de chequearlo es **medir el contraste en el
+  navegador** recorriendo el DOM, no leer el código.
+
+### ⚠️ El cian `--promo` es SÓLO para promociones
+
+`--promo #3fb8c4` con `--promo-ink #1c1c1e` es el **único color** de toda la paleta,
+y se usa en **cuatro lugares y nada más**: los badges, el precio anterior tachado, el
+ahorro y el renglón "¡Últimas N unidades!".
+
+**No lo extiendas al resto de la interfaz.** Su fuerza viene de ser escaso: si el
+cian aparece en botones y títulos, los badges dejan de destacar, que es exactamente
+lo que se quiere evitar. Para cualquier otro acento está la gama gris.
+
+Los **tres tonos de badge comparten el mismo cian** y se distinguen por **ícono y
+texto**, no por color — si cada uno tuviera el suyo, el cian dejaría de leerse como
+"esto es una promo".
+
+- **Sombras y glows**: las sombras de profundidad van en **negro** (`rgba(0,0,0,…)`),
+  porque un halo gris sobre fondo gris se ve como una mancha.
+  ⚠️ **Dos excepciones, las dos a propósito**:
+  - **`.hero-glow` va en gris tenue, NO en negro.** No es un halo alrededor de un
+    elemento: es la **luz de fondo** que levanta la parte de arriba del hero. En negro
+    lo oscurecería en vez de iluminarlo. Lo que evita la mancha ahí es la opacidad
+    baja (el violeta llegaba a 0.55; en gris va a 0.10).
+  - **Los indicadores de foco van en gris, NO en negro.** Un anillo negro sobre fondo
+    oscuro es invisible, y quien navega con teclado pierde el rastro del foco. Se
+    distinguen por la forma: `0_0_0_Npx` es un anillo de foco, `0_Ypx_Bpx` es
+    profundidad.
 - **Colores que NO siguen la paleta** (a propósito): verde de WhatsApp
   (`#25a35a` / `#37c46f`), rosa de Instagram (`#e46bb0`) y el rojo de error/agotado.
 - **Tipografía**: **Archivo** (Google Fonts vía `next/font`, variable
@@ -142,14 +213,63 @@ y `CatalogoVacio`.
   favicon 🐟. Es neutro respecto de los productos, que van a seguir cambiando.
 - **Reglas de las cards** (`ProductCard.tsx`):
   - Son **clickeables y abren el modal**. **No** tienen botón "Agregar" ni badge de
-    categoría. El **precio** va en una **pill azul centrada** (`PRICE_PILL`, en
-    `CardPrecio.tsx`).
+    categoría. El **precio** va en una **pill de acento centrada**, con texto oscuro
+    encima (`PRICE_PILL`, en `CardPrecio.tsx`).
   - **Sin foto**: se renderiza `SinFoto` en el mismo hueco, así el layout no cambia.
   - **Badge de promoción**: arriba a la izquierda de la foto, uno solo (ver sección 6).
   - **Promo por cantidad ("Silicone Case")**: abajo del precio dice
     "Promo por cantidad · hasta 4" en vez de la disponibilidad. El resto pasa en el
     modal: **tabla de precios** visible al abrir, selector con **tope 4** y aviso con
     botón de WhatsApp si se lo intenta pasar.
+
+### Imagen por variante: una foto por cada valor de opción
+
+Las fundas cambian de foto según el color elegido. Lo resuelve el campo opcional
+`imagenesPorOpcion` de `Product`, indexado por **label del grupo** y después por
+**valor**: `{ "Color": { "Fucsia": "/images/funda-11-fucsia.webp" } }`.
+
+Quien lo lee es la función pura **`imagenDeOpciones(product, opciones)`**
+(`products.ts`), y **falla siempre hacia la foto principal**: si el producto no
+declara el campo, si todavía no se eligió nada, o si ese valor puntual no tiene foto
+propia, devuelve `product.image`. **Nunca deja una imagen rota.**
+
+- **`image` sigue siendo la principal**: es la que muestra la card en la grilla, antes
+  de que el visitante elija nada. En las fundas es **la NEGRA** de cada modelo.
+- **Es aditivo**: los productos con una sola foto no declaran el campo y no cambiaron.
+- **Dónde se muestra cada una** — de los cuatro lugares, sólo el modal necesitó tocarse:
+
+  | Dónde | Qué foto | ¿Se tocó? |
+  |---|---|---|
+  | Card de la grilla | la principal | no, sigue leyendo `product.image` |
+  | Modal | la del color elegido | **sí**, usa `imagenDeOpciones` |
+  | Panel del carrito | la del color elegido | no, lee el ítem guardado |
+  | `/carrito` | la del color elegido | no, ídem |
+
+- ⚠️ **La foto del color elegido se resuelve en `ProductModal`, ANTES de llamar a
+  `addItem`.** El carrito sigue guardando un `image: string` y sin saber que existen
+  fotos por variante: no hubo que tocar `cart-context.tsx`. Si algún día parece que
+  hay que tocarlo para esto, es señal de que algo se está resolviendo en el lugar
+  equivocado.
+
+### ⚠️ Fotos verticales: se rellenan, NO se recortan
+
+Las fotos de las fundas vienen del cliente en **900×1600 (9:16)** y las cards son
+**cuadradas con `object-cover`**: un recorte al centro le corta la funda arriba y
+abajo (ocupa ~1200-1400px de alto sobre 900 de ancho).
+
+Se procesan a **800×800 WebP** metiendo la foto **entera** (`fit: inside`) y
+rellenando los costados con **la misma foto ampliada y desenfocada**. El relleno
+queda con el color y la textura de la tela de esa foto, así que no se lee como una
+banda pegada, y es **imposible que corte el producto**.
+
+- Se probó detectar el recuadro de la funda por color y por bordes: **las dos
+  fallaron**. La tela tiene textura y arrugas, así que la detección marcaba la imagen
+  entera o daba cajas inconsistentes. El caso peor es la funda **blanca** sobre tela
+  crema. No volver a intentarlo sin una forma de verificar las 21 a ojo.
+- ⚠️ **`sharp` corre el `resize` ANTES del `composite`**, sin importar el orden en que
+  se llamen los métodos. Encadenar `create → composite → resize` falla con
+  *"Image to composite must have same dimensions or smaller"*: hay que armar el fondo
+  en su propia llamada y recién después componer.
 
 ## 4. Decisiones y convenciones ya tomadas
 
@@ -177,7 +297,7 @@ y `CatalogoVacio`.
   - Se usó un tiempo para que las promos salieran también en Accesorios Apple, y se
     revirtió: las dos categorías terminaban mostrando **casi lo mismo** (5 de 6
     productos repetidos). Hoy cada producto está en una sola categoría y **la suma de
-    los contadores de los chips coincide con "Ver todo"** (17).
+    los contadores de los chips coincide con "Ver todo"** (19).
   - ⚠️ **NO borrar el campo ni `categoriasDe()`**: se va a volver a necesitar apenas
     un producto pertenezca de verdad a dos categorías.
   - Si se reactiva: `category` es la **principal** (la del badge del modal y la del
@@ -190,7 +310,7 @@ y `CatalogoVacio`.
   **activan el chip**, no scrollean.
 - **El salto al cambiar de categoría** (`Catalogo.tsx`) — dos problemas distintos que
   se arreglaron juntos, y las dos soluciones son frágiles si se tocan:
-  1. **El "tirón"**: pasar de 17 cards a 3 acorta el documento y el navegador
+  1. **El "tirón"**: pasar de 19 cards a 3 acorta el documento y el navegador
      **clampea** el scroll. Se arregla con el **orden de las operaciones**: primero el
      scroll, después el cambio de filtro. Corregir *después* no sirve, porque las
      cards salen con animación y la altura colapsa un frame más tarde.
@@ -229,7 +349,7 @@ y `CatalogoVacio`.
 - **Buscador**: el del navbar. **No hay dos mecanismos**: escribe en el mismo estado
   que lee la grilla. Matchea por nombre **o** descripción, sin distinguir mayúsculas.
 - **Precio**: rango desde/hasta. ⚠️ Con un tope activo, los productos **sin precio**
-  quedan afuera (hoy no aplica: los 17 tienen precio).
+  quedan afuera (hoy no aplica: los 19 tienen precio).
 - **Orden**: por defecto (el de `products.ts`), precio asc, precio desc, alfabético.
   El default es el orden del archivo **a propósito**: se controla a mano qué va primero.
 - **Contador**: cuántos productos hay en la vista actual.
@@ -312,7 +432,7 @@ arriba, "¡Últimas 2 unidades!" abajo. (Hubo un badge "ÚLTIMOS N" en la primer
 se quitó porque duplicaba el mensaje del renglón.)
 
 **Agotado apaga la promoción**: sin stock no se muestra ni el badge ni la oferta. El
-cartel de "Agotado" manda, y un "Ahorrás $7.000" en lila brillante al lado de "Agotado"
+cartel de "Agotado" manda, y un "Ahorrás $7.000" en cian brillante al lado de "Agotado"
 se contradice.
 
 **La oferta pone su badge sola**: con sólo cargar `precioAnterior` aparece OFERTA, sin
@@ -411,16 +531,16 @@ products.ts ──► contenido-db.ts ──► /api/contenido ──► Conteni
 
 ## 7. Estado actual y pendientes
 
-**Catálogo actual — 17 productos, 4 categorías** (en `products.ts`, en este orden):
+**Catálogo actual — 19 productos, 4 categorías** (en `products.ts`, en este orden):
 
 | Categoría (`category`) | Chip | # | Productos |
 |---|---|---|---|
 | `accesorios` | **Promos** | 5 | Silicone Case 11-17 ($5.000, promo por cantidad, sin stock) · **AirPods Pro 2 (sin cancelación de ruido)** $25.000 · **AirPods Pro 2 con cancelación de ruido + funda** $49.990 · Cable y cabezal $20.000 · **Promo templado + funda** $8.500 |
 | `vapers` | **Vapers** | 8 | 5 dispositivos recargables + 2 líquidos 30ml + 1 kit — todos $35.000, **sin foto** |
 | `termos` | **Termos** | 3 | Termo Stanley 750ml en rosa, azul y blanco — $45.000, **sin foto** |
-| `accesorios-apple` | **Apple** | 1 | Cargadores $11.400 |
+| `accesorios-apple` | **Apple** | 3 | **Funda de silicona iPhone 11** $5.000 (7 colores) · **Funda de silicona iPhone 12 y 12 Pro** $5.000 (14 colores) · Cargadores $11.400 |
 
-La suma de los chips (5+8+3+1) **coincide** con "Ver todo" (17): ya no hay
+La suma de los chips (5+8+3+3) **coincide** con "Ver todo" (19): ya no hay
 multi-categoría (ver sección 4).
 
 **Productos con selector de opciones** (el modal obliga a elegir antes de agregar, y
@@ -431,6 +551,21 @@ la opción viaja al carrito y al mensaje de WhatsApp):
 | Cable y cabezal (Promos) | `Ficha` | `C - C` · `C - Lightning` |
 | Cargadores (Apple) | `Ficha` | `C - C` · `C - Lightning` |
 | Promo templado + funda | `Templado` | `9D` · `Anti espía` |
+| **Funda iPhone 11** | `Color` | 7: Negro · Azul marino · Fucsia · Marrón · Naranja · Turquesa · Verde oliva |
+| **Funda iPhone 12 y 12 Pro** | `Color` | 14: Negro · Azul marino · Blanco · Borravino · Lila oscuro · Marrón · Morado · Naranja · Rojo desgastado · Rosado · Rosado claro · Verde · Verde agua · Verde militar |
+
+⚠️ **`apl-funda-12` es UN producto, no dos.** El packaging de la foto dice literal
+**"12/12 PRO Case"**: es una sola funda que sirve para los dos modelos, un solo SKU y
+**una sola pila de stock**. Separarlo en "iPhone 12" e "iPhone 12 Pro" contaría el
+mismo stock físico dos veces. **No lo dividas.**
+
+⚠️ **Las fundas por modelo conviven a propósito con la `Silicone Case` de Promos.**
+Aquella es la promo **por cantidad** (packs de 2, 3 y 4, sin elegir modelo ni color);
+estas son la **unidad suelta**, con modelo y color. Es el pendiente de "funda sola"
+que estaba anotado desde hace tiempo, no una duplicación por error.
+
+El **"Verde"** a secas del 12/12 Pro convive con "Verde agua" y "Verde militar":
+viene así del cliente y **se dejó tal cual** a propósito.
 
 ⚠️ **Los dos AirPods y por qué la aclaración va en el NOMBRE.** Conviven un
 **AirPods Pro 2 (sin cancelación de ruido)** a $25.000 y un **AirPods Pro 2 con
@@ -503,6 +638,17 @@ regulado: si se amplía, mantener ese tono.
     del antiespía) y AirPods con cancelación de ruido.
 - **Agrupación por categoría en "Ver todo"** y arreglo del espacio vacío en mobile al
   cambiar de chip (ver secciones 4 y 5).
+- **Fundas de silicona por modelo, con imagen según el color** (ver sección 3):
+  `apl-funda-11` (7 colores) y `apl-funda-12` (14), a $5.000, con selector de **Color**
+  obligatorio y **stock por color**. Trajeron el sistema de `imagenesPorOpcion`: la
+  card muestra la **negra** y el modal cambia de foto al elegir. Las 21 fotos pasaron
+  de 2,6 MB de JPEG vertical a **734 KB** de WebP cuadrado.
+- **Migración de paleta a "Grafito"** (ver sección 3): los 9 tokens + `--navy-3` +
+  `--promo`/`--promo-ink`, los fondos translúcidos, las sombras en negro, el cian de
+  promociones y la imagen OG. **25 lugares** pasaron de texto blanco a oscuro sobre
+  el acento. Verificado midiendo el contraste de los **86 textos** de la home en el
+  navegador: **cero** por debajo de AA. De paso se arregló el rótulo "Sin foto", que
+  ya venía fallando en violeta (3.62:1) y ahora da 5.04:1.
 - **Contenido editable desde el panel** (descripciones y `packPrecios`, ver sección 6):
   lógica pura + tabla `contenido_overrides` + endpoint público de solo lectura +
   rutas privadas + sección nueva en `/admindistribucion`. **Falla ABIERTO.**
@@ -523,6 +669,10 @@ regulado: si se amplía, mantener ese tono.
   | `promo-cable-cabezal` | `C - C` · `C - Lightning` |
   | `promo-templado-funda` | `9D` · `Anti espía` |
   | `apl-3` (Cargadores) | `C - C` · `C - Lightning` |
+  | **`apl-funda-11`** | **7 filas**, una por color: `Negro` · `Azul marino` · `Fucsia` · `Marrón` · `Naranja` · `Turquesa` · `Verde oliva` |
+  | **`apl-funda-12`** | **14 filas**, una por color: `Negro` · `Azul marino` · `Blanco` · `Borravino` · `Lila oscuro` · `Marrón` · `Morado` · `Naranja` · `Rojo desgastado` · `Rosado` · `Rosado claro` · `Verde` · `Verde agua` · `Verde militar` |
+
+  Con las fundas son **21 filas nuevas**, así que el total a cargar pasó de 19 a **40**.
 
 - [ ] **Fotos reales** de los 8 vapers y los 3 termos (hoy muestran `SinFoto`). Alcanza
   con agregar `image:` en `products.ts` — el placeholder deja de renderizarse solo.
@@ -534,9 +684,14 @@ regulado: si se amplía, mantener ese tono.
   Falta: **largo del cable** (la promo dice 1 metro), **watts del cabezal** (la promo
   dice 20W), y si la diferencia es de specs o de calidad/marca. La descripción está
   escrita **sin inventar specs** a propósito; completarla cuando haya respuesta.
-- [ ] **Sumar los productos sueltos a Accesorios Apple**: funda sola, templado solo,
-  cable solo. Faltan los precios del cliente. Es lo que va a sacar a esa categoría de
-  tener un solo producto.
+- [ ] **Terminar los productos sueltos de Accesorios Apple**: ya entraron las **fundas
+  por modelo**; faltan el **templado solo** y el **cable solo**, esperando precio del
+  cliente.
+- [ ] **Fundas de los modelos 13 en adelante.** Hoy sólo hay 11 y 12/12 Pro, porque son
+  los únicos con fotos. Cuando lleguen las del 13, 14, 15, 16 o 17, cada modelo se suma
+  como un producto más con el mismo patrón: fotos procesadas con relleno desenfocado,
+  la **negra como principal**, `options` con sus colores e `imagenesPorOpcion`. No hace
+  falta tocar ningún componente.
 - [ ] **Limpiar las filas huérfanas de la base** (ver abajo).
 - [ ] **Panel para los badges**: editarlos desde `/admindistribucion` en vez de a mano.
   Ya está preparado — ver "Cómo migrar los badges al panel" en la sección 6.
@@ -640,3 +795,23 @@ DELETE FROM stock WHERE product_id IN ('paq-1','paq-2','paq-3','paq-4','paq-5','
 (marcá pendientes como hechos, agregá decisiones nuevas), para que sirva de contexto
 en la sesión siguiente. Editalo con las herramientas de edición, **nunca con
 PowerShell** (ver sección 0).
+
+### ⚠️ Tailwind LEE este archivo: no escribas clases de ejemplo con relleno
+
+Tailwind 4 escanea **todos los archivos del repo que no estén en `.gitignore`**, y
+este `CLAUDE.md` es uno de ellos. Cualquier cosa con forma de clase de valor
+arbitrario que aparezca acá —aunque sea prosa explicando código— la toma como clase
+real y genera CSS con ella.
+
+Ya rompió el sitio una vez: documentando la migración de paleta quedó escrito el
+patrón de un degradé con `var` y tres puntos de relleno adentro de los corchetes.
+Tailwind generó `--tw-gradient-from:` con ese relleno textual y el CSS dejó de
+parsear, con la home en **500**.
+
+- **Peor todavía**: `npm run build` **NO falla**, sólo `npm run dev`. Se puede
+  commitear y deployar sin enterarse.
+- **La regla**: al documentar, nombrá el prefijo suelto (`from-`, `bg-`) o citá una
+  clase **completa y válida**. Nunca una con puntos suspensivos o un placeholder
+  adentro de los corchetes.
+- **Cómo chequearlo**: después de tocar este archivo, levantá `npm run dev` de verdad
+  —no alcanza con el build— y confirmá que la home responde 200.
