@@ -43,10 +43,11 @@ export async function asegurarTabla(): Promise<void> {
   await sql`
     CREATE TABLE IF NOT EXISTS contenido_overrides (
       product_id   text PRIMARY KEY,
-      nombre       text,
-      imagen       text,
-      descripcion  text,
-      pack_precios jsonb,
+      nombre         text,
+      imagen         text,
+      descripcion    text,
+      pack_precios   jsonb,
+      opciones_extra jsonb,
       updated_at   timestamptz NOT NULL DEFAULT now(),
       updated_by   text
     )
@@ -58,6 +59,7 @@ export async function asegurarTabla(): Promise<void> {
      No hay que ejecutar nada a mano: pasa sola al entrar al panel. */
   await sql`ALTER TABLE contenido_overrides ADD COLUMN IF NOT EXISTS nombre text`;
   await sql`ALTER TABLE contenido_overrides ADD COLUMN IF NOT EXISTS imagen text`;
+  await sql`ALTER TABLE contenido_overrides ADD COLUMN IF NOT EXISTS opciones_extra jsonb`;
 
   tablaLista = true;
 }
@@ -68,6 +70,7 @@ interface FilaCruda {
   imagen: string | null;
   descripcion: string | null;
   pack_precios: number[] | null;
+  opciones_extra: Record<string, string[]> | null;
 }
 
 /**
@@ -82,7 +85,8 @@ export async function leerOverrides(): Promise<MapaContenido> {
   let filas: FilaCruda[];
   try {
     filas = (await sql`
-      SELECT product_id, nombre, imagen, descripcion, pack_precios FROM contenido_overrides
+      SELECT product_id, nombre, imagen, descripcion, pack_precios, opciones_extra
+        FROM contenido_overrides
     `) as FilaCruda[];
   } catch (err) {
     const code = (err as { code?: string })?.code;
@@ -97,6 +101,7 @@ export async function leerOverrides(): Promise<MapaContenido> {
       imagen: f.imagen,
       descripcion: f.descripcion,
       packPrecios: f.pack_precios,
+      opcionesExtra: f.opciones_extra,
     };
   }
   return mapa;
@@ -109,6 +114,7 @@ export interface FilaContenido {
   imagen: string | null;
   descripcion: string | null;
   pack_precios: number[] | null;
+  opciones_extra: Record<string, string[]> | null;
   updated_at: string;
   updated_by: string | null;
 }
@@ -118,7 +124,8 @@ export async function leerOverridesDetallados(): Promise<FilaContenido[]> {
   await asegurarTabla();
   const sql = getSql();
   return (await sql`
-    SELECT product_id, nombre, imagen, descripcion, pack_precios, updated_at, updated_by
+    SELECT product_id, nombre, imagen, descripcion, pack_precios, opciones_extra,
+           updated_at, updated_by
       FROM contenido_overrides
   `) as FilaContenido[];
 }
@@ -192,7 +199,35 @@ export async function fijarPackPrecios(
   `;
 }
 
-/** Qué campo se borra al volver al valor del código. */
+/**
+ * Guarda el mapa COMPLETO de valores extra de un producto.
+ *
+ * Quien llama arma el mapa nuevo a partir del que ya estaba: acá no hay
+ * lógica de mezcla, para que la validación (duplicados, largo, tope) viva
+ * en un solo lugar y no se duplique entre el handler y el SQL.
+ *
+ * ⚠️ No existe una función para QUITAR valores, y es a propósito: sacar
+ * uno dejaría stock huérfano y carritos apuntando a una variante que ya
+ * no existe. Tampoco hay acción de borrado en la API.
+ */
+export async function fijarOpcionesExtra(
+  productId: string,
+  mapa: Record<string, string[]>,
+  usuario: string
+): Promise<void> {
+  await asegurarTabla();
+  const sql = getSql();
+  const json = JSON.stringify(mapa);
+  await sql`
+    INSERT INTO contenido_overrides (product_id, opciones_extra, updated_at, updated_by)
+    VALUES (${productId}, ${json}::jsonb, now(), ${usuario})
+    ON CONFLICT (product_id)
+    DO UPDATE SET opciones_extra = ${json}::jsonb, updated_at = now(), updated_by = ${usuario}
+  `;
+}
+
+/** Qué campo se borra al volver al valor del código.
+ *  ⚠️ `opcionesExtra` NO está: los valores creados no se pueden quitar. */
 export type CampoContenido = "nombre" | "imagen" | "descripcion" | "packPrecios";
 
 /**
@@ -242,6 +277,7 @@ export async function borrarOverride(
      WHERE product_id = ${productId}
        AND nombre IS NULL
        AND imagen IS NULL
+       AND opciones_extra IS NULL
        AND descripcion IS NULL
        AND pack_precios IS NULL
   `;

@@ -15,11 +15,13 @@ import {
   Type,
   Upload,
   Image as ImageIcon,
+  ListPlus,
 } from "lucide-react";
 import {
   validarNombre,
   validarDescripcion,
   validarPackPrecios,
+  validarValorOpcion,
   LARGO_MAX_NOMBRE,
   LARGO_MAX_DESCRIPCION,
 } from "@/lib/contenido";
@@ -36,8 +38,17 @@ import {
    Igual el servidor revalida todo: esto es comodidad, no seguridad.
    ═══════════════════════════════════════════════ */
 
+interface GrupoOpciones {
+  label: string;
+  /** Fijos: vienen de products.ts y NO se pueden quitar. */
+  delCodigo: string[];
+  /** Agregados desde el panel. Tampoco se pueden quitar. */
+  agregados: string[];
+}
+
 interface ProductoContenido {
   id: string;
+  grupos: GrupoOpciones[];
   /** Título efectivo: el editado si existe, si no el del código. */
   nombre: string;
   categoria: string;
@@ -111,6 +122,7 @@ export default function PanelContenido() {
 
   /* Borradores: lo que hay escrito en pantalla, todavía sin guardar */
   const [titulo, setTitulo] = useState<Record<string, string>>({});
+  const [nuevaOpcion, setNuevaOpcion] = useState<Record<string, string>>({});
   const [desc, setDesc] = useState<Record<string, string>>({});
   const [pack, setPack] = useState<Record<string, string[]>>({});
 
@@ -204,6 +216,50 @@ export default function PanelContenido() {
     } finally {
       setOcupado((p) => ({ ...p, [clave]: false }));
     }
+  };
+
+  /* ─── Opciones ─── */
+
+  const agregarOpcion = async (p: ProductoContenido, grupo: string) => {
+    const clave = `${p.id}|op|${grupo}`;
+    const texto = nuevaOpcion[clave] ?? "";
+
+    /* Misma validación que el servidor, para avisar sin ida y vuelta */
+    const v = validarValorOpcion(texto);
+    if (!v.ok) return marcar(clave, { tipo: "error", texto: v.error });
+
+    const r = await enviar(clave, {
+      productId: p.id,
+      accion: "agregar-opcion",
+      grupo,
+      valor: v.valor,
+    });
+    if (!r) return;
+
+    /* El grupo se reemplaza con lo que devolvió el servidor, que es la
+       fuente de verdad de qué quedó agregado. */
+    setProductos((prev) =>
+      prev.map((x) =>
+        x.id !== p.id
+          ? x
+          : {
+              ...x,
+              grupos: x.grupos.map((g) =>
+                g.label !== grupo
+                  ? g
+                  : { ...g, agregados: [...g.agregados, r.valor as string] }
+              ),
+            }
+      )
+    );
+    setNuevaOpcion((prev) => ({ ...prev, [clave]: "" }));
+    const filas = r.filasCreadas as number;
+    okPasajero(
+      clave,
+      filas > 0
+        ? `Agregado · ${filas} ${filas === 1 ? "casillero" : "casilleros"} de stock en 0`
+        : "Agregado"
+    );
   };
 
   /* ─── Foto ─── */
@@ -719,6 +775,80 @@ export default function PanelContenido() {
                   </p>
                 )}
               </section>
+
+              {/* ─── Opciones ─── */}
+              {p.grupos.length > 0 && (
+                <section className="mt-5 border-t border-[var(--line)] pt-4">
+                  {p.grupos.map((g) => {
+                    const claveOp = `${p.id}|op|${g.label}`;
+                    return (
+                      <div key={g.label} className="mb-4 last:mb-0">
+                        <h4 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-[var(--ink)]">
+                          <ListPlus className="h-4 w-4 text-[var(--gold)]" />
+                          {g.label}
+                          <span className="font-normal text-[var(--mut)]">
+                            · {g.delCodigo.length + g.agregados.length} opciones
+                          </span>
+                        </h4>
+
+                        <div className="mb-2 flex flex-wrap gap-1.5">
+                          {g.delCodigo.map((v) => (
+                            <span
+                              key={v}
+                              className="rounded-md border border-[var(--line)] bg-white/[0.04] px-2 py-1 text-[11px] font-semibold text-[var(--mut)]"
+                            >
+                              {v}
+                            </span>
+                          ))}
+                          {g.agregados.map((v) => (
+                            <span
+                              key={v}
+                              className="inline-flex items-center gap-1 rounded-md border border-[var(--gold)]/40 bg-[rgba(184,179,171,0.14)] px-2 py-1 text-[11px] font-semibold text-[var(--ink)]"
+                            >
+                              {v}
+                              <span className="text-[9px] font-bold uppercase tracking-wide text-[var(--gold)]">
+                                nuevo
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <input
+                            value={nuevaOpcion[claveOp] ?? ""}
+                            placeholder={`Agregar ${g.label.toLowerCase()}…`}
+                            disabled={!!ocupado[claveOp]}
+                            onChange={(e) =>
+                              setNuevaOpcion((prev) => ({ ...prev, [claveOp]: e.target.value }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") agregarOpcion(p, g.label);
+                            }}
+                            className="w-44 rounded-lg border border-[var(--line)] bg-white/[0.05] px-2.5 py-1.5 text-sm text-white outline-none transition placeholder:text-[var(--mut)]/70 focus:border-[var(--gold)] disabled:opacity-50"
+                          />
+                          <button
+                            onClick={() => agregarOpcion(p, g.label)}
+                            disabled={!!ocupado[claveOp]}
+                            className="flex items-center gap-1.5 rounded-lg border border-[var(--line)] px-3 py-1.5 text-xs font-bold text-[var(--ink)] transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)] disabled:opacity-30"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Agregar
+                          </button>
+                          <Mensaje aviso={aviso[claveOp]} />
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  <p className="rounded-lg border border-[var(--line)] bg-white/[0.04] px-3 py-2 text-[11px] leading-relaxed text-[var(--mut)]">
+                    Las opciones <span className="font-semibold text-[var(--ink)]">no se pueden
+                    borrar</span>, para no perder el stock que ya cargaste ni romper pedidos en
+                    curso. Cada opción nueva arranca <span className="font-semibold text-[var(--ink)]">
+                    en 0</span>: cargale la cantidad en <span className="font-semibold text-[var(--gold)]">
+                    Stock</span>, más arriba.
+                  </p>
+                </section>
+              )}
 
               {p.actualizado && (
                 <p className="mt-3 text-[10px] text-[var(--mut)]/70">

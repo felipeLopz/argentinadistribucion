@@ -112,6 +112,39 @@ export async function fijarStock(
 }
 
 /**
+ * Crea filas en 0 para las claves que todavía no existan.
+ *
+ * La usa la creación de opciones desde el panel: una opción nueva arranca
+ * agotada hasta que le carguen cantidad.
+ *
+ * ⚠️ Va con `ON CONFLICT DO NOTHING` y NO con `fijarStock`, que hace
+ * UPSERT: si la clave ya tuviera stock cargado, `fijarStock` lo pisaría a
+ * 0 y se perderían unidades reales. Acá una fila existente se deja como
+ * está, siempre.
+ *
+ * Devuelve cuántas filas se crearon de verdad.
+ */
+export async function crearFilasSiFaltan(
+  filas: { productId: string; stockKey: string }[],
+  usuario: string
+): Promise<number> {
+  if (filas.length === 0) return 0;
+  const sql = getSql();
+  let creadas = 0;
+
+  for (const { productId, stockKey } of filas) {
+    const res = await sql`
+      INSERT INTO stock (product_id, stock_key, cantidad, updated_at, updated_by)
+      VALUES (${productId}, ${stockKey}, 0, now(), ${usuario})
+      ON CONFLICT (product_id, stock_key) DO NOTHING
+      RETURNING product_id
+    `;
+    if (res.length > 0) creadas++;
+  }
+  return creadas;
+}
+
+/**
  * Descuenta unidades (al confirmar una venta por WhatsApp). Nunca baja de 0.
  * Devuelve la cantidad resultante, o null si la fila no existe.
  */

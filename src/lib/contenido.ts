@@ -64,6 +64,15 @@ export interface OverrideContenido {
   imagen?: string | null;
   descripcion?: string | null;
   packPrecios?: number[] | null;
+  /** Valores de opción AGREGADOS desde el panel, por label de grupo:
+   *  `{ "Color": ["Dorado"] }`.
+   *
+   *  ⚠️ Es puramente ADITIVO. Nunca quita un valor que esté en el código:
+   *  si se pudiera, quedaría stock huérfano y los carritos guardados con
+   *  esa variante apuntarían a algo que ya no existe. Por eso tampoco hay
+   *  acción de borrado en la API — no es sólo que la interfaz no la
+   *  ofrezca: no existe. */
+  opcionesExtra?: Record<string, string[]> | null;
 }
 
 /** Overrides indexados por id de producto. */
@@ -92,6 +101,43 @@ export function validarNombre(entrada: unknown): Resultado<string> {
     return {
       ok: false,
       error: `El título no puede pasar de ${LARGO_MAX_NOMBRE} caracteres (tiene ${texto.length}).`,
+    };
+  }
+  return { ok: true, valor: texto };
+}
+
+/* ─── Valores de opción ─── */
+
+/** Largo máximo de un valor de opción. El más largo hoy tiene 15
+ *  ("Rojo desgastado"); arriba de 40 no entra en el botón del modal. */
+export const LARGO_MAX_VALOR = 40;
+
+/** Tope de valores por grupo. Las fundas tienen 14. */
+export const MAX_VALORES_POR_GRUPO = 40;
+
+/**
+ * Forma canónica de un valor, sólo para COMPARAR.
+ *
+ * Sin distinguir mayúsculas ni espacios sobrantes, para que "negro",
+ * " Negro " y "NEGRO" cuenten como el mismo y no se dupliquen en el
+ * selector. Lo que se guarda es el texto tal como lo escribieron: esto
+ * es únicamente el criterio de igualdad.
+ */
+export function normalizarValor(valor: string): string {
+  return valor.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+/** Valida un valor de opción nuevo. Devuelve el texto ya recortado. */
+export function validarValorOpcion(entrada: unknown): Resultado<string> {
+  if (typeof entrada !== "string") {
+    return { ok: false, error: "El valor tiene que ser texto." };
+  }
+  const texto = entrada.trim().replace(/\s+/g, " ");
+  if (texto === "") return { ok: false, error: "Escribí un valor antes de agregarlo." };
+  if (texto.length > LARGO_MAX_VALOR) {
+    return {
+      ok: false,
+      error: `El valor no puede pasar de ${LARGO_MAX_VALOR} caracteres (tiene ${texto.length}).`,
     };
   }
   return { ok: true, valor: texto };
@@ -288,8 +334,52 @@ export function aplicarOverride(product: Product, override?: OverrideContenido |
     }
   }
 
+  /* ⚠️ Los valores de opción se SUMAN, nunca se restan. Los del código van
+     primero y en su orden original; los agregados desde el panel se
+     apilan al final. Un valor que ya exista (comparando sin mayúsculas ni
+     espacios sobrantes) se ignora en vez de duplicarse.
+     Que sea imposible quitar uno del código es lo que garantiza que no
+     quede stock huérfano ni carritos apuntando a una variante inexistente. */
+  if (override.opcionesExtra) {
+    const opciones = aplicarExtras(product.options, override.opcionesExtra);
+    if (opciones !== product.options) parches.options = opciones;
+  }
+
   if (Object.keys(parches).length === 0) return product;
   return { ...product, ...parches };
+}
+
+/** Suma los valores extra a los grupos que existan. Devuelve el MISMO
+ *  array si no hay nada nuevo, para no romper la identidad referencial. */
+function aplicarExtras(
+  grupos: Product["options"],
+  extras: Record<string, string[]>
+): Product["options"] {
+  if (!grupos?.length) return grupos;
+
+  let cambio = false;
+  const salida = grupos.map((g) => {
+    const nuevos = extras[g.label];
+    if (!Array.isArray(nuevos) || nuevos.length === 0) return g;
+
+    const vistos = new Set(g.values.map(normalizarValor));
+    const suma: string[] = [];
+    for (const bruto of nuevos) {
+      const v = validarValorOpcion(bruto);
+      if (!v.ok) continue; // fila corrupta: se descarta ese valor, no el grupo
+      const clave = normalizarValor(v.valor);
+      if (vistos.has(clave)) continue;
+      vistos.add(clave);
+      suma.push(v.valor);
+    }
+    if (suma.length === 0) return g;
+    if (g.values.length + suma.length > MAX_VALORES_POR_GRUPO) return g;
+
+    cambio = true;
+    return { ...g, values: [...g.values, ...suma] };
+  });
+
+  return cambio ? salida : grupos;
 }
 
 /** Aplica los overrides a todo el catálogo, preservando identidades. */

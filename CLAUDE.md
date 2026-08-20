@@ -88,7 +88,7 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 | `src/app/api/stock/route.ts` | **Endpoint público, SOLO LECTURA** del stock. |
 | `src/app/api/contenido/route.ts` | **Endpoint público, SOLO LECTURA** de los overrides de contenido. |
 | `src/app/api/stock/seed/route.ts` | Carga inicial/sincronización, protegida por `SEED_TOKEN`. Idempotente. |
-| `src/app/api/admindistribucion/` | Rutas privadas: `login`, `logout`, `stock` y `contenido` (lectura + escrituras). |
+| `src/app/api/admindistribucion/` | Rutas privadas: `login`, `logout`, `stock`, `contenido` e `imagen` (subida de fotos al Blob). |
 | `src/app/admindistribucion/` | **Panel privado**: `login/page.tsx`, `page.tsx`, `PanelStock.tsx`, `PanelContenido.tsx`, `BotonSalir.tsx`. |
 | `scripts/hash-password.mjs` | Genera el hash bcrypt de una contraseña (entrada oculta). |
 | `src/app/opengraph-image.tsx` | Genera la **imagen de la tarjeta al compartir** (PNG 1200x630) con el theme del sitio. |
@@ -519,11 +519,25 @@ patrón que ya usa el stock:
 `promos.ts` y los tres componentes **no se tocan**. Los campos de `products.ts` pueden
 quedar como fallback o eliminarse; se decide en ese momento.
 
-### Contenido editable desde el panel (descripciones y packPrecios) — HECHO
+### Contenido editable desde el panel — HECHO
 
-Ya se puede editar desde `/admindistribucion`, **sin tocar código ni hacer deploy**:
-la **descripción** de cualquier producto y sus **precios por cantidad**
-(`packPrecios`), incluso cargándoselos a productos que no los tienen.
+Desde `/admindistribucion` se edita **sin tocar código ni hacer deploy**:
+
+| Qué | Columna | Notas |
+|---|---|---|
+| **Título** | `nombre` | ⚠️ NO pisa `cartName` (ver abajo) |
+| **Foto principal** | `imagen` | Se sube al Blob y se reprocesa a 800×800 WebP |
+| **Descripción** | `descripcion` | |
+| **Precios por cantidad** | `pack_precios` | `[]` = promo apagada |
+| **Valores de opción** | `opciones_extra` | ⚠️ **SÓLO se agregan, nunca se quitan** |
+
+Todo vive en la misma tabla `contenido_overrides`, con la misma precedencia y el
+mismo fallar-abierto. Las columnas se agregan solas con `ALTER TABLE ... ADD COLUMN
+IF NOT EXISTS` al entrar al panel: **no hay que correr ninguna migración a mano**.
+
+⚠️ `leerOverrides` trata el error `42703` (columna inexistente) igual que el de
+tabla inexistente. Sin eso, entre que se deploya una columna nueva y alguien entra
+al panel, **todos** los overrides quedarían desactivados.
 
 `products.ts` sigue siendo la **base**; la tabla `contenido_overrides` guarda
 sólo lo editado. Es la misma costura que describe el apartado de arriba para los
@@ -570,6 +584,76 @@ products.ts ──► contenido-db.ts ──► /api/contenido ──► Conteni
   modal —incluida la `variante` que va al carrito y al mensaje de WhatsApp—, así que
   una promo cargada sobre un cable habría dicho "3 fundas" en el pedido.
   **No es editable desde el panel a propósito**: es redacción, va por código.
+
+### ⚠️ El título NO cambia el nombre del carrito ni del WhatsApp
+
+Los productos que declaran **`cartName`** (hoy sólo la Silicone Case) siguen entrando
+al carrito y al mensaje de WhatsApp con ese nombre corto, aunque se les edite el
+título desde el panel. `cartName` existe justamente para que esa línea del pedido no
+se vaya de largo.
+
+**No es un bug y el panel lo avisa** con un renglón en los productos que lo tienen.
+Si algún día se quiere que el título mande también ahí, hay que decidirlo aparte:
+toca la generación del pedido.
+
+### Fotos subidas desde el panel (Vercel Blob)
+
+- **Dónde**: un store de **Vercel Blob** en modo Public. La variable
+  `BLOB_READ_WRITE_TOKEN` la inyecta Vercel sola al conectar el store al proyecto;
+  **no se copia a mano ni aparece en el código**.
+- ⚠️ **`next.config.ts` necesita `images.remotePatterns`** con
+  `*.public.blob.vercel-storage.com`. Sin eso `next/image` rechaza las URLs subidas y
+  **no se ve ninguna foto nueva** — y el error recién aparece en producción.
+- **El navegador achica antes de subir** (canvas, lado mayor 1600px, WebP). No es
+  cosmético: las funciones de Vercel cortan el body en ~4,5 MB y una foto de celular
+  pesa 3-8 MB. De paso convierte el **HEIC** de los iPhone, que sharp no lee.
+- **El servidor reprocesa igual** a 800×800 WebP con relleno desenfocado: del cliente
+  no nos fiamos, y así el encuadre sale con el mismo criterio que las fotos hechas a
+  mano (ver "Fotos verticales" arriba).
+- ⚠️ **La foto anterior NUNCA se borra del Blob.** Los carritos abiertos guardan la
+  URL en `localStorage`: si se borrara, mostrarían una imagen rota. Cada una pesa
+  ~40 KB. Por lo mismo, "volver al código" sólo olvida la URL, no borra el blob.
+- **En las fundas cambia sólo la principal**: `imagenesPorOpcion` no se toca, así que
+  al elegir un color se sigue viendo la foto de ese color.
+
+### ⚠️ Opciones nuevas: SÓLO se agregan, nunca se quitan
+
+Desde el panel se pueden sumar valores a un grupo que ya exista (un color a una
+funda, una ficha al cable). **No se pueden crear grupos nuevos ni borrar valores.**
+
+**No es sólo que la interfaz no lo ofrezca: no existe la acción en la API.**
+`CampoContenido` no incluye `opcionesExtra` y el handler de `borrar` la rechaza. Si
+se pudiera quitar un valor quedaría **stock huérfano** y los carritos guardados con
+esa variante apuntarían a algo inexistente.
+
+- **La resolución es aditiva**: los valores del código van primero y en su orden; los
+  agregados se apilan al final. Un duplicado se ignora, comparando **sin distinguir
+  mayúsculas ni espacios sobrantes** ("negro" no entra al lado de "Negro").
+- **Cada opción nueva crea su fila de stock en 0** (agotada hasta que le carguen
+  cantidad), con `INSERT ... ON CONFLICT DO NOTHING`.
+  ⚠️ **Nunca con `fijarStock`**, que hace UPSERT: si la clave ya tuviera stock
+  cargado, lo pisaría a 0 y se perderían unidades reales.
+- **El caso multi-grupo está resuelto de forma genérica**: se comparan las claves de
+  `clavesDeStock` antes y después, y se crea una fila por cada clave nueva. Hoy ningún
+  producto tiene dos grupos, pero sumar un color a un producto con Color y Modelo
+  generaría una fila por modelo. Ya funciona para cuando entren los celulares usados.
+- **Un color nuevo sin foto propia** cae en la principal, gracias a
+  `imagenDeOpciones`. No queda una imagen rota.
+
+### ⚠️ La ruta de stock del panel usa el CATÁLOGO EFECTIVO
+
+`/api/admindistribucion/stock` resuelve los overrides antes de armar los casilleros y
+antes de validar. **Sin esto, una opción creada desde el panel no aparecería en el
+panel de stock y `validarPar` la rechazaría** como clave fantasma.
+
+- El catálogo se resuelve **una vez por request** y se le pasa al validador, para que
+  el listado y el guard miren exactamente lo mismo.
+- **El guard no se aflojó**: sigue exigiendo que la clave exista. Lo único que cambió
+  es contra qué compara.
+- **Falla ABIERTO**: si la base de overrides no responde, se sigue con el catálogo del
+  código. Cargar stock es más urgente que ver un título editado.
+- El endpoint público `/api/stock` **no cambió**: sigue siendo de sólo lectura y
+  fallando cerrado.
 
 ## 7. Estado actual y pendientes
 
@@ -657,7 +741,11 @@ regulado: si se amplía, mantener ese tono.
   de login / 15 min**.
 - **Variables de entorno en Vercel** (Production + Preview), **ninguna con
   `NEXT_PUBLIC_`**: `DATABASE_URL`, `SEED_TOKEN`, `ADMIN_USERS` (`email:hash`, varios
-  separados por coma) y `AUTH_SECRET`.
+  separados por coma), `AUTH_SECRET` y **`BLOB_READ_WRITE_TOKEN`** (la inyecta Vercel
+  sola al conectar el Blob store; no se copia a mano).
+  ⚠️ **`vercel env pull` trae los valores sensibles REDACTADOS** como `[SENSITIVE]`:
+  el `.env.local` que genera sirve para saber qué variables existen, **no** para
+  correr con base ni con Blob en local. Para eso hay que poner los valores a mano.
 - **Auditoría técnica**: imágenes WebP + `next/image` (−83% de transferencia), Open
   Graph + Twitter cards con **imagen OG generada**, `metadataBase`, sitemap, diálogos
   accesibles (`role="dialog"`, Escape, focus trap), y `noopener,noreferrer` en todos
@@ -697,6 +785,13 @@ regulado: si se amplía, mantener ese tono.
   el acento. Verificado midiendo el contraste de los **86 textos** de la home en el
   navegador: **cero** por debajo de AA. De paso se arregló el rótulo "Sin foto", que
   ya venía fallando en violeta (3.62:1) y ahora da 5.04:1.
+- **Panel de autogestión completo** (ver sección 6): además de descripciones y
+  precios por cantidad, ahora se editan el **título**, la **foto principal**
+  (subida a Vercel Blob, achicada en el navegador y reprocesada a 800×800 WebP) y se
+  pueden **agregar valores de opción** (un color a una funda), que crean su fila de
+  stock en 0. La ruta de stock del panel pasó a usar el **catálogo efectivo**.
+  ⚠️ Falta probar la creación de opciones **contra la base**: se verificó la lógica,
+  no la escritura real.
 - **Contenido editable desde el panel** (descripciones y `packPrecios`, ver sección 6):
   lógica pura + tabla `contenido_overrides` + endpoint público de solo lectura +
   rutas privadas + sección nueva en `/admindistribucion`. **Falla ABIERTO.**
