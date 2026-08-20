@@ -34,10 +34,11 @@ export type CategoriaFiltro = "todo" | Categoria;
    sus fotos y su stock, y el panel de admin los sigue listando para poder
    cargarles stock mientras están ocultos.
 
-   Motivo actual: vapers y termos están sin stock; se ocultan hasta
-   reponer, para no mostrar un catálogo entero en "Agotado".
+   Motivo actual: `termos` sigue sin stock, así que se oculta hasta
+   reponer — mostrar tres productos en "Agotado" es peor que no mostrarlos.
+   `vapers` ya se reactivó: quedó con un solo producto.
    ══════════════════════════════════════════════════════════════ */
-export const CATEGORIAS_PROXIMAMENTE: readonly Categoria[] = ["vapers", "termos"];
+export const CATEGORIAS_PROXIMAMENTE: readonly Categoria[] = ["termos"];
 
 /** ¿La categoría elegida está en modo "Próximamente"?
  *  "todo" nunca lo está: es la vista sin filtrar. */

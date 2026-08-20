@@ -181,6 +181,24 @@ const FUNDA_12 = {
 /* Opciones reutilizables */
 const FICHAS_CABLE = ["C - C", "C - Lightning"];
 
+/* Modelos con templado disponible. En orden ascendente por número y, dentro
+   de cada uno, del base al Pro Max: así el que compra baja hasta su modelo
+   sin tener que buscarlo salteado.
+   No están todos los modelos de cada número a propósito — es lo que hay. */
+const MODELOS_TEMPLADO = [
+  "iPhone 11",
+  "iPhone 12",
+  "iPhone 13 Pro Max",
+  "iPhone 14 Pro",
+  "iPhone 14 Pro Max",
+  "iPhone 15",
+  "iPhone 15 Pro Max",
+  "iPhone 16",
+  "iPhone 16 Pro",
+  "iPhone 16 Pro Max",
+  "iPhone 17 Pro Max",
+];
+
 export const products: Product[] = [
   // ═══ PROMOS ═══
   {
@@ -249,69 +267,30 @@ export const products: Product[] = [
 
   // ═══ VAPERS ═══
   /* Descripciones deliberadamente técnicas: formato, batería, capacidad.
-     Sin adjetivos promocionales ni nada que invite al consumo. */
+     Sin adjetivos promocionales ni nada que invite al consumo.
+
+     ⚠️ Queda UN SOLO vaper a propósito: los otros 7 se eliminaron al
+     reactivar la categoría, y éste sirve para estrenar la edición desde
+     el panel (título, foto, descripción). Ver sección 7. */
   {
     id: "vap-1",
     name: "Vaper Recargable Pod - Negro",
-    description: "Dispositivo recargable con cápsula reemplazable y carga por USB-C. Color negro.",
+    description:
+      "Dispositivo recargable con cápsula reemplazable y carga por USB-C. Color negro. El sabor se elige al comprar.",
     price: 35000,
+    /* ⚠️ Arranca con UN solo sabor. En Argentina los únicos autorizados
+       son tabaco y mentol: sumar cualquier otro NO es una mejora técnica,
+       es una decisión que tiene que tomar el cliente y que además está
+       regulada. Los sabores nuevos se agregan desde el panel.
+
+       Cada sabor es un producto físico distinto, así que el stock va por
+       sabor: `clavesDeStock` deriva una fila por valor. */
+    options: [{ label: "Sabor", values: ["Mentol"] }],
     /* EJEMPLO A PROPÓSITO: marcado con badge y precio anterior, pero la
        categoría `vapers` no admite promoción, así que NO se muestra
        ninguna de las dos cosas. Sirve para comprobar la regla. */
     badges: ["oferta"],
     precioAnterior: 42000,
-    category: "vapers",
-  },
-  {
-    id: "vap-2",
-    name: "Vaper Recargable Pod - Azul",
-    description: "Dispositivo recargable con cápsula reemplazable y carga por USB-C. Color azul.",
-    price: 35000,
-    category: "vapers",
-  },
-  {
-    id: "vap-3",
-    name: "Vaper Recargable Pod - Plata",
-    description: "Dispositivo recargable con cápsula reemplazable y carga por USB-C. Color plata.",
-    price: 35000,
-    category: "vapers",
-  },
-  {
-    id: "vap-4",
-    name: "Vaper Recargable Pro - Negro",
-    description:
-      "Dispositivo recargable de mayor capacidad de batería, con cápsula reemplazable y carga por USB-C. Color negro.",
-    price: 35000,
-    category: "vapers",
-  },
-  {
-    id: "vap-5",
-    name: "Vaper Recargable Pro - Grafito",
-    description:
-      "Dispositivo recargable de mayor capacidad de batería, con cápsula reemplazable y carga por USB-C. Color grafito.",
-    price: 35000,
-    category: "vapers",
-  },
-  {
-    id: "vap-6",
-    name: "Liquido para Vaper - Tabaco 30ml",
-    description: "Líquido para dispositivos recargables. Frasco de 30 ml. Perfil de sabor tabaco.",
-    price: 35000,
-    category: "vapers",
-  },
-  {
-    id: "vap-7",
-    name: "Liquido para Vaper - Mentol 30ml",
-    description: "Líquido para dispositivos recargables. Frasco de 30 ml. Perfil de sabor mentol.",
-    price: 35000,
-    category: "vapers",
-  },
-  {
-    id: "vap-8",
-    name: "Kit Vaper Recargable + Liquido",
-    description:
-      "Incluye un dispositivo recargable con cápsula reemplazable, cable de carga USB-C y un frasco de líquido de 30 ml.",
-    price: 35000,
     category: "vapers",
   },
 
@@ -353,6 +332,21 @@ export const products: Product[] = [
      ⚠️ Las fundas conviven a propósito con la `Silicone Case` de Promos:
      aquella es la promo POR CANTIDAD (packs de 2, 3 y 4, sin elegir
      modelo ni color) y estas son la unidad suelta, con modelo y color. */
+  {
+    id: "apl-templado",
+    name: "Templado para iPhone",
+    /* Sin specs inventadas: sólo lo que es. */
+    description:
+      "Vidrio templado para proteger la pantalla. Mismo precio para todos los modelos: elegí el tuyo al comprar.",
+    /* Comparte la foto con la "Promo templado + funda" de Promos: es el
+       mismo vidrio. Ojo al borrar cualquiera de los dos productos. */
+    image: IMG_TEMPLADO_FUNDA,
+    price: 4500,
+    /* Cada modelo es un producto físico distinto, así que el stock va por
+       modelo: `clavesDeStock` deriva una fila por valor. */
+    options: [{ label: "Modelo", values: MODELOS_TEMPLADO }],
+    category: "accesorios-apple",
+  },
   {
     id: "apl-funda-11",
     name: "Funda de silicona iPhone 11",

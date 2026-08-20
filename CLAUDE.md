@@ -310,7 +310,7 @@ banda pegada, y es **imposible que corte el producto**.
   **activan el chip**, no scrollean.
 - **El salto al cambiar de categoría** (`Catalogo.tsx`) — dos problemas distintos que
   se arreglaron juntos, y las dos soluciones son frágiles si se tocan:
-  1. **El "tirón"**: pasar de 18 cards a 3 acorta el documento y el navegador
+  1. **El "tirón"**: pasar de 12 cards a 3 acorta el documento y el navegador
      **clampea** el scroll. Se arregla con el **orden de las operaciones**: primero el
      scroll, después el cambio de filtro. Corregir *después* no sirve, porque las
      cards salen con animación y la altura colapsa un frame más tarde.
@@ -349,7 +349,7 @@ banda pegada, y es **imposible que corte el producto**.
 - **Buscador**: el del navbar. **No hay dos mecanismos**: escribe en el mismo estado
   que lee la grilla. Matchea por nombre **o** descripción, sin distinguir mayúsculas.
 - **Precio**: rango desde/hasta. ⚠️ Con un tope activo, los productos **sin precio**
-  quedan afuera (hoy no aplica: los 18 tienen precio).
+  quedan afuera (hoy no aplica: los 12 tienen precio).
 - **Orden**: por defecto (el de `products.ts`), precio asc, precio desc, alfabético.
   El default es el orden del archivo **a propósito**: se controla a mano qué va primero.
 - **Contador**: cuántos productos hay en la vista actual.
@@ -380,15 +380,17 @@ orden ni la búsqueda entran en la decisión.
   propósito**. Si aparece de nuevo esa condición en `correspondeAgrupar()`, es una
   regresión.
 
-### ⚠️ TEMPORAL: Vapers y Termos están en modo "Próximamente"
+### ⚠️ TEMPORAL: Termos está en modo "Próximamente"
 
-Las dos categorías están **ocultas a propósito** porque no hay stock: mostrar 11
-productos todos en "Agotado" es peor que no mostrarlos. **No es un bug.**
+Está **oculta a propósito** porque no hay stock: mostrar tres productos todos en
+"Agotado" es peor que no mostrarlos. **No es un bug.**
+
+**Vapers ya se reactivó** — quedó con un solo producto (ver sección 7).
 
 **El interruptor es una sola constante**, en `filtros.ts`:
 
 ```ts
-export const CATEGORIAS_PROXIMAMENTE: readonly Categoria[] = ["vapers", "termos"];
+export const CATEGORIAS_PROXIMAMENTE: readonly Categoria[] = ["termos"];
 ```
 
 **Para reactivar una categoría: sacarla de esa lista. Nada más.** No hay que tocar
@@ -657,19 +659,44 @@ panel de stock y `validarPar` la rechazaría** como clave fantasma.
 
 ## 7. Estado actual y pendientes
 
-**Catálogo actual — 18 productos, 4 categorías** (en `products.ts`, en este orden).
-⚠️ **De los 18, hoy se ven 7**: `vapers` y `termos` están en modo "Próximamente" y sus
-11 productos están ocultos (ver sección 5). Siguen enteros en el archivo.
+**Catálogo actual — 12 productos, 4 categorías** (en `products.ts`, en este orden).
+⚠️ **De los 12, hoy se ven 9**: `termos` sigue en modo "Próximamente" y sus 3
+productos están ocultos (ver sección 5). Siguen enteros en el archivo.
 
 | Categoría (`category`) | Chip | # | Productos |
 |---|---|---|---|
 | `accesorios` | **Promos** | 5 | Silicone Case 11-17 ($5.000, promo por cantidad, sin stock) · **AirPods Pro 2 (sin cancelación de ruido)** $25.000 · **AirPods Pro 2 con cancelación de ruido + funda** $49.990 · Cable y cabezal $20.000 · **Promo templado + funda** $8.500 |
-| `vapers` | **Vapers** | 8 | 5 dispositivos recargables + 2 líquidos 30ml + 1 kit — todos $35.000, **sin foto** |
+| `vapers` | **Vapers** | 1 | **Vaper Recargable Pod - Negro** $35.000, **sin foto**, con selector de `Sabor`. Único sobreviviente (ver abajo) |
 | `termos` | **Termos** | 3 | Termo Stanley 750ml en rosa, azul y blanco — $45.000, **sin foto** |
-| `accesorios-apple` | **Apple** | 2 | **Funda de silicona iPhone 11** $5.000 (7 colores) · **Funda de silicona iPhone 12 y 12 Pro** $5.000 (14 colores) |
+| `accesorios-apple` | **Apple** | 3 | **Templado para iPhone** $4.500 (11 modelos) · **Funda de silicona iPhone 11** $5.000 (7 colores) · **Funda de silicona iPhone 12 y 12 Pro** $5.000 (14 colores) |
 
-La suma de los chips (5+8+3+2) **coincide** con "Ver todo" (18): ya no hay
+La suma de los chips (5+1+3+3) **coincide** con "Ver todo" (12): ya no hay
 multi-categoría (ver sección 4).
+
+⚠️ **El "Templado para iPhone" comparte la foto** (`promo-templado-funda.webp`) con
+la **"Promo templado + funda"** de Promos: es el mismo vidrio. Ojo al borrar
+cualquiera de los dos — la imagen se queda mientras uno de ellos siga vivo.
+Conviven a propósito: aquella es el combo con funda; ésta es el templado **solo**.
+
+**Vapers quedó con UN solo producto, a propósito.** Al reactivar la categoría se
+eliminaron los otros 7 (`vap-2`…`vap-8`: los otros dispositivos, los dos líquidos y
+el kit), con sus filas de stock. El que sobrevive sirve para **estrenar la edición
+desde el panel**: no tiene foto, así que subirle una es la prueba más visible.
+
+⚠️ **Se eligió `vap-1` y no otro por un motivo concreto**: es el que lleva el
+testigo de la regla legal. Está marcado a propósito con `badges: ["oferta"]` y
+`precioAnterior: 42000`, y como los vapers no admiten promoción, **no muestra
+ninguna de las dos cosas**. Mientras la categoría estuvo oculta ese testigo no se
+podía observar; ahora sí. Si algún día le aparece un badge o un precio tachado,
+la regla se rompió. **No le saques esos dos campos.**
+
+**Tiene un selector de `Sabor` con UN solo valor: `Mentol`.** Se le puso justamente
+para **estrenar la creación de opciones desde el panel**: sumarle un sabor es la
+prueba más directa de esa función.
+
+⚠️ **En Argentina los únicos sabores autorizados son tabaco y mentol.** Agregar
+cualquier otro no es una mejora técnica: es una decisión del cliente y además está
+regulada. Por eso arranca con uno solo y los demás se suman a mano desde el panel.
 
 **Productos con selector de opciones** (el modal obliga a elegir antes de agregar, y
 la opción viaja al carrito y al mensaje de WhatsApp):
@@ -678,6 +705,8 @@ la opción viaja al carrito y al mensaje de WhatsApp):
 |---|---|---|
 | Cable y cabezal (Promos) | `Ficha` | `C - C` · `C - Lightning` |
 | Promo templado + funda | `Templado` | `9D` · `Anti espía` |
+| **Vaper Recargable Pod** | `Sabor` | 1: `Mentol` — arranca con uno solo a propósito (ver abajo) |
+| **Templado para iPhone** | `Modelo` | 11: iPhone 11 · 12 · 13 Pro Max · 14 Pro · 14 Pro Max · 15 · 15 Pro Max · 16 · 16 Pro · 16 Pro Max · 17 Pro Max |
 | **Funda iPhone 11** | `Color` | 7: Negro · Azul marino · Fucsia · Marrón · Naranja · Turquesa · Verde oliva |
 | **Funda iPhone 12 y 12 Pro** | `Color` | 14: Negro · Azul marino · Blanco · Borravino · Lila oscuro · Marrón · Morado · Naranja · Rojo desgastado · Rosado · Rosado claro · Verde · Verde agua · Verde militar |
 
@@ -708,8 +737,8 @@ no es una suposición. **No sacar la aclaración del nombre.**
 
 **Accesorios Apple quedó con las dos fundas.** Se eliminó el producto **Cargadores**
 (`apl-3`, $11.400): era el que estaba sin specs porque el cliente nunca aclaró qué lo
-diferenciaba de la promo de $20.000. Se van a sumar los **productos sueltos** que
-faltan (templado solo, cable solo) cuando lleguen los precios. No "arreglarlo"
+diferenciaba de la promo de $20.000. Ya entraron las **fundas por modelo** y el
+**templado solo**; falta el **cable solo**, esperando precio. No "arreglarlo"
 volviendo a poner `categoriasExtra` en las promos: eso ya se probó y se revirtió.
 
 ⚠️ Al borrar `apl-3` **no se borró su imagen**: `cable-cabezal-usbc.webp` la
@@ -754,6 +783,7 @@ regulado: si se amplía, mantener ese tono.
   favicon 🐟 e ícono de marca. Cero rastros del rubro viejo.
 - **Reestructura del catálogo** (Fase 2): fuera figuritas, álbumes e indumentaria;
   entran 8 vapers y 3 termos; placeholder `SinFoto` para los productos sin imagen.
+  *(De esos 8 vapers hoy queda 1: ver el catálogo actual más arriba.)*
 - **Catálogo filtrable** (Fase 3): chips, precio, orden, contador, estado vacío único,
   URL con History API, arreglo del tirón, y `CardPrecio` extraído.
 - **Badges y ofertas** (Fase 4, ver sección 6): badges manuales, precio anterior
@@ -799,9 +829,9 @@ regulado: si se amplía, mantener ese tono.
 
 **Pendiente** ⏳
 
-- [ ] **Reactivar Vapers y Termos** cuando haya stock: sacarlas de
-  `CATEGORIAS_PROXIMAMENTE` en `filtros.ts` (ver sección 5). Es sacar dos strings de
-  una lista; no hay nada más que revertir.
+- [ ] **Reactivar Termos** cuando haya stock: sacarla de `CATEGORIAS_PROXIMAMENTE`
+  en `filtros.ts` (ver sección 5). Es sacar un string de una lista; no hay nada más
+  que revertir. *(Vapers ya se reactivó.)*
 - [ ] **Cargar el stock desde el panel.** Es el pendiente **más viejo y el más
   urgente**: hasta que no se carguen, esos productos se ven **"Agotado"** en
   producción. Aparecen con el badge **"SIN CARGAR"**; se cargan escribiendo el número
@@ -809,7 +839,9 @@ regulado: si se amplía, mantener ese tono.
 
   | Producto | Claves a cargar |
   |---|---|
-  | `vap-1`…`vap-8`, `ter-1`…`ter-3` | `""` (11 filas) |
+  | `vap-1` | `Mentol` — ⚠️ **NO** `""`: al sumarle el selector cambió de clave |
+  | `ter-1`…`ter-3` | `""` (3 filas) |
+  | **`apl-templado`** | **11 filas**, una por modelo: `iPhone 11` · `iPhone 12` · `iPhone 13 Pro Max` · `iPhone 14 Pro` · `iPhone 14 Pro Max` · `iPhone 15` · `iPhone 15 Pro Max` · `iPhone 16` · `iPhone 16 Pro` · `iPhone 16 Pro Max` · `iPhone 17 Pro Max` |
   | `promo-airpods-pro-2` | `""` |
   | `promo-airpods-anc` | `""` |
   | `promo-cable-cabezal` | `C - C` · `C - Lightning` |
@@ -817,17 +849,18 @@ regulado: si se amplía, mantener ese tono.
   | **`apl-funda-11`** | **7 filas**, una por color: `Negro` · `Azul marino` · `Fucsia` · `Marrón` · `Naranja` · `Turquesa` · `Verde oliva` |
   | **`apl-funda-12`** | **14 filas**, una por color: `Negro` · `Azul marino` · `Blanco` · `Borravino` · `Lila oscuro` · `Marrón` · `Morado` · `Naranja` · `Rojo desgastado` · `Rosado` · `Rosado claro` · `Verde` · `Verde agua` · `Verde militar` |
 
-  Son **38 filas** en total: las 21 de las fundas más las 17 que ya venían. (Eran 40
-  antes de eliminar `apl-3`, que aportaba 2.)
+  Son **42 filas** en total: 21 de las fundas, 11 del templado, 6 de las promos con
+  selector, 1 del vaper y 3 de clave vacía. Coincide con los pares válidos que genera
+  `clavesDeStock` — es la misma lista que usa el SQL de limpieza de más abajo.
 
-- [ ] **Fotos reales** de los 8 vapers y los 3 termos (hoy muestran `SinFoto`). Alcanza
+- [ ] **Fotos reales** del vaper y los 3 termos (hoy muestran `SinFoto`). Alcanza
   con agregar `image:` en `products.ts` — el placeholder deja de renderizarse solo.
 - [ ] **Foto del templado que muestre el combo completo.** Pasaron dos y ninguna sirve
   del todo: la primera eran 5 fundas **sin templado**, la actual es un render del
   **templado sin funda**. El producto es "funda + templado".
 - [ ] **Terminar los productos sueltos de Accesorios Apple**: ya entraron las **fundas
-  por modelo**; faltan el **templado solo** y el **cable solo**, esperando precio del
-  cliente.
+  por modelo** y el **templado solo** ($4.500, 11 modelos); falta el **cable solo**,
+  esperando precio del cliente.
 - [ ] **Fundas de los modelos 13 en adelante.** Hoy sólo hay 11 y 12/12 Pro, porque son
   los únicos con fotos. Cuando lleguen las del 13, 14, 15, 16 o 17, cada modelo se suma
   como un producto más con el mismo patrón: fotos procesadas con relleno desenfocado,
@@ -848,21 +881,22 @@ que **cambiaron de clave** al sumarles un selector (antes tenían una fila `""`,
 una por opción). No molestan —nadie las lee, todo se arma desde el catálogo— pero si
 se quiere dejar prolijo:
 
-```sql
--- Productos eliminados
---   apl-5 (6 filas, una por modelo) y apl-6: protectores
---   apl-2: el AirPods de $52.300
---   apl-3: Cargadores ($11.400). TODAS sus filas quedan huérfanas: la de
---          clave "" que tuvo antes del selector, y las de C - C y
---          C - Lightning, si se le llegó a cargar stock.
-DELETE FROM stock WHERE product_id IN ('apl-5','apl-6','apl-2','apl-3');
+⚠️ **NO borrar con una lista de ids anotada a mano.** Se fue desactualizando cada vez
+que se eliminó un producto o cambió una clave, y para cuando hizo falta usarla ya no
+era confiable. El SQL correcto **se genera desde el catálogo**: se arma la lista de
+pares `(product_id, stock_key)` válidos con `clavesDeStock()` y se borra todo lo que
+no esté ahí. Así cubre solo, sin acordarse de nada:
 
--- Cambiaron de clave "" a una fila por ficha (C - C / C - Lightning)
-DELETE FROM stock WHERE product_id = 'promo-cable-cabezal' AND stock_key = '';
+- productos eliminados (`apl-1`…`apl-6`, `promo-1/2/3`, los 7 vapers, el rubro viejo);
+- productos que **cambiaron de clave** al sumarles un selector;
+- productos con `sinStock` que nunca deberían tener fila.
 
--- Y las de las tandas del rubro viejo, si nunca se corrieron
-DELETE FROM stock WHERE product_id IN ('paq-1','paq-2','paq-3','paq-4','paq-5','paq-6','alb-1','alb-2','ind-1','apl-1','apl-4','promo-1','promo-2','promo-3');
-```
+El archivo **`limpieza-stock.sql`** de la raíz tiene las cuatro consultas listas
+(mirar → resumen → borrar → comprobar). Se corre en el **SQL Editor de Neon**.
+
+Para regenerarlo cuando vuelva a cambiar el catálogo, la receta es: recorrer
+`products`, sacar `clavesDeStock(p)` de cada uno, y armar un `WITH validos (...)
+AS (VALUES ...)` con esos pares.
 
 ## 8. Notas / cómo operar el stock
 
