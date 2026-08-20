@@ -29,6 +29,9 @@ Thumbs.db
 # Config local del agente/preview (no aporta al sitio)
 .claude/
 
+# Preferencias del editor
+.vscode/
+
 # Diseños de referencia (mockups HTML, no forman parte del sitio)
 /mockup/
 

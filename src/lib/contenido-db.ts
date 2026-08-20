@@ -22,6 +22,12 @@ import type { MapaContenido } from "./contenido";
 /** Código de Postgres para "la tabla no existe" (undefined_table). */
 const TABLA_INEXISTENTE = "42P01";
 
+/** "la columna no existe" (undefined_column). Pasa en la ventana entre que
+ *  se deploya una columna nueva y alguien entra al panel, que es lo que
+ *  dispara la migración. Se trata igual que la tabla ausente: todavía no
+ *  hay overrides. */
+const COLUMNA_INEXISTENTE = "42703";
+
 let tablaLista = false;
 
 /**
@@ -37,17 +43,29 @@ export async function asegurarTabla(): Promise<void> {
   await sql`
     CREATE TABLE IF NOT EXISTS contenido_overrides (
       product_id   text PRIMARY KEY,
+      nombre       text,
+      imagen       text,
       descripcion  text,
       pack_precios jsonb,
       updated_at   timestamptz NOT NULL DEFAULT now(),
       updated_by   text
     )
   `;
+
+  /* Para las bases que ya existían antes de que el título fuera editable:
+     el CREATE de arriba no corre (la tabla ya está) así que la columna la
+     tiene que agregar este ALTER. Es idempotente, se puede correr siempre.
+     No hay que ejecutar nada a mano: pasa sola al entrar al panel. */
+  await sql`ALTER TABLE contenido_overrides ADD COLUMN IF NOT EXISTS nombre text`;
+  await sql`ALTER TABLE contenido_overrides ADD COLUMN IF NOT EXISTS imagen text`;
+
   tablaLista = true;
 }
 
 interface FilaCruda {
   product_id: string;
+  nombre: string | null;
+  imagen: string | null;
   descripcion: string | null;
   pack_precios: number[] | null;
 }
@@ -64,16 +82,19 @@ export async function leerOverrides(): Promise<MapaContenido> {
   let filas: FilaCruda[];
   try {
     filas = (await sql`
-      SELECT product_id, descripcion, pack_precios FROM contenido_overrides
+      SELECT product_id, nombre, imagen, descripcion, pack_precios FROM contenido_overrides
     `) as FilaCruda[];
   } catch (err) {
-    if ((err as { code?: string })?.code === TABLA_INEXISTENTE) return {};
+    const code = (err as { code?: string })?.code;
+    if (code === TABLA_INEXISTENTE || code === COLUMNA_INEXISTENTE) return {};
     throw err;
   }
 
   const mapa: MapaContenido = {};
   for (const f of filas) {
     mapa[f.product_id] = {
+      nombre: f.nombre,
+      imagen: f.imagen,
       descripcion: f.descripcion,
       packPrecios: f.pack_precios,
     };
@@ -84,6 +105,8 @@ export async function leerOverrides(): Promise<MapaContenido> {
 /** Fila con metadatos de auditoría, para el panel. */
 export interface FilaContenido {
   product_id: string;
+  nombre: string | null;
+  imagen: string | null;
   descripcion: string | null;
   pack_precios: number[] | null;
   updated_at: string;
@@ -95,9 +118,41 @@ export async function leerOverridesDetallados(): Promise<FilaContenido[]> {
   await asegurarTabla();
   const sql = getSql();
   return (await sql`
-    SELECT product_id, descripcion, pack_precios, updated_at, updated_by
+    SELECT product_id, nombre, imagen, descripcion, pack_precios, updated_at, updated_by
       FROM contenido_overrides
   `) as FilaContenido[];
+}
+
+/** Guarda (o pisa) el título de un producto. */
+export async function fijarNombre(
+  productId: string,
+  texto: string,
+  usuario: string
+): Promise<void> {
+  await asegurarTabla();
+  const sql = getSql();
+  await sql`
+    INSERT INTO contenido_overrides (product_id, nombre, updated_at, updated_by)
+    VALUES (${productId}, ${texto}, now(), ${usuario})
+    ON CONFLICT (product_id)
+    DO UPDATE SET nombre = ${texto}, updated_at = now(), updated_by = ${usuario}
+  `;
+}
+
+/** Guarda (o pisa) la foto principal de un producto (URL del Blob). */
+export async function fijarImagen(
+  productId: string,
+  url: string,
+  usuario: string
+): Promise<void> {
+  await asegurarTabla();
+  const sql = getSql();
+  await sql`
+    INSERT INTO contenido_overrides (product_id, imagen, updated_at, updated_by)
+    VALUES (${productId}, ${url}, now(), ${usuario})
+    ON CONFLICT (product_id)
+    DO UPDATE SET imagen = ${url}, updated_at = now(), updated_by = ${usuario}
+  `;
 }
 
 /** Guarda (o pisa) la descripción de un producto. */
@@ -138,7 +193,7 @@ export async function fijarPackPrecios(
 }
 
 /** Qué campo se borra al volver al valor del código. */
-export type CampoContenido = "descripcion" | "packPrecios";
+export type CampoContenido = "nombre" | "imagen" | "descripcion" | "packPrecios";
 
 /**
  * Borra un override y vuelve al valor de products.ts.
@@ -153,7 +208,22 @@ export async function borrarOverride(
   await asegurarTabla();
   const sql = getSql();
 
-  if (campo === "descripcion") {
+  if (campo === "nombre") {
+    await sql`
+      UPDATE contenido_overrides
+         SET nombre = NULL, updated_at = now(), updated_by = ${usuario}
+       WHERE product_id = ${productId}
+    `;
+  } else if (campo === "imagen") {
+    /* Sólo se olvida la URL: el blob NO se borra, porque los carritos que
+       la gente tenga abiertos la siguen referenciando. Ver la nota de la
+       ruta de subida. */
+    await sql`
+      UPDATE contenido_overrides
+         SET imagen = NULL, updated_at = now(), updated_by = ${usuario}
+       WHERE product_id = ${productId}
+    `;
+  } else if (campo === "descripcion") {
     await sql`
       UPDATE contenido_overrides
          SET descripcion = NULL, updated_at = now(), updated_by = ${usuario}
@@ -170,6 +240,8 @@ export async function borrarOverride(
   await sql`
     DELETE FROM contenido_overrides
      WHERE product_id = ${productId}
+       AND nombre IS NULL
+       AND imagen IS NULL
        AND descripcion IS NULL
        AND pack_precios IS NULL
   `;

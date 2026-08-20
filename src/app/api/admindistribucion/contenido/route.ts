@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { requerirSesion } from "@/lib/auth";
 import { products } from "@/lib/products";
-import { validarDescripcion, validarPackPrecios } from "@/lib/contenido";
+import { validarNombre, validarDescripcion, validarPackPrecios } from "@/lib/contenido";
 import {
   leerOverridesDetallados,
+  fijarNombre,
   fijarDescripcion,
   fijarPackPrecios,
   borrarOverride,
@@ -51,13 +52,26 @@ export async function GET() {
       const fila = porId.get(p.id);
       return {
         id: p.id,
-        nombre: p.name,
+        /* Encabezado de la ficha en el panel: el título EFECTIVO, para que
+           lo que se lee arriba coincida con lo que se ve en la web. */
+        nombre: fila?.nombre ?? p.name,
         categoria: p.category,
         /* Valores del código, como referencia en el panel */
+        nombreCodigo: p.name,
+        imagenCodigo: p.image ?? null,
         descripcionCodigo: p.description,
+        /* true en las fundas: tienen una foto por color. El panel lo avisa,
+           porque subir una foto ahí cambia SÓLO la principal. */
+        tieneFotosPorOpcion: !!p.imagenesPorOpcion,
         packPreciosCodigo: p.packPrecios ?? null,
+        /* El nombre corto con el que el ítem entra al carrito y al mensaje
+           de WhatsApp, si el producto lo define. El panel lo muestra como
+           aviso: editar el título NO cambia ese nombre. */
+        cartName: p.cartName ?? null,
         /* Overrides guardados. null = sin override (manda el código).
            packPreciosOverride: [] = "sin promo" explícito. */
+        nombreOverride: fila?.nombre ?? null,
+        imagenOverride: fila?.imagen ?? null,
         descripcionOverride: fila?.descripcion ?? null,
         packPreciosOverride: fila?.pack_precios ?? null,
         actualizado: fila?.updated_at ?? null,
@@ -106,6 +120,15 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (accion === "fijar-nombre") {
+      const v = validarNombre(cuerpo.nombre);
+      if (!v.ok) return NextResponse.json({ ok: false, error: v.error }, { status: 400 });
+
+      await fijarNombre(productId, v.valor, email);
+      console.info(`[admin/contenido] título de ${productId} por ${email}`);
+      return NextResponse.json({ ok: true, nombre: v.valor });
+    }
+
     if (accion === "fijar-descripcion") {
       const v = validarDescripcion(cuerpo.descripcion);
       if (!v.ok) return NextResponse.json({ ok: false, error: v.error }, { status: 400 });
@@ -128,9 +151,18 @@ export async function POST(request: Request) {
 
     if (accion === "borrar") {
       const campo = cuerpo.campo;
-      if (campo !== "descripcion" && campo !== "packPrecios") {
+      if (
+        campo !== "nombre" &&
+        campo !== "imagen" &&
+        campo !== "descripcion" &&
+        campo !== "packPrecios"
+      ) {
         return NextResponse.json(
-          { ok: false, error: "Sólo se puede volver al código en «descripcion» o «packPrecios»." },
+          {
+            ok: false,
+            error:
+              "Sólo se puede volver al código en «nombre», «imagen», «descripcion» o «packPrecios».",
+          },
           { status: 400 }
         );
       }

@@ -12,8 +12,17 @@ import {
   AlertCircle,
   FileText,
   Tag,
+  Type,
+  Upload,
+  Image as ImageIcon,
 } from "lucide-react";
-import { validarDescripcion, validarPackPrecios, LARGO_MAX_DESCRIPCION } from "@/lib/contenido";
+import {
+  validarNombre,
+  validarDescripcion,
+  validarPackPrecios,
+  LARGO_MAX_NOMBRE,
+  LARGO_MAX_DESCRIPCION,
+} from "@/lib/contenido";
 
 /* ═══════════════════════════════════════════════
    PANEL DE CONTENIDO — descripciones y precios por cantidad
@@ -29,10 +38,20 @@ import { validarDescripcion, validarPackPrecios, LARGO_MAX_DESCRIPCION } from "@
 
 interface ProductoContenido {
   id: string;
+  /** Título efectivo: el editado si existe, si no el del código. */
   nombre: string;
   categoria: string;
+  nombreCodigo: string;
+  imagenCodigo: string | null;
   descripcionCodigo: string;
   packPreciosCodigo: number[] | null;
+  /** true en las fundas: tienen una foto por color, que no se toca. */
+  tieneFotosPorOpcion: boolean;
+  /** Nombre corto con el que el ítem entra al carrito y al WhatsApp.
+   *  Si el producto lo tiene, editar el título NO lo cambia. */
+  cartName: string | null;
+  nombreOverride: string | null;
+  imagenOverride: string | null;
   descripcionOverride: string | null;
   /** [] = promo apagada a propósito; null = sin override. */
   packPreciosOverride: number[] | null;
@@ -48,6 +67,42 @@ const API = "/api/admindistribucion/contenido";
 const pesos = (n: number) => `$${n.toLocaleString("es-AR")}`;
 const unidades = (n: number) => `${n} ${n === 1 ? "unidad" : "unidades"}`;
 
+/* ─── Achicado en el navegador, antes de subir ───
+   Una foto de celular pesa 3-8 MB y las funciones de Vercel cortan el body
+   en ~4,5 MB: sin esto, subir del teléfono fallaría casi siempre. Además
+   sube mucho más rápido con datos móviles.
+
+   No define la calidad final: el servidor re-procesa igual a 800x800 WebP.
+   Esto es sólo para que el archivo entre y viaje liviano.
+
+   De paso resuelve el HEIC de los iPhone: el navegador lo decodifica y acá
+   sale como WebP, así que al servidor nunca le llega un formato que sharp
+   no sepa leer. */
+const LADO_SUBIDA = 1600;
+const MAX_ORIGINAL_MB = 25;
+
+async function achicar(archivo: File): Promise<File> {
+  /* `imageOrientation` aplica la rotación EXIF al decodificar: sin esto una
+     foto sacada de costado se sube acostada. */
+  const bitmap = await createImageBitmap(archivo, { imageOrientation: "from-image" });
+
+  const escala = Math.min(1, LADO_SUBIDA / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * escala);
+  const h = Math.round(bitmap.height * escala);
+
+  const lienzo = document.createElement("canvas");
+  lienzo.width = w;
+  lienzo.height = h;
+  const ctx = lienzo.getContext("2d");
+  if (!ctx) throw new Error("El navegador no pudo procesar la imagen.");
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  bitmap.close();
+
+  const blob = await new Promise<Blob | null>((r) => lienzo.toBlob(r, "image/webp", 0.9));
+  if (!blob) throw new Error("El navegador no pudo convertir la imagen.");
+  return new File([blob], "foto.webp", { type: "image/webp" });
+}
+
 export default function PanelContenido() {
   const [productos, setProductos] = useState<ProductoContenido[]>([]);
   const [estado, setEstado] = useState<Estado>("cargando");
@@ -55,6 +110,7 @@ export default function PanelContenido() {
   const [busqueda, setBusqueda] = useState("");
 
   /* Borradores: lo que hay escrito en pantalla, todavía sin guardar */
+  const [titulo, setTitulo] = useState<Record<string, string>>({});
   const [desc, setDesc] = useState<Record<string, string>>({});
   const [pack, setPack] = useState<Record<string, string[]>>({});
 
@@ -76,12 +132,15 @@ export default function PanelContenido() {
     /* Los borradores arrancan en el valor EFECTIVO: el override si el
        producto tiene uno, y si no el del código. Así el textarea y los
        escalones muestran de entrada lo que hoy ve el visitante. */
+    const t: Record<string, string> = {};
     const d: Record<string, string> = {};
     const p: Record<string, string[]> = {};
     for (const x of lista) {
+      t[x.id] = x.nombreOverride ?? x.nombreCodigo;
       d[x.id] = x.descripcionOverride ?? x.descripcionCodigo;
       p[x.id] = (x.packPreciosOverride ?? x.packPreciosCodigo ?? []).map(String);
     }
+    setTitulo(t);
     setDesc(d);
     setPack(p);
     setEstado("listo");
@@ -147,6 +206,70 @@ export default function PanelContenido() {
     }
   };
 
+  /* ─── Foto ─── */
+
+  const subirFoto = async (p: ProductoContenido, archivo: File) => {
+    const clave = `${p.id}|foto`;
+    if (ocupado[clave]) return;
+
+    if (!archivo.type.startsWith("image/")) {
+      return marcar(clave, {
+        tipo: "error",
+        texto: "Ese archivo no es una imagen. Elegí una foto (JPG, PNG o WebP).",
+      });
+    }
+    if (archivo.size > MAX_ORIGINAL_MB * 1024 * 1024) {
+      return marcar(clave, {
+        tipo: "error",
+        texto: `Esa foto pesa ${(archivo.size / 1024 / 1024).toFixed(1)} MB, demasiado incluso para achicarla. Probá con otra.`,
+      });
+    }
+
+    setOcupado((o) => ({ ...o, [clave]: true }));
+    marcar(clave, { tipo: "ok", texto: "Preparando la foto…" });
+
+    try {
+      const chico = await achicar(archivo);
+      marcar(clave, { tipo: "ok", texto: "Subiendo…" });
+
+      const datos = new FormData();
+      datos.append("productId", p.id);
+      datos.append("archivo", chico);
+
+      const res = await fetch("/api/admindistribucion/imagen", { method: "POST", body: datos });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+
+      aplicar(p.id, { imagenOverride: data.imagen as string });
+      okPasajero(clave, `Listo · ${Math.round((data.bytes as number) / 1024)} KB`);
+    } catch (e) {
+      marcar(clave, {
+        tipo: "error",
+        texto: e instanceof Error ? e.message : "No se pudo subir la foto.",
+      });
+    } finally {
+      setOcupado((o) => ({ ...o, [clave]: false }));
+    }
+  };
+
+  /* ─── Título ─── */
+
+  const guardarTitulo = async (p: ProductoContenido) => {
+    const clave = `${p.id}|titulo`;
+    const texto = titulo[p.id] ?? "";
+
+    const v = validarNombre(texto);
+    if (!v.ok) return marcar(clave, { tipo: "error", texto: v.error });
+
+    const r = await enviar(clave, { productId: p.id, accion: "fijar-nombre", nombre: v.valor });
+    if (!r) return;
+    const guardado = r.nombre as string;
+    /* Se actualiza también `nombre`, que es el encabezado de la ficha */
+    aplicar(p.id, { nombreOverride: guardado, nombre: guardado });
+    setTitulo((prev) => ({ ...prev, [p.id]: guardado }));
+    okPasajero(clave, "Guardado");
+  };
+
   /* ─── Descripción ─── */
 
   const guardarDescripcion = async (p: ProductoContenido) => {
@@ -194,12 +317,27 @@ export default function PanelContenido() {
 
   /* ─── Volver al código ─── */
 
-  const volverAlCodigo = async (p: ProductoContenido, campo: "descripcion" | "packPrecios") => {
-    const clave = `${p.id}|${campo === "descripcion" ? "desc" : "pack"}`;
+  const CLAVE_DE_CAMPO = {
+    nombre: "titulo",
+    imagen: "foto",
+    descripcion: "desc",
+    packPrecios: "pack",
+  } as const;
+
+  const volverAlCodigo = async (
+    p: ProductoContenido,
+    campo: "nombre" | "imagen" | "descripcion" | "packPrecios"
+  ) => {
+    const clave = `${p.id}|${CLAVE_DE_CAMPO[campo]}`;
     const r = await enviar(clave, { productId: p.id, accion: "borrar", campo });
     if (!r) return;
 
-    if (campo === "descripcion") {
+    if (campo === "imagen") {
+      aplicar(p.id, { imagenOverride: null });
+    } else if (campo === "nombre") {
+      aplicar(p.id, { nombreOverride: null, nombre: p.nombreCodigo });
+      setTitulo((prev) => ({ ...prev, [p.id]: p.nombreCodigo }));
+    } else if (campo === "descripcion") {
       aplicar(p.id, { descripcionOverride: null });
       setDesc((prev) => ({ ...prev, [p.id]: p.descripcionCodigo }));
     } else {
@@ -295,11 +433,17 @@ export default function PanelContenido() {
 
       <div className="space-y-5">
         {filtrados.map((p) => {
+          const claveFoto = `${p.id}|foto`;
+          const claveTitulo = `${p.id}|titulo`;
+          const editandoFoto = p.imagenOverride !== null;
+          const fotoActual = p.imagenOverride ?? p.imagenCodigo;
           const claveDesc = `${p.id}|desc`;
           const clavePack = `${p.id}|pack`;
+          const editandoTitulo = p.nombreOverride !== null;
           const editandoDesc = p.descripcionOverride !== null;
           const editandoPack = p.packPreciosOverride !== null;
           const escalones = pack[p.id] ?? [];
+          const textoTitulo = titulo[p.id] ?? "";
           const textoDesc = desc[p.id] ?? "";
 
           return (
@@ -313,6 +457,140 @@ export default function PanelContenido() {
                   {p.categoria}
                 </span>
               </div>
+
+              {/* ─── Foto ─── */}
+              <section className="mb-5">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <h4 className="flex items-center gap-1.5 text-sm font-bold text-[var(--ink)]">
+                    <ImageIcon className="h-4 w-4 text-[var(--gold)]" />
+                    Foto principal
+                  </h4>
+                  <Etiqueta editado={editandoFoto} />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Miniatura. Va como <img> y no <Image> a propósito: es
+                      el panel, no hace falta optimizarla, y así no depende
+                      de que el host esté en remotePatterns. */}
+                  <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-[var(--line)] bg-white/[0.04]">
+                    {fotoActual ? (
+                      <img
+                        src={fotoActual}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        key={fotoActual}
+                      />
+                    ) : (
+                      <ImageIcon className="h-6 w-6 text-[var(--mut)]" />
+                    )}
+                  </span>
+
+                  <div className="flex flex-col gap-2">
+                    <label
+                      className={`flex w-fit cursor-pointer items-center gap-1.5 rounded-lg bg-gradient-to-br from-[var(--blue-l)] to-[var(--blue)] px-3 py-1.5 text-xs font-bold text-[#1c1c1e] transition hover:brightness-110 ${
+                        ocupado[claveFoto] ? "pointer-events-none opacity-40" : ""
+                      }`}
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      {fotoActual ? "Cambiar foto" : "Subir foto"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={!!ocupado[claveFoto]}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          /* Se limpia el input para que elegir la MISMA
+                             foto otra vez vuelva a disparar el evento. */
+                          e.target.value = "";
+                          if (f) subirFoto(p, f);
+                        }}
+                      />
+                    </label>
+
+                    <p className="text-[11px] leading-relaxed text-[var(--mut)]">
+                      Se achica y se convierte sola: no importa el formato ni el peso.
+                    </p>
+                  </div>
+
+                  {editandoFoto && (
+                    <BotonVolver
+                      onClick={() => volverAlCodigo(p, "imagen")}
+                      disabled={!!ocupado[claveFoto]}
+                    />
+                  )}
+                  <Mensaje aviso={aviso[claveFoto]} />
+                </div>
+
+                {/* Las fundas tienen una foto por color: hay que decirlo o
+                    parece que la subida no funcionó. */}
+                {p.tieneFotosPorOpcion && (
+                  <p className="mt-2 rounded-lg border border-[var(--line)] bg-white/[0.04] px-3 py-2 text-[11px] leading-relaxed text-[var(--mut)]">
+                    <span className="font-semibold text-[var(--gold)]">Ojo:</span> este producto
+                    tiene <span className="font-semibold text-[var(--ink)]">una foto por color</span>
+                    . Acá cambiás sólo la principal, que es la que se ve en la grilla. Al elegir un
+                    color, el cliente sigue viendo la foto de ese color.
+                  </p>
+                )}
+              </section>
+
+              {/* ─── Título ─── */}
+              <section className="mb-5">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <h4 className="flex items-center gap-1.5 text-sm font-bold text-[var(--ink)]">
+                    <Type className="h-4 w-4 text-[var(--gold)]" />
+                    Título
+                  </h4>
+                  <Etiqueta editado={editandoTitulo} />
+                  <span className="ml-auto text-[11px] tabular-nums text-[var(--mut)]">
+                    {textoTitulo.trim().length}/{LARGO_MAX_NOMBRE}
+                  </span>
+                </div>
+
+                <input
+                  value={textoTitulo}
+                  disabled={!!ocupado[claveTitulo]}
+                  onChange={(e) => setTitulo((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") guardarTitulo(p);
+                  }}
+                  className="w-full rounded-xl border border-[var(--line)] bg-white/[0.05] px-3 py-2 text-sm font-semibold text-white outline-none transition focus:border-[var(--gold)] disabled:opacity-50"
+                />
+
+                {editandoTitulo && (
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-[var(--mut)]">
+                    <span className="font-semibold">En el código:</span> {p.nombreCodigo}
+                  </p>
+                )}
+
+                {/* Aviso sólo en los productos que llevan nombre corto al
+                    carrito. Es el caso raro y hay que decirlo, si no parece
+                    que el cambio no se aplicó. */}
+                {p.cartName && (
+                  <p className="mt-2 rounded-lg border border-[var(--line)] bg-white/[0.04] px-3 py-2 text-[11px] leading-relaxed text-[var(--mut)]">
+                    <span className="font-semibold text-[var(--gold)]">Ojo:</span> en el carrito y
+                    en el pedido de WhatsApp este producto sigue apareciendo como{" "}
+                    <span className="font-semibold text-[var(--ink)]">
+                      &ldquo;{p.cartName}&rdquo;
+                    </span>
+                    , que es su nombre corto. El título de acá cambia lo que se ve en la web.
+                  </p>
+                )}
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <BotonGuardar
+                    onClick={() => guardarTitulo(p)}
+                    disabled={!!ocupado[claveTitulo]}
+                  />
+                  {editandoTitulo && (
+                    <BotonVolver
+                      onClick={() => volverAlCodigo(p, "nombre")}
+                      disabled={!!ocupado[claveTitulo]}
+                    />
+                  )}
+                  <Mensaje aviso={aviso[claveTitulo]} />
+                </div>
+              </section>
 
               {/* ─── Descripción ─── */}
               <section className="mb-5">
