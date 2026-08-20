@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requerirSesion } from "@/lib/auth";
-import { products } from "@/lib/products";
+import { products, type Product } from "@/lib/products";
+import { aplicarOverrides } from "@/lib/contenido";
+import { leerOverrides } from "@/lib/contenido-db";
 import { clavesDeStock } from "@/lib/stock-config";
 import { leerStockDetallado, fijarStock, descontarStock } from "@/lib/stock";
 
@@ -20,11 +22,38 @@ export const dynamic = "force-dynamic";
 
 const SIN_SESION = NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
 
+/**
+ * El catálogo con los overrides del panel ya aplicados.
+ *
+ * Se lee de la base y NO de `products` a secas porque las opciones que se
+ * crean desde el panel viven ahí: sin esto, una opción nueva no aparecería
+ * en el panel de stock y `validarPar` la rechazaría como clave fantasma.
+ *
+ * ⚠️ FALLA ABIERTO, igual que el resto del contenido: si la base de
+ * overrides no responde, se sigue con el catálogo del código. El panel de
+ * stock tiene que poder trabajar aunque los overrides estén caídos —
+ * cargar stock es más urgente que ver un título editado.
+ */
+async function catalogoEfectivo(): Promise<Product[]> {
+  try {
+    return aplicarOverrides(products, await leerOverrides());
+  } catch (err) {
+    console.error(
+      "[admin/stock] no se pudieron leer los overrides; se sigue con el catálogo del código:",
+      err
+    );
+    return products;
+  }
+}
+
 /** Estructura del catálogo: qué variantes existen para cada producto.
  *  Sirve para armar el listado y para validar las escrituras: solo se puede
- *  escribir sobre pares (producto, variante) que existen en el catálogo. */
-function catalogoDeStock() {
-  return products
+ *  escribir sobre pares (producto, variante) que existen en el catálogo.
+ *
+ *  Es PURA: recibe el catálogo ya resuelto. Así cada request lo lee una
+ *  sola vez y el listado y el validador miran exactamente lo mismo. */
+function catalogoDeStock(catalogo: Product[]) {
+  return catalogo
     .map((p) => ({
       id: p.id,
       nombre: p.name,
@@ -48,12 +77,18 @@ function catalogoDeStock() {
  *
  * Hoy no hay ninguno así: STOCK_GROUPS está vacío y el stock va por cada
  * valor de opción. El caso se contempla para los celulares usados.
+ *
+ * ⚠️ El guard NO se aflojó al pasar al catálogo efectivo: sigue exigiendo
+ * que la clave exista. Lo único que cambió es CONTRA QUÉ compara — antes
+ * el catálogo crudo, ahora el que la web realmente lee. Una clave que no
+ * esté en ninguno de los dos se sigue rechazando igual.
  */
 function validarPar(
+  catalogo: Product[],
   productId: string,
   stockKey: string
 ): { ok: true } | { ok: false; error: string } {
-  const prod = catalogoDeStock().find((p) => p.id === productId);
+  const prod = catalogoDeStock(catalogo).find((p) => p.id === productId);
   if (!prod) return { ok: false, error: `El producto "${productId}" no existe en el catálogo` };
 
   if (!prod.claves.includes(stockKey)) {
@@ -83,7 +118,7 @@ export async function GET() {
 
     /* Se arma desde el CATÁLOGO para que aparezcan también las variantes
        que todavía no tienen fila en la base (se muestran sin cargar). */
-    const productos = catalogoDeStock().map((p) => {
+    const productos = catalogoDeStock(await catalogoEfectivo()).map((p) => {
       const enBase = porProducto.get(p.id);
       return {
         id: p.id,
@@ -131,8 +166,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Petición inválida" }, { status: 400 });
   }
 
-  /* Granularidad: se rechaza cualquier clave que la web pública no leería */
-  const valido = validarPar(productId, stockKey);
+  /* Granularidad: se rechaza cualquier clave que la web pública no leería.
+     El catálogo se resuelve UNA vez por request y se le pasa al validador,
+     para no leer los overrides dos veces y para que valide exactamente
+     contra lo mismo que muestra el listado. */
+  const valido = validarPar(await catalogoEfectivo(), productId, stockKey);
   if (!valido.ok) {
     console.warn(`[admin/stock] clave rechazada ${productId}/${stockKey} por ${email}`);
     return NextResponse.json({ ok: false, error: valido.error }, { status: 400 });

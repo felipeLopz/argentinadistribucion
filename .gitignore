@@ -37,3 +37,6 @@ Thumbs.db
 
 # Original del proyecto
 argentina-distributor.zip
+
+.vercel
+.env*
