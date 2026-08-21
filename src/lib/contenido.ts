@@ -3,10 +3,11 @@ import type { Product } from "./products";
 /* ══════════════════════════════════════════════════════════════
    CONTENIDO EDITABLE — lógica pura (sin React, sin base de datos)
 
-   Qué resuelve: la DESCRIPCIÓN y los PRECIOS POR CANTIDAD de un producto
-   se pueden editar desde /admindistribucion sin tocar código ni hacer
-   deploy. Los valores de `products.ts` siguen siendo la BASE; la base de
-   datos guarda únicamente lo que se editó.
+   Qué resuelve: el TÍTULO, la FOTO, la DESCRIPCIÓN, el PRECIO y los
+   PRECIOS POR CANTIDAD de un producto se pueden editar desde
+   /admindistribucion sin tocar código ni hacer deploy (y se pueden AGREGAR
+   valores de opción, nunca quitar). Los valores de `products.ts` siguen
+   siendo la BASE; la base de datos guarda únicamente lo que se editó.
 
        Precedencia:   override de la base   >   valor de products.ts
 
@@ -40,13 +41,15 @@ export const LARGO_MAX_DESCRIPCION = 600;
 /** Máximo de escalones de un pack. */
 export const MAX_ESCALONES = 24;
 
-/** Techo por escalón, en pesos. */
+/** Techo de cualquier precio en pesos: el simple y el de cada escalón.
+ *  No es una regla de negocio, es un tope de cordura para que un cero de
+ *  más no entre a la base. Entra holgado en un `integer` de Postgres. */
 export const PRECIO_MAX = 100_000_000;
 
 /**
  * Override guardado para un producto.
  *
- * Los dos campos son independientes y tienen TRES estados:
+ * Cada campo es independiente y tiene TRES estados:
  *   - ausente / null  → no hay override: manda el valor de products.ts
  *   - valor válido    → manda el override
  *   - `packPrecios: []` → override explícito "este producto NO tiene promo
@@ -63,6 +66,14 @@ export interface OverrideContenido {
    *  siguen siendo las del código. Sólo reemplaza la de la grilla. */
   imagen?: string | null;
   descripcion?: string | null;
+  /** Precio SIMPLE, en pesos enteros.
+   *
+   *  ⚠️ Convive con `packPrecios`, no lo reemplaza. En un producto con
+   *  promo por cantidad los dos están vivos y mandan en lugares distintos:
+   *  el precio simple gobierna la pill de la card, el filtro de precio y
+   *  el orden por precio; la escalera gobierna el modal y lo que entra al
+   *  carrito. Ver la nota de `aplicarOverride`. */
+  precio?: number | null;
   packPrecios?: number[] | null;
   /** Valores de opción AGREGADOS desde el panel, por label de grupo:
    *  `{ "Color": ["Dorado"] }`.
@@ -203,6 +214,46 @@ export function validarDescripcion(entrada: unknown): Resultado<string> {
 }
 
 /**
+ * Valida un precio simple.
+ *
+ * Entero de pesos, positivo y por debajo del tope de cordura. Sin
+ * centavos: el catálogo entero está en pesos redondos y el sitio los
+ * muestra sin decimales, así que aceptar 4500.5 sólo lograría que se
+ * viera "$4.500,5" en la pill.
+ *
+ * ⚠️ NO valida nada contra `packPrecios`, a propósito. Ver la nota sobre
+ * la Silicone Case en `aplicarOverride`: los dos campos se guardan por
+ * separado, así que una regla cruzada acá haría imposible cambiarlos.
+ */
+export function validarPrecio(entrada: unknown): Resultado<number> {
+  if (entrada === null || entrada === undefined || entrada === "") {
+    return {
+      ok: false,
+      error: "El precio no puede quedar vacío. Si querés el original, usá «Volver al código».",
+    };
+  }
+  if (typeof entrada !== "number" || !Number.isFinite(entrada)) {
+    return { ok: false, error: "El precio tiene que ser un número." };
+  }
+  if (!Number.isInteger(entrada)) {
+    return {
+      ok: false,
+      error: `El precio tiene que ser un número entero, sin centavos (llegó ${entrada}).`,
+    };
+  }
+  if (entrada <= 0) {
+    return { ok: false, error: "El precio tiene que ser mayor que 0." };
+  }
+  if (entrada > PRECIO_MAX) {
+    return {
+      ok: false,
+      error: `El precio es demasiado grande: el máximo es $${PRECIO_MAX.toLocaleString("es-AR")}.`,
+    };
+  }
+  return { ok: true, valor: entrada };
+}
+
+/**
  * Valida una lista de precios por cantidad.
  *
  * La POSICIÓN define la cantidad: `precios[0]` es el precio de 1 unidad,
@@ -322,6 +373,24 @@ export function aplicarOverride(product: Product, override?: OverrideContenido |
   if (override.descripcion !== undefined && override.descripcion !== null) {
     const v = validarDescripcion(override.descripcion);
     if (v.ok && v.valor !== product.description) parches.description = v.valor;
+  }
+
+  /* ⚠️ El precio simple y `packPrecios` CONVIVEN: editar uno no toca al
+     otro, y en la Silicone Case (el único producto con promo por cantidad)
+     los dos están vivos al mismo tiempo, cada uno mandando en un lado:
+
+       precio simple  →  la pill de la card, el filtro de precio, el orden
+       packPrecios    →  la tabla del modal y lo que entra al carrito
+
+     Por eso NO se valida que el precio coincida con el escalón de 1, aunque
+     hoy coincidan ($5.000). Cada campo se guarda con su propia acción, así
+     que una regla cruzada trabaría el cambio en los dos sentidos: al subir
+     el precio fallaría por no coincidir con la escalera, y al subir la
+     escalera fallaría por no coincidir con el precio. El panel avisa de la
+     diferencia en vez de bloquearla. */
+  if (override.precio !== undefined && override.precio !== null) {
+    const v = validarPrecio(override.precio);
+    if (v.ok && v.valor !== product.price) parches.price = v.valor;
   }
 
   if (override.packPrecios !== undefined && override.packPrecios !== null) {

@@ -77,7 +77,7 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 | `src/lib/db.ts` | Cliente de Neon. **Solo servidor**, conexión perezosa. |
 | `src/lib/stock.ts` | Lectura/escritura del stock en la base. **Solo servidor**. |
 | `src/lib/stock-context.tsx` | `StockProvider`: la web pública lee `/api/stock` desde el navegador. |
-| `src/lib/contenido.ts` | **Lógica pura del contenido editable**: precedencia (override de la base > `products.ts`) y validación de `packPrecios`. Sin React ni base. ⚠️ **FALLA ABIERTO**, al revés que el stock. Ver sección 6. |
+| `src/lib/contenido.ts` | **Lógica pura del contenido editable**: precedencia (override de la base > `products.ts`) y las validaciones (`validarNombre`, `validarImagen`, `validarDescripcion`, **`validarPrecio`**, `validarPackPrecios`, `validarValorOpcion`). Sin React ni base. ⚠️ **FALLA ABIERTO**, al revés que el stock. Ver sección 6. |
 | `src/lib/contenido-db.ts` | Tabla `contenido_overrides` y sus lecturas/escrituras. **Solo servidor**. |
 | `src/lib/contenido-context.tsx` | `ContenidoProvider`: expone el **catálogo efectivo** (`productos`) ya resuelto. Lo consumen `filtros-context` y `page.tsx`. |
 | `src/lib/auth-session.ts` | JWT + cookie. **Compatible con Edge** (sin bcrypt): lo usa el middleware. |
@@ -531,6 +531,7 @@ Desde `/admindistribucion` se edita **sin tocar código ni hacer deploy**:
 | **Título** | `nombre` | ⚠️ NO pisa `cartName` (ver abajo) |
 | **Foto principal** | `imagen` | Se sube al Blob y se reprocesa a 800×800 WebP |
 | **Descripción** | `descripcion` | |
+| **Precio** | `precio` | Entero de pesos, sin centavos. ⚠️ Convive con `pack_precios` (ver abajo) |
 | **Precios por cantidad** | `pack_precios` | `[]` = promo apagada |
 | **Valores de opción** | `opciones_extra` | ⚠️ **SÓLO se agregan, nunca se quitan** |
 
@@ -541,6 +542,44 @@ IF NOT EXISTS` al entrar al panel: **no hay que correr ninguna migración a mano
 ⚠️ `leerOverrides` trata el error `42703` (columna inexistente) igual que el de
 tabla inexistente. Sin eso, entre que se deploya una columna nueva y alguien entra
 al panel, **todos** los overrides quedarían desactivados.
+
+⚠️ **Al agregar una columna de override hay que sumarla al `DELETE` del final de
+`borrarOverride`.** Esa consulta borra la fila cuando ya no le queda ningún
+override, y para eso enumera **todas** las columnas con `IS NULL`. Si falta una, un
+producto editado **sólo** en ese campo pierde su override apenas alguien toque
+«Volver al código» en cualquier otro — y se pierde en silencio, sin error.
+
+### ⚠️ El precio simple y `packPrecios` CONVIVEN: no se reemplazan
+
+Es el caso de la **Silicone Case**, hoy el único producto con promo por cantidad.
+Los dos campos están vivos al mismo tiempo y **mandan en lugares distintos**:
+
+| Campo | Dónde manda |
+|---|---|
+| **precio simple** (`price`) | la **pill de la card**, el **filtro de precio** y el **orden por precio** |
+| **`packPrecios`** | la **tabla del modal** y lo que **entra al carrito** |
+
+Por eso el panel **muestra el campo de precio también en la Silicone Case**, en vez
+de ocultarlo: ahí `price` no es un valor muerto — es el que decide si el producto
+aparece en "hasta $10.000" y en qué puesto queda al ordenar. Ocultarlo dejaría un
+número gobernando tres superficies sin forma de editarlo.
+
+⚠️ **NO se valida que el precio coincida con el escalón de 1 unidad**, aunque hoy
+coincidan ($5.000). El motivo es concreto: **cada campo se guarda con su propia
+acción**, así que una regla cruzada trabaría el cambio en los dos sentidos — al
+subir el precio fallaría por no coincidir con la escalera, y al subir la escalera
+fallaría por no coincidir con el precio, sin ningún orden que funcione. El panel
+**avisa** de la diferencia y deja guardar.
+
+### ⚠️ Cambiar el precio NO toca los carritos ya abiertos
+
+El carrito guarda el precio **del momento en que se agregó el producto**
+(`localStorage`), así que quien lo tenga abierto lo conserva al precio viejo y así
+llega su pedido por WhatsApp. **Es a propósito y no se toca**: el precio se resuelve
+al mostrar el catálogo, no en el carrito — la misma regla que hace que
+`cart-context.tsx` no sepa nada de promos (ver sección 4). **El panel lo avisa** con
+un renglón fijo en el campo de precio, porque si no parece que el cambio no se
+aplicó.
 
 `products.ts` sigue siendo la **base**; la tabla `contenido_overrides` guarda
 sólo lo editado. Es la misma costura que describe el apartado de arriba para los
@@ -841,6 +880,15 @@ regulado: si se amplía, mantener ese tono.
   stock en 0. La ruta de stock del panel pasó a usar el **catálogo efectivo**.
   ⚠️ Falta probar la creación de opciones **contra la base**: se verificó la lógica,
   no la escritura real.
+- **Precio simple editable desde el panel** (ver sección 6): columna `precio`
+  (`integer`), `validarPrecio` (entero, positivo, tope $100.000.000), acción
+  `fijar-precio`, «Volver al código» y campo nuevo en el panel con previsualización
+  formateada. **No hizo falta tocar ningún componente**: la card, el modal, el filtro
+  y el orden ya leían el **catálogo efectivo**, así que alcanzó con sumar el campo a
+  `aplicarOverride`. Falla ABIERTO como el resto.
+  ⚠️ Igual que las opciones, **falta probar la escritura contra la base**: se
+  verificó la lógica ejecutándola, y el fallar-abierto en el navegador, pero el
+  `ALTER TABLE` y el guardado real recién corren al entrar al panel en Vercel.
 - **Contenido editable desde el panel** (descripciones y `packPrecios`, ver sección 6):
   lógica pura + tabla `contenido_overrides` + endpoint público de solo lectura +
   rutas privadas + sección nueva en `/admindistribucion`. **Falla ABIERTO.**
@@ -958,8 +1006,8 @@ AS (VALUES ...)` con esos pares.
 - **El stock se cambia SOLO desde el panel.** No baja solo cuando alguien consulta por
   WhatsApp: la venta se cierra por chat, así que al confirmarla hay que entrar al panel
   y usar **"−1"** (o "Agotar" / editar el número).
-- **Editar descripciones y precios por cantidad**: en el mismo panel, sección
-  **"Descripciones y precios por cantidad"**. Cada campo dice si está **DEL CÓDIGO** o
+- **Editar fotos, textos y precios**: en el mismo panel, sección
+  **"Fotos, textos y precios"**. Cada campo dice si está **DEL CÓDIGO** o
   **EDITADO**, muestra el valor de `products.ts` como referencia cuando lo pisaste, y
   tiene **"Volver al código"** para borrar el override. Los escalones se agregan y se
   quitan de a uno; **la posición es la cantidad**, así que quitar el del medio
@@ -967,6 +1015,12 @@ AS (VALUES ...)` con esos pares.
   "PROMO APAGADA"). Ver sección 6.
   ⚠️ **La tabla `contenido_overrides` se crea sola** al entrar al panel; no hay que
   correr ningún seed.
+- **Cambiar el precio de un producto**: mismo lugar, campo **Precio**. Va en pesos
+  enteros, sin centavos ni puntos — se escribe `35000` y al lado se ve `$35.000`
+  para confirmar que el número es el que se quiso poner. Se refleja al instante en
+  la card, el modal, el filtro y el orden.
+  ⚠️ **No cambia los carritos ya abiertos** (ver sección 6), y en la Silicone Case
+  **convive** con los precios por cantidad en vez de reemplazarlos.
 - **El cliente todavía NO tiene acceso al panel** (decisión de negocio: las
   actualizaciones las hago yo y se cobran aparte). Ni siquiera sabe que existe.
 - **Si algún día se le da el panel al cliente**: conviene antes revisar los textos y la

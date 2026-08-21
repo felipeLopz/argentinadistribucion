@@ -46,6 +46,7 @@ export async function asegurarTabla(): Promise<void> {
       nombre         text,
       imagen         text,
       descripcion    text,
+      precio         integer,
       pack_precios   jsonb,
       opciones_extra jsonb,
       updated_at   timestamptz NOT NULL DEFAULT now(),
@@ -60,6 +61,9 @@ export async function asegurarTabla(): Promise<void> {
   await sql`ALTER TABLE contenido_overrides ADD COLUMN IF NOT EXISTS nombre text`;
   await sql`ALTER TABLE contenido_overrides ADD COLUMN IF NOT EXISTS imagen text`;
   await sql`ALTER TABLE contenido_overrides ADD COLUMN IF NOT EXISTS opciones_extra jsonb`;
+  /* `integer` alcanza de sobra: el tope de cordura son $100.000.000 y un
+     int4 llega a 2.147.483.647. Los precios van sin centavos. */
+  await sql`ALTER TABLE contenido_overrides ADD COLUMN IF NOT EXISTS precio integer`;
 
   tablaLista = true;
 }
@@ -69,6 +73,7 @@ interface FilaCruda {
   nombre: string | null;
   imagen: string | null;
   descripcion: string | null;
+  precio: number | null;
   pack_precios: number[] | null;
   opciones_extra: Record<string, string[]> | null;
 }
@@ -85,7 +90,7 @@ export async function leerOverrides(): Promise<MapaContenido> {
   let filas: FilaCruda[];
   try {
     filas = (await sql`
-      SELECT product_id, nombre, imagen, descripcion, pack_precios, opciones_extra
+      SELECT product_id, nombre, imagen, descripcion, precio, pack_precios, opciones_extra
         FROM contenido_overrides
     `) as FilaCruda[];
   } catch (err) {
@@ -100,6 +105,7 @@ export async function leerOverrides(): Promise<MapaContenido> {
       nombre: f.nombre,
       imagen: f.imagen,
       descripcion: f.descripcion,
+      precio: f.precio,
       packPrecios: f.pack_precios,
       opcionesExtra: f.opciones_extra,
     };
@@ -113,6 +119,7 @@ export interface FilaContenido {
   nombre: string | null;
   imagen: string | null;
   descripcion: string | null;
+  precio: number | null;
   pack_precios: number[] | null;
   opciones_extra: Record<string, string[]> | null;
   updated_at: string;
@@ -124,7 +131,7 @@ export async function leerOverridesDetallados(): Promise<FilaContenido[]> {
   await asegurarTabla();
   const sql = getSql();
   return (await sql`
-    SELECT product_id, nombre, imagen, descripcion, pack_precios, opciones_extra,
+    SELECT product_id, nombre, imagen, descripcion, precio, pack_precios, opciones_extra,
            updated_at, updated_by
       FROM contenido_overrides
   `) as FilaContenido[];
@@ -179,6 +186,27 @@ export async function fijarDescripcion(
 }
 
 /**
+ * Guarda (o pisa) el precio simple de un producto.
+ *
+ * No toca `pack_precios`: en un producto con promo por cantidad los dos
+ * conviven y mandan en lugares distintos (ver `aplicarOverride`).
+ */
+export async function fijarPrecio(
+  productId: string,
+  precio: number,
+  usuario: string
+): Promise<void> {
+  await asegurarTabla();
+  const sql = getSql();
+  await sql`
+    INSERT INTO contenido_overrides (product_id, precio, updated_at, updated_by)
+    VALUES (${productId}, ${precio}, now(), ${usuario})
+    ON CONFLICT (product_id)
+    DO UPDATE SET precio = ${precio}, updated_at = now(), updated_by = ${usuario}
+  `;
+}
+
+/**
  * Guarda (o pisa) los precios por cantidad.
  * Una lista vacía se guarda como `[]`, que NO es lo mismo que NULL: es el
  * override explícito de "este producto no tiene promo por cantidad".
@@ -228,7 +256,7 @@ export async function fijarOpcionesExtra(
 
 /** Qué campo se borra al volver al valor del código.
  *  ⚠️ `opcionesExtra` NO está: los valores creados no se pueden quitar. */
-export type CampoContenido = "nombre" | "imagen" | "descripcion" | "packPrecios";
+export type CampoContenido = "nombre" | "imagen" | "descripcion" | "precio" | "packPrecios";
 
 /**
  * Borra un override y vuelve al valor de products.ts.
@@ -264,6 +292,12 @@ export async function borrarOverride(
          SET descripcion = NULL, updated_at = now(), updated_by = ${usuario}
        WHERE product_id = ${productId}
     `;
+  } else if (campo === "precio") {
+    await sql`
+      UPDATE contenido_overrides
+         SET precio = NULL, updated_at = now(), updated_by = ${usuario}
+       WHERE product_id = ${productId}
+    `;
   } else {
     await sql`
       UPDATE contenido_overrides
@@ -272,6 +306,10 @@ export async function borrarOverride(
     `;
   }
 
+  /* ⚠️ Esta limpieza tiene que nombrar TODAS las columnas de override. Si
+     alguna falta, un producto que sólo tenga ESE override se borraría
+     entero al volver al código en cualquier otro campo, y se perdería en
+     silencio. Al agregar una columna nueva, sumarla también acá. */
   await sql`
     DELETE FROM contenido_overrides
      WHERE product_id = ${productId}
@@ -279,6 +317,7 @@ export async function borrarOverride(
        AND imagen IS NULL
        AND opciones_extra IS NULL
        AND descripcion IS NULL
+       AND precio IS NULL
        AND pack_precios IS NULL
   `;
 }

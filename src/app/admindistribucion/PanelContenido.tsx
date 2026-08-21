@@ -16,10 +16,12 @@ import {
   Upload,
   Image as ImageIcon,
   ListPlus,
+  DollarSign,
 } from "lucide-react";
 import {
   validarNombre,
   validarDescripcion,
+  validarPrecio,
   validarPackPrecios,
   validarValorOpcion,
   LARGO_MAX_NOMBRE,
@@ -27,7 +29,8 @@ import {
 } from "@/lib/contenido";
 
 /* ═══════════════════════════════════════════════
-   PANEL DE CONTENIDO — descripciones y precios por cantidad
+   PANEL DE CONTENIDO — foto, título, descripción, precio, precios por
+   cantidad y valores de opción
 
    Edita lo que en products.ts es la BASE. Cada campo tiene dos estados
    visibles: "usa el valor del código" o "editado desde el panel", y
@@ -55,6 +58,7 @@ interface ProductoContenido {
   nombreCodigo: string;
   imagenCodigo: string | null;
   descripcionCodigo: string;
+  precioCodigo: number | null;
   packPreciosCodigo: number[] | null;
   /** true en las fundas: tienen una foto por color, que no se toca. */
   tieneFotosPorOpcion: boolean;
@@ -64,6 +68,7 @@ interface ProductoContenido {
   nombreOverride: string | null;
   imagenOverride: string | null;
   descripcionOverride: string | null;
+  precioOverride: number | null;
   /** [] = promo apagada a propósito; null = sin override. */
   packPreciosOverride: number[] | null;
   actualizado: string | null;
@@ -124,6 +129,7 @@ export default function PanelContenido() {
   const [titulo, setTitulo] = useState<Record<string, string>>({});
   const [nuevaOpcion, setNuevaOpcion] = useState<Record<string, string>>({});
   const [desc, setDesc] = useState<Record<string, string>>({});
+  const [precio, setPrecio] = useState<Record<string, string>>({});
   const [pack, setPack] = useState<Record<string, string[]>>({});
 
   const [ocupado, setOcupado] = useState<Record<string, boolean>>({});
@@ -146,14 +152,20 @@ export default function PanelContenido() {
        escalones muestran de entrada lo que hoy ve el visitante. */
     const t: Record<string, string> = {};
     const d: Record<string, string> = {};
+    const pr: Record<string, string> = {};
     const p: Record<string, string[]> = {};
     for (const x of lista) {
       t[x.id] = x.nombreOverride ?? x.nombreCodigo;
       d[x.id] = x.descripcionOverride ?? x.descripcionCodigo;
+      /* Un producto sin precio en el código arranca con el campo vacío,
+         no con un "0" que parecería un precio real. */
+      const efectivo = x.precioOverride ?? x.precioCodigo ?? null;
+      pr[x.id] = efectivo === null ? "" : String(efectivo);
       p[x.id] = (x.packPreciosOverride ?? x.packPreciosCodigo ?? []).map(String);
     }
     setTitulo(t);
     setDesc(d);
+    setPrecio(pr);
     setPack(p);
     setEstado("listo");
   }, []);
@@ -347,6 +359,26 @@ export default function PanelContenido() {
     okPasajero(clave, "Guardado");
   };
 
+  /* ─── Precio simple ─── */
+
+  const guardarPrecio = async (p: ProductoContenido) => {
+    const clave = `${p.id}|precio`;
+    const crudo = (precio[p.id] ?? "").trim();
+
+    /* Vacío es "no escribiste nada", no un cero: se avisa con el mismo
+       texto que daría el servidor. `Number("")` sería 0 y pasaría como
+       precio válido de no filtrarlo acá. */
+    const v = validarPrecio(crudo === "" ? null : Number(crudo));
+    if (!v.ok) return marcar(clave, { tipo: "error", texto: v.error });
+
+    const r = await enviar(clave, { productId: p.id, accion: "fijar-precio", precio: v.valor });
+    if (!r) return;
+    const guardado = r.precio as number;
+    aplicar(p.id, { precioOverride: guardado });
+    setPrecio((prev) => ({ ...prev, [p.id]: String(guardado) }));
+    okPasajero(clave, "Guardado");
+  };
+
   /* ─── Precios por cantidad ─── */
 
   const guardarPack = async (p: ProductoContenido) => {
@@ -377,12 +409,13 @@ export default function PanelContenido() {
     nombre: "titulo",
     imagen: "foto",
     descripcion: "desc",
+    precio: "precio",
     packPrecios: "pack",
   } as const;
 
   const volverAlCodigo = async (
     p: ProductoContenido,
-    campo: "nombre" | "imagen" | "descripcion" | "packPrecios"
+    campo: "nombre" | "imagen" | "descripcion" | "precio" | "packPrecios"
   ) => {
     const clave = `${p.id}|${CLAVE_DE_CAMPO[campo]}`;
     const r = await enviar(clave, { productId: p.id, accion: "borrar", campo });
@@ -396,6 +429,12 @@ export default function PanelContenido() {
     } else if (campo === "descripcion") {
       aplicar(p.id, { descripcionOverride: null });
       setDesc((prev) => ({ ...prev, [p.id]: p.descripcionCodigo }));
+    } else if (campo === "precio") {
+      aplicar(p.id, { precioOverride: null });
+      setPrecio((prev) => ({
+        ...prev,
+        [p.id]: p.precioCodigo == null ? "" : String(p.precioCodigo),
+      }));
     } else {
       aplicar(p.id, { packPreciosOverride: null });
       setPack((prev) => ({ ...prev, [p.id]: (p.packPreciosCodigo ?? []).map(String) }));
@@ -428,10 +467,19 @@ export default function PanelContenido() {
     );
   }, [productos, busqueda]);
 
+  /* Cuenta un producto una sola vez, tenga uno o cinco campos editados.
+     Tiene que nombrarlos a TODOS: si falta alguno, un producto editado
+     sólo en ese campo no se cuenta y el resumen miente. */
   const editados = useMemo(
     () =>
-      productos.filter((p) => p.descripcionOverride !== null || p.packPreciosOverride !== null)
-        .length,
+      productos.filter(
+        (p) =>
+          p.nombreOverride !== null ||
+          p.imagenOverride !== null ||
+          p.descripcionOverride !== null ||
+          p.precioOverride !== null ||
+          p.packPreciosOverride !== null
+      ).length,
     [productos]
   );
 
@@ -495,12 +543,39 @@ export default function PanelContenido() {
           const fotoActual = p.imagenOverride ?? p.imagenCodigo;
           const claveDesc = `${p.id}|desc`;
           const clavePack = `${p.id}|pack`;
+          const clavePrecio = `${p.id}|precio`;
           const editandoTitulo = p.nombreOverride !== null;
           const editandoDesc = p.descripcionOverride !== null;
+          const editandoPrecio = p.precioOverride !== null;
           const editandoPack = p.packPreciosOverride !== null;
           const escalones = pack[p.id] ?? [];
           const textoTitulo = titulo[p.id] ?? "";
           const textoDesc = desc[p.id] ?? "";
+          const textoPrecio = precio[p.id] ?? "";
+
+          /* Previsualización con separador de miles: el <input type="number">
+             no puede mostrarla (un value con puntos no es un número válido
+             y el navegador lo descarta), así que va al lado y se actualiza
+             mientras se escribe. */
+          const precioNum = Number(textoPrecio.trim());
+          const precioPreview =
+            textoPrecio.trim() !== "" && Number.isFinite(precioNum) && precioNum > 0
+              ? pesos(precioNum)
+              : null;
+
+          /* ¿Este producto tiene promo por cantidad ACTIVA? Se mira el
+             valor efectivo, no el del código: una promo apagada desde el
+             panel (lista vacía) no cuenta. */
+          const escaleraActiva =
+            (p.packPreciosOverride ?? p.packPreciosCodigo ?? []).length > 0;
+          const escalonDeUno = (p.packPreciosOverride ?? p.packPreciosCodigo ?? [])[0];
+          /* Aviso, no bloqueo: los dos campos se guardan por separado, así
+             que exigir que coincidan trabaría cualquier cambio. */
+          const precioDiscrepa =
+            escaleraActiva &&
+            escalonDeUno !== undefined &&
+            precioPreview !== null &&
+            precioNum !== escalonDeUno;
 
           return (
             <div
@@ -687,6 +762,94 @@ export default function PanelContenido() {
                     />
                   )}
                   <Mensaje aviso={aviso[claveDesc]} />
+                </div>
+              </section>
+
+              {/* ─── Precio ─── */}
+              <section className="mb-5">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <h4 className="flex items-center gap-1.5 text-sm font-bold text-[var(--ink)]">
+                    <DollarSign className="h-4 w-4 text-[var(--gold)]" />
+                    Precio
+                  </h4>
+                  <Etiqueta editado={editandoPrecio} />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-[var(--mut)]">$</span>
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
+                    value={textoPrecio}
+                    disabled={!!ocupado[clavePrecio]}
+                    onChange={(e) => setPrecio((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") guardarPrecio(p);
+                    }}
+                    className="w-40 rounded-xl border border-[var(--line)] bg-white/[0.05] px-3 py-2 text-sm font-bold tabular-nums text-white outline-none transition focus:border-[var(--gold)] disabled:opacity-50"
+                  />
+                  {precioPreview && (
+                    <span className="text-sm font-bold tabular-nums text-[var(--gold)]">
+                      {precioPreview}
+                    </span>
+                  )}
+                </div>
+
+                {editandoPrecio && (
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-[var(--mut)]">
+                    <span className="font-semibold">En el código:</span>{" "}
+                    {p.precioCodigo === null ? "sin precio" : pesos(p.precioCodigo)}
+                  </p>
+                )}
+
+                {/* Los carritos guardan el precio del momento en que se
+                    agregó el producto: hay que decirlo o parece un error. */}
+                <p className="mt-2 rounded-lg border border-[var(--line)] bg-white/[0.04] px-3 py-2 text-[11px] leading-relaxed text-[var(--mut)]">
+                  <span className="font-semibold text-[var(--gold)]">Ojo:</span> el precio nuevo
+                  vale para el catálogo desde que lo guardás, pero{" "}
+                  <span className="font-semibold text-[var(--ink)]">
+                    no cambia los carritos que ya estén abiertos
+                  </span>
+                  : quien agregó el producto antes lo conserva al precio de ese momento, y así
+                  llega su pedido por WhatsApp.
+                </p>
+
+                {/* La Silicone Case es el caso: precio simple y escalera
+                    conviven, y cada uno manda en un lado distinto. */}
+                {escaleraActiva && (
+                  <p className="mt-2 rounded-lg border border-[var(--line)] bg-white/[0.04] px-3 py-2 text-[11px] leading-relaxed text-[var(--mut)]">
+                    Este producto{" "}
+                    <span className="font-semibold text-[var(--ink)]">
+                      también tiene precios por cantidad
+                    </span>
+                    , acá abajo. Este precio es el que se ve en la grilla y el que usan el filtro
+                    y el orden por precio; al abrir el producto, el cliente ve la tabla de
+                    cantidades y paga según ella.
+                  </p>
+                )}
+
+                {precioDiscrepa && (
+                  <p className="mt-2 text-[11px] leading-relaxed text-amber-300/80">
+                    El escalón de 1 unidad sale {pesos(escalonDeUno!)} y acá pusiste{" "}
+                    {precioPreview}. Se puede guardar igual, pero en la grilla se va a leer un
+                    precio y al abrir el producto otro: conviene dejar los dos iguales.
+                  </p>
+                )}
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <BotonGuardar
+                    onClick={() => guardarPrecio(p)}
+                    disabled={!!ocupado[clavePrecio]}
+                  />
+                  {editandoPrecio && (
+                    <BotonVolver
+                      onClick={() => volverAlCodigo(p, "precio")}
+                      disabled={!!ocupado[clavePrecio]}
+                    />
+                  )}
+                  <Mensaje aviso={aviso[clavePrecio]} />
                 </div>
               </section>
 

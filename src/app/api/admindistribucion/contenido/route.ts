@@ -4,6 +4,7 @@ import { products } from "@/lib/products";
 import {
   validarNombre,
   validarDescripcion,
+  validarPrecio,
   validarPackPrecios,
   validarValorOpcion,
   normalizarValor,
@@ -15,6 +16,7 @@ import {
   leerOverridesDetallados,
   fijarNombre,
   fijarDescripcion,
+  fijarPrecio,
   fijarPackPrecios,
   fijarOpcionesExtra,
   borrarOverride,
@@ -24,7 +26,8 @@ import { clavesDeStock } from "@/lib/stock-config";
 import { crearFilasSiFaltan } from "@/lib/stock";
 
 /* ══════════════════════════════════════════════════════════════
-   /api/admindistribucion/contenido — descripciones y precios por cantidad
+   /api/admindistribucion/contenido — título, foto, descripción, precio,
+   precios por cantidad y valores de opción
 
    ⚠️ RUTA PRIVADA. Misma doble barrera que /api/admindistribucion/stock:
      1) el middleware bloquea todo /api/admindistribucion/*
@@ -82,6 +85,7 @@ export async function GET() {
         nombreCodigo: p.name,
         imagenCodigo: p.image ?? null,
         descripcionCodigo: p.description,
+        precioCodigo: p.price ?? null,
         /* true en las fundas: tienen una foto por color. El panel lo avisa,
            porque subir una foto ahí cambia SÓLO la principal. */
         tieneFotosPorOpcion: !!p.imagenesPorOpcion,
@@ -95,6 +99,7 @@ export async function GET() {
         nombreOverride: fila?.nombre ?? null,
         imagenOverride: fila?.imagen ?? null,
         descripcionOverride: fila?.descripcion ?? null,
+        precioOverride: fila?.precio ?? null,
         packPreciosOverride: fila?.pack_precios ?? null,
         actualizado: fila?.updated_at ?? null,
         por: fila?.updated_by ?? null,
@@ -158,6 +163,15 @@ export async function POST(request: Request) {
       await fijarDescripcion(productId, v.valor, email);
       console.info(`[admin/contenido] descripción de ${productId} por ${email}`);
       return NextResponse.json({ ok: true, descripcion: v.valor });
+    }
+
+    if (accion === "fijar-precio") {
+      const v = validarPrecio(cuerpo.precio);
+      if (!v.ok) return NextResponse.json({ ok: false, error: v.error }, { status: 400 });
+
+      await fijarPrecio(productId, v.valor, email);
+      console.info(`[admin/contenido] precio de ${productId} -> ${v.valor} por ${email}`);
+      return NextResponse.json({ ok: true, precio: v.valor });
     }
 
     if (accion === "fijar-pack") {
@@ -279,13 +293,14 @@ export async function POST(request: Request) {
         campo !== "nombre" &&
         campo !== "imagen" &&
         campo !== "descripcion" &&
+        campo !== "precio" &&
         campo !== "packPrecios"
       ) {
         return NextResponse.json(
           {
             ok: false,
             error:
-              "Sólo se puede volver al código en «nombre», «imagen», «descripcion» o «packPrecios».",
+              "Sólo se puede volver al código en «nombre», «imagen», «descripcion», «precio» o «packPrecios».",
           },
           { status: 400 }
         );

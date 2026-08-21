@@ -33,7 +33,7 @@ export default async function PanelPage() {
       </section>
 
       <section className="mt-14 border-t border-[var(--line)] pt-10">
-        <h2 className="text-lg font-black text-white">Descripciones y precios por cantidad</h2>
+        <h2 className="text-lg font-black text-white">Fotos, textos y precios</h2>
         <p className="mt-1 text-sm text-[var(--mut)]">
           Lo que se edita acá pisa lo que dice <code className="text-[var(--gold)]">products.ts</code>{" "}
           sin necesidad de hacer deploy. Si la base falla, la web vuelve sola a los valores del

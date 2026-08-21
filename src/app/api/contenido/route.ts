@@ -4,8 +4,9 @@ import { leerOverrides } from "@/lib/contenido-db";
 /* ══════════════════════════════════════════════════════════════
    GET /api/contenido — lectura pública de los overrides (solo lectura)
 
-   Devuelve únicamente lo EDITADO desde el panel (descripciones y precios
-   por cantidad). El catálogo completo sigue viniendo de products.ts, que
+   Devuelve únicamente lo EDITADO desde el panel (título, foto,
+   descripción, precio, precios por cantidad y valores de opción
+   agregados). El catálogo completo sigue viniendo de products.ts, que
    viaja en el bundle: acá no se expone el catálogo entero.
 
    No exporta POST/PUT/DELETE a propósito: Next responde 405, igual que
