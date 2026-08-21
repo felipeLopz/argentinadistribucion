@@ -4,12 +4,13 @@
 -- Los pares (product_id, stock_key) de abajo son los VALIDOS, generados
 -- desde el catalogo actual de products.ts. Todo lo que este en la tabla
 -- y NO este aca, sobra. Eso cubre solo tres casos:
---   · productos eliminados
+--   · productos eliminados (incluidos los viejos vap-2...vap-8, que NO
+--     son los vap-rec-2...vap-rec-8 de ahora)
 --   · productos que CAMBIARON de clave al sumarles un selector
 --     (su vieja fila con clave '' queda huerfana)
 --   · productos con sinStock, que no deberian tener fila
 --
--- Catalogo: 12 productos · 42 pares validos
+-- Catalogo: 19 productos · 49 pares validos
 -- Sin stock (no llevan fila): promo-silicone
 --
 -- ⚠️ REGENERAR esto cada vez que cambie el catalogo. Si se agrega un
@@ -27,6 +28,13 @@ WITH validos (product_id, stock_key) AS (
     ('promo-templado-funda', '9D'),
     ('promo-templado-funda', 'Anti espía'),
     ('vap-1', 'Mentol'),
+    ('vap-rec-2', ''),
+    ('vap-rec-3', ''),
+    ('vap-rec-4', ''),
+    ('vap-rec-5', ''),
+    ('vap-rec-6', ''),
+    ('vap-rec-7', ''),
+    ('vap-rec-8', ''),
     ('ter-1', ''),
     ('ter-2', ''),
     ('ter-3', ''),
@@ -81,6 +89,13 @@ WITH validos (product_id, stock_key) AS (
     ('promo-templado-funda', '9D'),
     ('promo-templado-funda', 'Anti espía'),
     ('vap-1', 'Mentol'),
+    ('vap-rec-2', ''),
+    ('vap-rec-3', ''),
+    ('vap-rec-4', ''),
+    ('vap-rec-5', ''),
+    ('vap-rec-6', ''),
+    ('vap-rec-7', ''),
+    ('vap-rec-8', ''),
     ('ter-1', ''),
     ('ter-2', ''),
     ('ter-3', ''),
@@ -135,6 +150,13 @@ WITH validos (product_id, stock_key) AS (
     ('promo-templado-funda', '9D'),
     ('promo-templado-funda', 'Anti espía'),
     ('vap-1', 'Mentol'),
+    ('vap-rec-2', ''),
+    ('vap-rec-3', ''),
+    ('vap-rec-4', ''),
+    ('vap-rec-5', ''),
+    ('vap-rec-6', ''),
+    ('vap-rec-7', ''),
+    ('vap-rec-8', ''),
     ('ter-1', ''),
     ('ter-2', ''),
     ('ter-3', ''),
@@ -187,6 +209,13 @@ WITH validos (product_id, stock_key) AS (
     ('promo-templado-funda', '9D'),
     ('promo-templado-funda', 'Anti espía'),
     ('vap-1', 'Mentol'),
+    ('vap-rec-2', ''),
+    ('vap-rec-3', ''),
+    ('vap-rec-4', ''),
+    ('vap-rec-5', ''),
+    ('vap-rec-6', ''),
+    ('vap-rec-7', ''),
+    ('vap-rec-8', ''),
     ('ter-1', ''),
     ('ter-2', ''),
     ('ter-3', ''),

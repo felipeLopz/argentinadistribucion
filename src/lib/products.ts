@@ -294,6 +294,29 @@ export const products: Product[] = [
     category: "vapers",
   },
 
+  /* ─── Dispositivos recargables, sin líquido ───
+     ⚠️ NOMBRES PROVISORIOS. El cliente todavía no pasó los reales, así que
+     van numerados y se completan DESDE EL PANEL, sin tocar código.
+     Mientras tanto el número hace de modelo: es presentable para el que
+     compra y obvio para quien administra.
+
+     No llevan selector: al no incluir líquido no hay sabor que elegir, así
+     que el stock va en una sola fila con clave "".
+
+     ⚠️ Los ids NO reusan vap-2…vap-8, que fueron otros productos: si la
+     base todavía tuviera sus filas viejas (misma clave ""), estos
+     heredarían stock que nadie contó. */
+  ...[2, 3, 4, 5, 6, 7, 8].map(
+    (n): Product => ({
+      id: `vap-rec-${n}`,
+      name: `Vaper Recargable ${n}`,
+      description:
+        "Dispositivo recargable con carga por USB-C. No incluye líquido.",
+      price: 20000,
+      category: "vapers",
+    })
+  ),
+
   // ═══ TERMOS ═══
   {
     id: "ter-1",

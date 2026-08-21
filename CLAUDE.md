@@ -310,7 +310,7 @@ banda pegada, y es **imposible que corte el producto**.
   **activan el chip**, no scrollean.
 - **El salto al cambiar de categoría** (`Catalogo.tsx`) — dos problemas distintos que
   se arreglaron juntos, y las dos soluciones son frágiles si se tocan:
-  1. **El "tirón"**: pasar de 12 cards a 3 acorta el documento y el navegador
+  1. **El "tirón"**: pasar de 19 cards a 3 acorta el documento y el navegador
      **clampea** el scroll. Se arregla con el **orden de las operaciones**: primero el
      scroll, después el cambio de filtro. Corregir *después* no sirve, porque las
      cards salen con animación y la altura colapsa un frame más tarde.
@@ -349,7 +349,7 @@ banda pegada, y es **imposible que corte el producto**.
 - **Buscador**: el del navbar. **No hay dos mecanismos**: escribe en el mismo estado
   que lee la grilla. Matchea por nombre **o** descripción, sin distinguir mayúsculas.
 - **Precio**: rango desde/hasta. ⚠️ Con un tope activo, los productos **sin precio**
-  quedan afuera (hoy no aplica: los 12 tienen precio).
+  quedan afuera (hoy no aplica: los 19 tienen precio).
 - **Orden**: por defecto (el de `products.ts`), precio asc, precio desc, alfabético.
   El default es el orden del archivo **a propósito**: se controla a mano qué va primero.
 - **Contador**: cuántos productos hay en la vista actual.
@@ -659,19 +659,36 @@ panel de stock y `validarPar` la rechazaría** como clave fantasma.
 
 ## 7. Estado actual y pendientes
 
-**Catálogo actual — 12 productos, 4 categorías** (en `products.ts`, en este orden).
-⚠️ **De los 12, hoy se ven 9**: `termos` sigue en modo "Próximamente" y sus 3
+**Catálogo actual — 19 productos, 4 categorías** (en `products.ts`, en este orden).
+⚠️ **De los 19, hoy se ven 16**: `termos` sigue en modo "Próximamente" y sus 3
 productos están ocultos (ver sección 5). Siguen enteros en el archivo.
 
 | Categoría (`category`) | Chip | # | Productos |
 |---|---|---|---|
 | `accesorios` | **Promos** | 5 | Silicone Case 11-17 ($5.000, promo por cantidad, sin stock) · **AirPods Pro 2 (sin cancelación de ruido)** $25.000 · **AirPods Pro 2 con cancelación de ruido + funda** $49.990 · Cable y cabezal $20.000 · **Promo templado + funda** $8.500 |
-| `vapers` | **Vapers** | 1 | **Vaper Recargable Pod - Negro** $35.000, **sin foto**, con selector de `Sabor`. Único sobreviviente (ver abajo) |
+| `vapers` | **Vapers** | 8 | **Vaper Recargable Pod - Negro** $35.000 con selector de `Sabor` · **Vaper Recargable 2 a 8** $20.000, sin selector — **nombres provisorios** (ver abajo). Todos **sin foto** |
 | `termos` | **Termos** | 3 | Termo Stanley 750ml en rosa, azul y blanco — $45.000, **sin foto** |
 | `accesorios-apple` | **Apple** | 3 | **Templado para iPhone** $4.500 (11 modelos) · **Funda de silicona iPhone 11** $5.000 (7 colores) · **Funda de silicona iPhone 12 y 12 Pro** $5.000 (14 colores) |
 
-La suma de los chips (5+1+3+3) **coincide** con "Ver todo" (12): ya no hay
+La suma de los chips (5+8+3+3) **coincide** con "Ver todo" (19): ya no hay
 multi-categoría (ver sección 4).
+
+### ⚠️ Los "Vaper Recargable 2 a 8" son nombres PROVISORIOS
+
+Son 7 dispositivos recargables **sin líquido** a $20.000, cargados con nombres
+numerados porque el cliente todavía no pasó los reales. **Se completan desde el
+panel**, sin tocar código: es justamente el caso de uso para el que se construyó la
+edición de título, foto y descripción.
+
+El número hace de modelo mientras tanto: es presentable para el que compra y obvio
+para quien administra. **No llevan selector** — al no incluir líquido no hay sabor
+que elegir, así que su stock va en una sola fila con clave `""`.
+
+⚠️ **Sus ids son `vap-rec-2`…`vap-rec-8`, NO `vap-2`…`vap-8`.** Esos últimos fueron
+otros productos (los que se eliminaron al reactivar la categoría) y, si la base
+todavía tuviera sus filas viejas —misma clave `""`—, los nuevos **heredarían stock
+que nadie contó**. Con ids distintos, esas filas quedan como huérfanas y las limpia
+el SQL. **No renombrar los ids para "emprolijar".**
 
 ⚠️ **El "Templado para iPhone" comparte la foto** (`promo-templado-funda.webp`) con
 la **"Promo templado + funda"** de Promos: es el mismo vidrio. Ojo al borrar
@@ -840,6 +857,7 @@ regulado: si se amplía, mantener ese tono.
   | Producto | Claves a cargar |
   |---|---|
   | `vap-1` | `Mentol` — ⚠️ **NO** `""`: al sumarle el selector cambió de clave |
+  | **`vap-rec-2`…`vap-rec-8`** | `""` (**7 filas**, una por dispositivo) |
   | `ter-1`…`ter-3` | `""` (3 filas) |
   | **`apl-templado`** | **11 filas**, una por modelo: `iPhone 11` · `iPhone 12` · `iPhone 13 Pro Max` · `iPhone 14 Pro` · `iPhone 14 Pro Max` · `iPhone 15` · `iPhone 15 Pro Max` · `iPhone 16` · `iPhone 16 Pro` · `iPhone 16 Pro Max` · `iPhone 17 Pro Max` |
   | `promo-airpods-pro-2` | `""` |
@@ -849,11 +867,14 @@ regulado: si se amplía, mantener ese tono.
   | **`apl-funda-11`** | **7 filas**, una por color: `Negro` · `Azul marino` · `Fucsia` · `Marrón` · `Naranja` · `Turquesa` · `Verde oliva` |
   | **`apl-funda-12`** | **14 filas**, una por color: `Negro` · `Azul marino` · `Blanco` · `Borravino` · `Lila oscuro` · `Marrón` · `Morado` · `Naranja` · `Rojo desgastado` · `Rosado` · `Rosado claro` · `Verde` · `Verde agua` · `Verde militar` |
 
-  Son **42 filas** en total: 21 de las fundas, 11 del templado, 6 de las promos con
-  selector, 1 del vaper y 3 de clave vacía. Coincide con los pares válidos que genera
-  `clavesDeStock` — es la misma lista que usa el SQL de limpieza de más abajo.
+  Son **49 filas** en total: 21 de las fundas, 11 del templado, 7 de los vapers
+  nuevos, 6 de las promos con selector, 1 del vaper con sabor y 3 de los termos.
+  Coincide con los pares válidos que genera `clavesDeStock` — es la misma lista que
+  usa el SQL de limpieza de más abajo.
 
-- [ ] **Fotos reales** del vaper y los 3 termos (hoy muestran `SinFoto`). Alcanza
+- [ ] **Completar los 7 "Vaper Recargable 2 a 8" desde el panel**: nombre real, foto
+  y descripción, cuando el cliente los pase. No hace falta tocar código.
+- [ ] **Fotos reales** de los 8 vapers y los 3 termos (hoy muestran `SinFoto`). Alcanza
   con agregar `image:` en `products.ts` — el placeholder deja de renderizarse solo.
 - [ ] **Foto del templado que muestre el combo completo.** Pasaron dos y ninguna sirve
   del todo: la primera eran 5 fundas **sin templado**, la actual es un render del
