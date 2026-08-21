@@ -84,12 +84,13 @@ opciones) sigue viviendo a mano en `products.ts`. Auth del panel con `bcryptjs`
 | `src/lib/auth.ts` | Parseo de `ADMIN_USERS`, bcrypt, `requerirSesion()`. Runtime Node. |
 | `src/lib/rate-limit.ts` | Límite de intentos de login **contra la base** (tabla `login_attempts`). |
 | `src/lib/site.ts` | **URL de producción del sitio** (`SITE_URL`). Única fuente de verdad: la usan `metadataBase` y el sitemap. |
-| `src/middleware.ts` | Primera barrera del panel (matcher acotado a `/admindistribucion` y `/api/admindistribucion`). |
+| `src/middleware.ts` | Primera barrera del panel (matcher acotado a `/admindistribucion` y `/api/admindistribucion`). ⚠️ Next 16 avisa que esta convención está **deprecada a favor de `proxy`**: hoy funciona igual y es sólo un warning — ver Pendientes en la sección 7. |
 | `src/app/api/stock/route.ts` | **Endpoint público, SOLO LECTURA** del stock. |
 | `src/app/api/contenido/route.ts` | **Endpoint público, SOLO LECTURA** de los overrides de contenido. |
 | `src/app/api/stock/seed/route.ts` | Carga inicial/sincronización, protegida por `SEED_TOKEN`. Idempotente. |
 | `src/app/api/admindistribucion/` | Rutas privadas: `login`, `logout`, `stock`, `contenido` e `imagen` (subida de fotos al Blob). |
 | `src/app/admindistribucion/` | **Panel privado**: `login/page.tsx`, `page.tsx`, `PanelStock.tsx`, `PanelContenido.tsx`, `BotonSalir.tsx`. |
+| `src/app/admindistribucion/layout.tsx` | Layout del panel: aplica el theme Grafito y el **`noindex`** (`robots: index false`). A propósito **NO** hay un `robots.txt` con `Disallow`: eso le anunciaría la ruta a cualquiera que lo lea. |
 | `scripts/hash-password.mjs` | Genera el hash bcrypt de una contraseña (entrada oculta). |
 | `src/app/opengraph-image.tsx` | Genera la **imagen de la tarjeta al compartir** (PNG 1200x630) con el theme del sitio. |
 | `src/app/twitter-image.tsx` | Reexporta la de arriba para Twitter/X. |
@@ -768,10 +769,11 @@ regulado: si se amplía, mantener ese tono.
 
 **Terminado** ✅
 
-- **Sistema de stock real** (Neon Postgres). **19 filas** en total: la mayoría lleva
-  una fila con clave `""`, y los **3 productos con selector** llevan **una por opción**
-  (`C - C` / `C - Lightning`, `9D` / `Anti espía`). Los marcados `sinStock` **no llevan
-  ninguna**. La web muestra **"Quedan N" / "Agotado"** y **bloquea agregar** lo
+- **Sistema de stock real** (Neon Postgres). **49 pares `(product_id, stock_key)`
+  válidos** sobre los 19 productos: los que no tienen selector llevan una sola fila con
+  clave `""`, y los **6 productos con selector** llevan **una por opción** (las 21 de
+  las fundas, las 11 del templado, `C - C` / `C - Lightning`, `9D` / `Anti espía` y el
+  `Mentol` de `vap-1`). Los marcados `sinStock` **no llevan ninguna**. La web muestra **"Quedan N" / "Agotado"** y **bloquea agregar** lo
   agotado; mientras carga dice "Verificando stock…". `/api/stock` es **SOLO LECTURA**
   (POST/PUT/DELETE → 405). **Fallar cerrado**: si la base no responde, todo se trata
   como agotado — la **única** excepción es `sinStock`.
@@ -887,7 +889,24 @@ regulado: si se amplía, mantener ese tono.
   como un producto más con el mismo patrón: fotos procesadas con relleno desenfocado,
   la **negra como principal**, `options` con sus colores e `imagenesPorOpcion`. No hace
   falta tocar ningún componente.
-- [ ] **Limpiar las filas huérfanas de la base** (ver abajo).
+- [ ] **Segunda pasada de limpieza de la base.** La primera **ya se corrió**: borró
+  **52 filas** y la comprobación dio **0** (ver abajo). Lo que quedó pendiente es una
+  pasada más, porque **después** de esa limpieza se crearon los 7 placeholders con ids
+  nuevos (`vap-rec-2`…`vap-rec-8`): las filas viejas de `vap-2`…`vap-8` siguen en la
+  tabla y ahora sí sobran. El SQL ya está regenerado con los 49 pares actuales.
+- [ ] **Panel aparte para la prima del cliente** — *planificado, sin empezar*. Es ella
+  la que vende, así que necesita **descontar stock** sin que eso implique darle el panel
+  entero. La idea es un panel **propio**, con **cuenta propia** (su usuario en
+  `ADMIN_USERS`, no el mío compartido) y **sin acceso al resto**: nada de descripciones,
+  precios, fotos ni opciones. Sólo ver el stock y bajarlo cuando cierra una venta.
+  **No hay nada hecho**: hoy `ADMIN_USERS` no distingue permisos, todos los usuarios
+  entran al mismo panel completo, así que hace falta además un concepto de rol.
+- [ ] **Migrar `src/middleware.ts` a la convención `proxy` de Next 16** — *deuda
+  técnica, no urge*. Next avisa en cada `build` y en cada `dev` que el archivo
+  `middleware` está deprecado a favor de `proxy`. **Hoy funciona perfecto**: es sólo un
+  warning, el panel sigue protegido y no hay nada roto. Se hace cuando toque subir de
+  versión mayor o cuando el warning pase a ser un breaking change; no antes, porque es
+  tocar la primera barrera de autenticación sin ninguna ganancia inmediata.
 - [ ] **Panel para los badges**: editarlos desde `/admindistribucion` en vez de a mano.
   Ya está preparado — ver "Cómo migrar los badges al panel" en la sección 6.
 - [ ] **Celulares usados** (cuando entren al catálogo). Traen dos cosas nuevas:
@@ -897,10 +916,16 @@ regulado: si se amplía, mantener ese tono.
     (memoria, batería, estado). Habría que sumar un campo estructurado y una vista de
     comparación. **No hay nada hecho de esto.**
 
-**Limpieza de la base**: quedaron filas huérfanas de productos borrados y de productos
+**Limpieza de la base**: quedan filas huérfanas de productos borrados y de productos
 que **cambiaron de clave** al sumarles un selector (antes tenían una fila `""`, ahora
 una por opción). No molestan —nadie las lee, todo se arma desde el catálogo— pero si
 se quiere dejar prolijo:
+
+> **✅ Ya se corrió una vez**: se borraron **52 filas** y la consulta de comprobación
+> devolvió **0**. **Pero volvió a haber huérfanas después**, y no por un error del SQL:
+> los 7 placeholders se crearon con ids nuevos (`vap-rec-2`…`vap-rec-8`) justamente
+> para **no heredar** el stock de los `vap-2`…`vap-8` viejos, así que esas filas viejas
+> quedaron sin dueño a propósito. Falta la segunda pasada con el SQL ya regenerado.
 
 ⚠️ **NO borrar con una lista de ids anotada a mano.** Se fue desactualizando cada vez
 que se eliminó un producto o cambió una clave, y para cuando hizo falta usarla ya no
